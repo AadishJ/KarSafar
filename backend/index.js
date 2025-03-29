@@ -2,9 +2,10 @@ import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import "dotenv/config";
+import userRouter from "./Routes/UserRouter.js";
 
 const app = express();
-const PORT = process.env.PORT || 4000;
+const PORT = process.env.PORT || 5000;
 const allowedOrigins = process.env.ALLOWED_ORIGINS?.split( "," ) || [];
 const corsOptions = {
     origin: ( origin, callback ) => {
@@ -21,7 +22,10 @@ const corsOptions = {
 
 app.use( cookieParser() );
 app.use( express.json() );
+app.use( express.urlencoded( { extended: true } ) );
 app.use( cors( corsOptions ) );
+
+app.use( "/auth", userRouter );
 
 app.get( "/", ( req, res ) => {
     res.send( "Hello World" );

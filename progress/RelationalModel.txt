@@ -1,0 +1,46 @@
+User - userId, firstName, lastName, phoneNo, Email, Password, Street, City, State, Pincode, Country, picture
+
+Booking - bookingId, price, status, userId, paymentId, paymentMethod, tripId, vehicleItemId, accomodationItemId
+
+VehicleItem - vehicleItemId, vehicleId, onboardingLocation, deboardingLocation, onboardingTime, deboardingTime, coachType, seatId
+
+Seat - vehicleId, seatId, seatNumber, name, age, gender, food
+
+VechicleItemCoach - vehicleItemCoachId, coachType, noOfSeats
+
+Station - vehicleId, stationName, time, stoppage
+
+Coach - vehicleId, coachType, seatsAvailable, price
+
+Train - vehicleId, trainName
+
+Flight - vehicleId, flightName, photo
+
+Bus - vehicleId, busName, driverName, driverPhoneNo, photo
+
+Cab - vehicleId, driverName, driverPhoneNo, carModel, photo
+
+Cruise - vehicleId, cruiseName, photo
+
+Review - itemId, reviewId, comment, rating 
+
+Pictures -accomId, picture
+
+AccomItem - accomItemId, accomId, checkInDate, checkoutDate, name , phoneNo, email
+
+AccomItemRoom - accomItemId, accomId, roomType, roomNumber
+
+Hotel - accomId, name, phoneNo, email, Street, City, State, Pincode, Country, description, breakfastInc, AC/non-AC
+
+Rooms- accomId, roomType, roomsAvailable, pplAccomodated, roomDescr  // rooom type should inc AC, non AC, suite ke b type, bunk bed
+
+Airbnb- accomId, name, phoneNo, email, Street, landmark, City, State, Pincode, Country, description, maxAllowedGuests
+
+AirbnbAmen- accomId, amenityType
+
+
+
+
+
+
+

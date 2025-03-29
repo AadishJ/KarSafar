@@ -1,0 +1,290 @@
+CREATE TABLE users (
+    userId BINARY(16) PRIMARY KEY,
+    firstName VARCHAR(50) NOT NULL,
+    lastName VARCHAR(50),
+    phoneNo VARCHAR(15) NOT NULL,
+    email VARCHAR(100) NOT NULL UNIQUE,
+    password VARCHAR(255) NOT NULL,
+    profilePicture VARCHAR(255)
+);
+
+CREATE TABLE userAddresses (
+    addressId BINARY(16) PRIMARY KEY,
+    userId INT NOT NULL,
+    street VARCHAR(100),
+    city VARCHAR(50) NOT NULL,
+    state VARCHAR(50),
+    pinCode VARCHAR(10),
+    country VARCHAR(50) NOT NULL,
+    FOREIGN KEY (userId) REFERENCES users(userId) ON DELETE CASCADE
+);
+
+
+
+
+CREATE TABLE vehicles (
+    vehicleId BINARY(16) PRIMARY KEY,
+    vehicleType ENUM('train', 'flight', 'bus', 'cab', 'cruise') NOT NULL,
+    status ENUM('active', 'maintenance', 'cancelled') DEFAULT 'active',
+    availableSeats INT NOT NULL
+);
+
+CREATE TABLE trains (
+    vehicleId BINARY(16) KEY,
+    trainName VARCHAR(100) NOT NULL,
+    FOREIGN KEY (vehicleId) REFERENCES vehicles(vehicleId) ON DELETE CASCADE
+);
+
+CREATE TABLE flights (
+    vehicleId BINARY(16) PRIMARY KEY,
+    flightName VARCHAR(100) NOT NULL,
+    FOREIGN KEY (vehicleId) REFERENCES vehicles(vehicleId) ON DELETE CASCADE
+);
+
+CREATE TABLE buses (
+    vehicleId BINARY(16) PRIMARY KEY,
+    busName VARCHAR(100) NOT NULL,
+    photo VARCHAR(255),
+    FOREIGN KEY (vehicleId) REFERENCES vehicles(vehicleId) ON DELETE CASCADE
+);
+
+CREATE TABLE cabs (
+    vehicleId BINARY(16) PRIMARY KEY,
+    carModel VARCHAR(100) NOT NULL,
+    photo VARCHAR(255),
+    FOREIGN KEY (vehicleId) REFERENCES vehicles(vehicleId) ON DELETE CASCADE
+);
+
+CREATE TABLE cruises (
+    vehicleId BINARY(16) PRIMARY KEY,
+    cruiseName VARCHAR(100) NOT NULL,
+    photo VARCHAR(255),
+    FOREIGN KEY (vehicleId) REFERENCES vehicles(vehicleId) ON DELETE CASCADE
+);
+
+CREATE TABLE vehicleDrivers (
+    driverId BINARY(16) PRIMARY KEY,
+    vehicleId INT NOT NULL,
+    driverName VARCHAR(100) NOT NULL,
+    driverPhoneNo VARCHAR(15) NOT NULL,
+    FOREIGN KEY (vehicleId) REFERENCES vehicles(vehicleId) ON DELETE CASCADE
+);
+
+CREATE TABLE vehicleCoaches (
+    coachId BINARY(16) PRIMARY KEY,
+    vehicleId INT NOT NULL,
+    coachType VARCHAR(50) NOT NULL,
+    seatsAvailable INT NOT NULL,
+    price DECIMAL(10,2) NOT NULL,
+    FOREIGN KEY (vehicleId) REFERENCES vehicles(vehicleId) ON DELETE CASCADE,
+    UNIQUE KEY unique_vehicle_coach (vehicleId, coachType)
+);
+
+CREATE TABLE vehicleStations (
+    stationId BINARY(16) PRIMARY KEY,
+    vehicleId INT NOT NULL,
+    stationName VARCHAR(100) NOT NULL,
+    arrivalTime DATETIME,
+    departureTime DATETIME,
+    stoppage INT, -- Duration in minutes
+    stationOrder INT NOT NULL,
+    FOREIGN KEY (vehicleId) REFERENCES vehicles(vehicleId) ON DELETE CASCADE,
+    UNIQUE KEY unique_vehicle_station_order (vehicleId, stationOrder)
+);
+
+CREATE TABLE seats (
+    seatId BINARY(16) PRIMARY KEY,
+    vehicleId INT NOT NULL,
+    coachId INT NOT NULL,
+    seatNumber VARCHAR(10) NOT NULL,
+    FOREIGN KEY (vehicleId) REFERENCES vehicles(vehicleId) ON DELETE CASCADE,
+    FOREIGN KEY (coachId) REFERENCES vehicleCoaches(coachId) ON DELETE CASCADE,
+    UNIQUE KEY unique_seat (vehicleId, coachId, seatNumber)
+);
+
+
+
+
+
+
+
+CREATE TABLE accommodations (
+    accomId BINARY(16) PRIMARY KEY,
+    accomType ENUM('hotel', 'airbnb') NOT NULL,
+    name VARCHAR(100) NOT NULL,
+    phoneNo VARCHAR(15) NOT NULL,
+    email VARCHAR(100),
+    description TEXT
+);
+
+CREATE TABLE accommodationAddresses (
+    addressId BINARY(16) PRIMARY KEY,
+    accomId INT NOT NULL,
+    street VARCHAR(100) NOT NULL,
+    landmark VARCHAR(100),
+    city VARCHAR(50) NOT NULL,
+    state VARCHAR(50),
+    pinCode VARCHAR(10),
+    country VARCHAR(50) NOT NULL,
+    FOREIGN KEY (accomId) REFERENCES accommodations(accomId) ON DELETE CASCADE
+);
+
+CREATE TABLE accommodationPhotos (
+    photoId BINARY(16) PRIMARY KEY,
+    accomId INT NOT NULL,
+    photoUrl VARCHAR(255) NOT NULL,
+    FOREIGN KEY (accomId) REFERENCES accommodations(accomId) ON DELETE CASCADE
+);
+
+CREATE TABLE accommodationAmenities (
+    amenityId BINARY(16) PRIMARY KEY,
+    amenityType VARCHAR(50) NOT NULL UNIQUE
+);
+
+CREATE TABLE accomAmenityMap (
+    accomId INT NOT NULL,
+    amenityId INT NOT NULL,
+    PRIMARY KEY (accomId, amenityId),
+    FOREIGN KEY (accomId) REFERENCES accommodations(accomId) ON DELETE CASCADE,
+    FOREIGN KEY (amenityId) REFERENCES accommodationAmenities(amenityId) ON DELETE CASCADE
+);
+
+CREATE TABLE hotels (
+    accomId BINARY(16) PRIMARY KEY,
+    breakfastIncluded BOOLEAN DEFAULT FALSE,
+    acType ENUM('AC', 'NON-AC', 'BOTH') NOT NULL,
+    FOREIGN KEY (accomId) REFERENCES accommodations(accomId) ON DELETE CASCADE
+);
+
+CREATE TABLE airbnbs (
+    accomId BINARY(16) PRIMARY KEY,
+    maxAllowedGuests INT NOT NULL,
+    FOREIGN KEY (accomId) REFERENCES accommodations(accomId) ON DELETE CASCADE
+);
+
+CREATE TABLE rooms (
+    roomId BINARY(16) PRIMARY KEY,
+    accomId INT NOT NULL,
+    roomType VARCHAR(50) NOT NULL,
+    roomsAvailable INT NOT NULL,
+    pplAccommodated INT NOT NULL,
+    roomDescription TEXT,
+    price DECIMAL(10,2) NOT NULL,
+    FOREIGN KEY (accomId) REFERENCES accommodations(accomId) ON DELETE CASCADE
+);
+
+
+
+
+
+
+
+CREATE TABLE trips (
+    tripId BINARY(16) PRIMARY KEY,
+    userId INT NOT NULL,
+    name VARCHAR(100) NOT NULL,
+    startDate DATE NOT NULL,
+    endDate DATE NOT NULL,
+    status ENUM('planning', 'booked', 'ongoing', 'completed', 'cancelled') DEFAULT 'planning',
+    FOREIGN KEY (userId) REFERENCES users(userId) ON DELETE CASCADE
+);
+
+CREATE TABLE vehicleBookingItems (
+    vehicleItemId BINARY(16) PRIMARY KEY,
+    vehicleId INT NOT NULL,
+    onboardingLocation VARCHAR(100) NOT NULL,
+    deboardingLocation VARCHAR(100) NOT NULL,
+    onboardingTime DATETIME NOT NULL,
+    deboardingTime DATETIME NOT NULL,
+    coachType VARCHAR(50),
+    price DECIMAL(10,2) NOT NULL,
+    status ENUM('confirmed', 'pending', 'cancelled') DEFAULT 'pending',
+    FOREIGN KEY (vehicleId) REFERENCES vehicles(vehicleId) ON DELETE CASCADE
+);
+
+CREATE TABLE accommodationBookingItems (
+    accomItemId BINARY(16) PRIMARY KEY,
+    accomId INT NOT NULL,
+    checkInDate DATE NOT NULL,
+    checkOutDate DATE NOT NULL,
+    contactName VARCHAR(100) NOT NULL,
+    contactPhoneNo VARCHAR(15) NOT NULL,
+    contactEmail VARCHAR(100),
+    price DECIMAL(10,2) NOT NULL,
+    status ENUM('confirmed', 'pending', 'cancelled') DEFAULT 'pending',
+    FOREIGN KEY (accomId) REFERENCES accommodations(accomId) ON DELETE CASCADE
+);
+
+CREATE TABLE accomBookingRooms (
+    bookingRoomId BINARY(16) PRIMARY KEY,
+    accomItemId INT NOT NULL,
+    roomId INT NOT NULL,
+    roomNumber VARCHAR(20),
+    FOREIGN KEY (accomItemId) REFERENCES accommodationBookingItems(accomItemId) ON DELETE CASCADE,
+    FOREIGN KEY (roomId) REFERENCES rooms(roomId) ON DELETE CASCADE
+);
+
+CREATE TABLE passengerSeats (
+    passengerId BINARY(16) PRIMARY KEY,
+    vehicleItemId INT NOT NULL,
+    seatId INT NOT NULL,
+    name VARCHAR(100) NOT NULL,
+    age INT NOT NULL,
+    gender ENUM('male', 'female', 'other') NOT NULL,
+    foodPreference ENUM('veg', 'non-veg', 'vegan', 'none') DEFAULT 'none',
+    FOREIGN KEY (vehicleItemId) REFERENCES vehicleBookingItems(vehicleItemId) ON DELETE CASCADE,
+    FOREIGN KEY (seatId) REFERENCES seats(seatId) ON DELETE CASCADE,
+    UNIQUE KEY unique_vehicle_seat (vehicleItemId, seatId)
+);
+
+CREATE TABLE bookings (
+    bookingId BINARY(16) PRIMARY KEY,
+    userId INT NOT NULL,
+    tripId INT,
+    totalPrice DECIMAL(10,2) NOT NULL,
+    status ENUM('confirmed', 'pending', 'cancelled') DEFAULT 'pending',
+    createDate TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (userId) REFERENCES users(userId) ON DELETE CASCADE,
+    FOREIGN KEY (tripId) REFERENCES trips(tripId) ON DELETE SET NULL
+);
+
+CREATE TABLE bookingItems (
+    bookingItemId BINARY(16) PRIMARY KEY,
+    bookingId INT NOT NULL,
+    itemType ENUM('vehicle', 'accommodation') NOT NULL,
+    vehicleItemId INT,
+    accomItemId INT,
+    price DECIMAL(10,2) NOT NULL,
+    FOREIGN KEY (bookingId) REFERENCES bookings(bookingId) ON DELETE CASCADE,
+    FOREIGN KEY (vehicleItemId) REFERENCES vehicleBookingItems(vehicleItemId) ON DELETE SET NULL,
+    FOREIGN KEY (accomItemId) REFERENCES accommodationBookingItems(accomItemId) ON DELETE SET NULL,
+    CHECK (
+        (itemType = 'vehicle' AND vehicleItemId IS NOT NULL AND accomItemId IS NULL) OR 
+        (itemType = 'accommodation' AND accomItemId IS NOT NULL AND vehicleItemId IS NULL)
+    )
+);
+
+CREATE TABLE payments (
+    paymentId BINARY(16) PRIMARY KEY,
+    bookingId INT NOT NULL,
+    amount DECIMAL(10,2) NOT NULL,
+    paid BOOLEAN DEFAULT FALSE,
+    paymentMethod VARCHAR(50),
+    transactionId VARCHAR(100),
+    paymentDate TIMESTAMP,
+    status ENUM('pending', 'completed', 'failed', 'refunded') DEFAULT 'pending',
+    FOREIGN KEY (bookingId) REFERENCES bookings(bookingId) ON DELETE CASCADE
+);
+
+
+CREATE TABLE reviews (
+    reviewId BINARY(16) PRIMARY KEY,
+    userId INT NOT NULL,
+    itemType ENUM('vehicle', 'accommodation', 'trip') NOT NULL,
+    itemId INT NOT NULL,
+    rating DECIMAL(3,2) NOT NULL CHECK (rating BETWEEN 0 AND 5),
+    comment TEXT,
+    reviewDate TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (userId) REFERENCES users(userId) ON DELETE CASCADE,
+    UNIQUE KEY unique_user_review (userId, itemType, itemId)
+);

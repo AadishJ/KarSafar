@@ -1,0 +1,163 @@
+/* User Management */
+User (userId PK, firstName, lastName, phoneNo, email, password, profilePicture)
+UserAddress (addressId PK, userId FK, street, city, state, pinCode, country)
+
+/* Vehicle Management */
+Vehicle (vehicleId PK, vehicleType, status, availableSeats)
+
+Train (vehicleId PK/FK, trainName)
+Flight (vehicleId PK/FK, flightName)
+Bus (vehicleId PK/FK, busName, photo)
+Cab (vehicleId PK/FK, carModel, photo)
+Cruise (vehicleId PK/FK, cruiseName, photo)
+
+VehicleDriver (driverId PK, vehicleId FK, driverName, driverPhoneNo)
+
+VehicleCoach (coachId PK, vehicleId FK, coachType, seatsAvailable, price)
+
+VehicleStation (stationId PK, vehicleId FK, stationName, arrivalTime, departureTime, stoppage, stationOrder)
+
+Seat (seatId PK, vehicleId FK, coachId FK, seatNumber)
+
+/* Accommodation Management */
+Accommodation (accomId PK, accomType, name, phoneNo, email, description)
+
+AccommodationAddress (addressId PK, accomId FK, street, landmark, city, state, pinCode, country)
+
+AccommodationPhoto (photoId PK, accomId FK, photoUrl)
+
+AccommodationAmenity (amenityId PK, amenityType)
+
+AccomAmenityMap (accomId FK, amenityId FK, PK(accomId, amenityId))
+
+Hotel (accomId PK/FK, breakfastIncluded, acType)
+
+Airbnb (accomId PK/FK, maxAllowedGuests)
+
+Room (roomId PK, accomId FK, roomType, roomsAvailable, pplAccommodated, roomDescription, price)
+
+/* Booking Management */
+Trip (tripId PK, userId FK, name, startDate, endDate, status)
+
+VehicleBookingItem (vehicleItemId PK, vehicleId FK, onboardingLocation, deboardingLocation, 
+                    onboardingTime, deboardingTime, coachType, price, status)
+
+AccommodationBookingItem (accomItemId PK, accomId FK, checkInDate, checkOutDate, 
+                          contactName, contactPhoneNo, contactEmail, price, status)
+
+AccomBookingRoom (bookingRoomId PK, accomItemId FK, roomId FK, roomNumber)
+
+PassengerSeat (passengerId PK, vehicleItemId FK, seatId FK, name, age, gender, foodPreference)
+
+Booking (bookingId PK, userId FK, tripId FK, totalPrice, status, createDate)
+
+BookingItem (bookingItemId PK, bookingId FK, itemType, vehicleItemId FK, accomItemId FK, price)
+
+Payment (paymentId PK, bookingId FK, amount, paid, paymentMethod, transactionId, paymentDate, status)
+
+/* Reviews */
+Review (reviewId PK, userId FK, itemType, itemId, rating, comment, reviewDate)
+
+
+
+Functional Dependencies in the Trip Database Schema
+Below are the functional dependencies (FDs) for each relation in our BCNF schema:
+
+User Management
+User:
+
+userId → firstName, lastName, phoneNo, email, password, profilePicture
+email → userId (assuming email is unique)
+UserAddress:
+
+addressId → userId, street, city, state, pinCode, country
+(userId, addressId) → street, city, state, pinCode, country
+
+Vehicle Management
+Vehicle:
+
+vehicleId → vehicleType, status, availableSeats
+Train/Flight/Bus/Cab/Cruise (Inheritance):
+
+vehicleId → all attributes specific to that vehicle type
+For Train: vehicleId → trainName
+For Flight: vehicleId → flightName
+For Bus: vehicleId → busName, photo
+For Cab: vehicleId → carModel, photo
+For Cruise: vehicleId → cruiseName, photo
+VehicleDriver:
+
+driverId → vehicleId, driverName, driverPhoneNo
+vehicleId → driverId (assuming one driver per vehicle)
+VehicleCoach:
+
+coachId → vehicleId, coachType, seatsAvailable, price
+(vehicleId, coachType) → coachId, seatsAvailable, price
+VehicleStation:
+
+stationId → vehicleId, stationName, arrivalTime, departureTime, stoppage, stationOrder
+(vehicleId, stationOrder) → stationId, stationName, arrivalTime, departureTime, stoppage
+Seat:
+
+seatId → vehicleId, coachId, seatNumber
+(vehicleId, coachId, seatNumber) → seatId
+Accommodation Management
+Accommodation:
+
+accomId → accomType, name, phoneNo, email, description
+AccommodationAddress:
+
+addressId → accomId, street, landmark, city, state, pinCode, country
+accomId → addressId (assuming one address per accommodation)
+AccommodationPhoto:
+
+photoId → accomId, photoUrl
+AccommodationAmenity:
+
+amenityId → amenityType
+AccomAmenityMap (M:M relationship):
+
+(accomId, amenityId) → No other attributes (just the relationship)
+Hotel/Airbnb (Inheritance):
+
+accomId → attributes specific to that accommodation type
+For Hotel: accomId → breakfastIncluded, acType
+For Airbnb: accomId → maxAllowedGuests
+Room:
+
+roomId → accomId, roomType, roomsAvailable, pplAccommodated, roomDescription, price
+(accomId, roomType) → roomsAvailable, pplAccommodated, roomDescription, price
+Booking Management
+Trip:
+
+tripId → userId, name, startDate, endDate, status
+VehicleBookingItem:
+
+vehicleItemId → vehicleId, onboardingLocation, deboardingLocation, onboardingTime, deboardingTime, coachType, price, status
+AccommodationBookingItem:
+
+accomItemId → accomId, checkInDate, checkOutDate, contactName, contactPhoneNo, contactEmail, price, status
+AccomBookingRoom:
+
+bookingRoomId → accomItemId, roomId, roomNumber
+(accomItemId, roomId) → roomNumber
+PassengerSeat:
+
+passengerId → vehicleItemId, seatId, name, age, gender, foodPreference
+(vehicleItemId, seatId) → passengerId, name, age, gender, foodPreference
+Booking:
+
+bookingId → userId, tripId, totalPrice, status, createDate
+BookingItem:
+
+bookingItemId → bookingId, itemType, vehicleItemId, accomItemId, price
+Note: vehicleItemId and accomItemId will be NULL depending on itemType
+Payment:
+
+paymentId → bookingId, amount, paid, paymentMethod, transactionId, paymentDate, status
+bookingId → paymentId (assuming one payment per booking)
+Reviews
+Review:
+
+reviewId → userId, itemType, itemId, rating, comment, reviewDate
+(userId, itemType, itemId) → reviewId, rating, comment, reviewDate

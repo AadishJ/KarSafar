@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { FcGoogle } from 'react-icons/fc';
-import { FaUser, FaLock, FaEnvelope, FaCheck, FaEye, FaEyeSlash } from 'react-icons/fa';
+import { FaUser, FaLock, FaEnvelope, FaCheck, FaEye, FaEyeSlash, FaPhone } from 'react-icons/fa';
 import { useAuth } from '../Contexts/auth.context';
 
 const Register = () => {
@@ -11,6 +11,7 @@ const Register = () => {
     // Form states
     const [ name, setName ] = useState( '' );
     const [ email, setEmail ] = useState( '' );
+    const [ phone, setPhone ] = useState( '' );
     const [ password, setPassword ] = useState( '' );
     const [ confirmPassword, setConfirmPassword ] = useState( '' );
     const [ showPassword, setShowPassword ] = useState( false );
@@ -96,7 +97,7 @@ const Register = () => {
         }
 
         try {
-            await register( name, email, password );
+            await register( name, email, password, phone );
             navigate( '/' );
         } catch ( err ) {
             setError( err.response?.data?.message || 'Registration failed. Please try again.' );
@@ -159,6 +160,25 @@ const Register = () => {
                             />
                         </div>
                     </div>
+                    <div>
+                        <label htmlFor="phone" className="text-sm font-medium text-gray-700 block mb-1">
+                            Phone Number
+                        </label>
+                        <div className="relative">
+                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <FaPhone className="text-gray-400" />
+                            </div>
+                            <input
+                                id="phone"
+                                type="tel"
+                                value={phone}
+                                onChange={( e ) => setPhone( e.target.value )}
+                                className="pl-10 w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                                placeholder="+1234567890"
+                                required
+                            />
+                    </div>   
+                    </div>
 
                     <div>
                         <label htmlFor="password" className="text-sm font-medium text-gray-700 block mb-1">
@@ -196,7 +216,7 @@ const Register = () => {
                                 <div className="flex justify-between mb-1">
                                     <span className="text-xs text-gray-500">Password strength:</span>
                                     <span className={`text-xs font-medium ${ passwordStrength <= 2 ? 'text-red-500' :
-                                            passwordStrength <= 4 ? 'text-yellow-500' : 'text-green-500'
+                                        passwordStrength <= 4 ? 'text-yellow-500' : 'text-green-500'
                                         }`}>{getStrengthLabel()}</span>
                                 </div>
                                 <div className="w-full bg-gray-200 rounded-full h-1.5">
@@ -246,8 +266,8 @@ const Register = () => {
                                 value={confirmPassword}
                                 onChange={( e ) => setConfirmPassword( e.target.value )}
                                 className={`pl-10 w-full px-4 py-2.5 border ${ confirmPassword && password !== confirmPassword
-                                        ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
-                                        : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500'
+                                    ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
+                                    : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500'
                                     } rounded-lg`}
                                 placeholder="••••••••"
                                 required

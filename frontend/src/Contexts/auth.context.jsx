@@ -75,12 +75,13 @@ export const AuthProvider = ( { children } ) => {
     };
 
     // Register function
-    const register = async ( name, email, password ) => {
+    const register = async ( name, email, password, phone ) => {
         try {
             const response = await axiosInstance.post( `/auth/register`, {
                 name,
                 email,
-                password
+                password,
+                phone
             } );
 
             const { token, user } = response.data;

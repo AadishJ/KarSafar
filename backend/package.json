@@ -16,6 +16,7 @@
     "authenticator": "^1.1.5",
     "axios": "^1.7.9",
     "bcrypt": "^5.1.1",
+    "bcryptjs": "^3.0.2",
     "cloudinary": "^2.5.1",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
@@ -29,6 +30,7 @@
     "nodemon": "^3.1.9",
     "otp-generator": "^4.0.1",
     "razorpay": "^2.9.5",
+    "uuid": "^11.1.0",
     "validator": "^13.12.0"
   }
 }

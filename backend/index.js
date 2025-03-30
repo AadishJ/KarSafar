@@ -3,8 +3,10 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 import "dotenv/config";
 import userRouter from "./Routes/UserRouter.js";
+import { connectDB } from "./Config/ConnectDB.js";
 
 const app = express();
+connectDB();
 const PORT = process.env.PORT || 5000;
 const allowedOrigins = process.env.ALLOWED_ORIGINS?.split( "," ) || [];
 const corsOptions = {

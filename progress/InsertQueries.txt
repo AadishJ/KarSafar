@@ -1,0 +1,92 @@
+INSERT INTO users (firstName, lastName, phoneNo, email, password, profilePicture) VALUES
+('John', 'Doe', '1234567890', 'john@example.com', 'password123', NULL),
+('Jane', 'Smith', '9876543210', 'jane@example.com', 'password456', NULL),
+('Alice', 'Brown', '5556667777', 'alice@example.com', 'alicePass', NULL),
+('Bob', 'Johnson', '4443332222', 'bob@example.com', 'bobPass', NULL),
+('Charlie', 'Davis', '7778889999', 'charlie@example.com', 'charliePass', NULL),
+('Emily', 'White', '9998887777', 'emily@example.com', 'emilyPass', NULL),
+('Daniel', 'Wilson', '6665554444', 'daniel@example.com', 'danielPass', NULL),
+('Olivia', 'Miller', '1112223333', 'olivia@example.com', 'oliviaPass', NULL),
+('Ethan', 'Taylor', '3334445555', 'ethan@example.com', 'ethanPass', NULL),
+('Sophia', 'Anderson', '2221110000', 'sophia@example.com', 'sophiaPass', NULL);
+
+
+INSERT INTO userAddresses (userId, street, city, state, pinCode, country) VALUES
+(1, '123 Main St', 'New York', 'NY', '10001', 'USA'),
+(2, '456 Elm St', 'Los Angeles', 'CA', '90001', 'USA'),
+(3, '789 Pine St', 'Chicago', 'IL', '60601', 'USA'),
+(4, '101 Maple St', 'Houston', 'TX', '77001', 'USA'),
+(5, '202 Oak St', 'San Francisco', 'CA', '94101', 'USA'),
+(6, '303 Birch St', 'Boston', 'MA', '02101', 'USA'),
+(7, '404 Cedar St', 'Seattle', 'WA', '98101', 'USA'),
+(8, '505 Walnut St', 'Miami', 'FL', '33101', 'USA'),
+(9, '606 Spruce St', 'Denver', 'CO', '80201', 'USA'),
+(10, '707 Cherry St', 'Atlanta', 'GA', '30301', 'USA');
+
+
+INSERT INTO vehicles (vehicleType, status, availableSeats) VALUES
+('train', 'active', 500),
+('flight', 'active', 200),
+('bus', 'active', 40),
+('cab', 'active', 4),
+('cruise', 'active', 100),
+('train', 'maintenance', 600),
+('flight', 'cancelled', 250),
+('bus', 'active', 30),
+('cab', 'active', 4),
+('cruise', 'active', 120);
+
+
+INSERT INTO trains (vehicleId, trainName) VALUES
+(1, 'Express 101'),
+(6, 'Superfast 303');
+
+INSERT INTO flights (vehicleId, flightName) VALUES
+(2, 'AirJet 500'),
+(7, 'SkyFlyer 700');
+
+INSERT INTO buses (vehicleId, busName, photo) VALUES
+(3, 'Greyhound', NULL),
+(8, 'MegaBus', NULL);
+
+INSERT INTO cabs (vehicleId, carModel, photo) VALUES
+(4, 'Toyota Prius', NULL),
+(9, 'Honda Civic', NULL);
+
+INSERT INTO cruises (vehicleId, cruiseName, photo) VALUES
+(5, 'Ocean Queen', NULL),
+(10, 'Sea King', NULL);
+
+INSERT INTO vehicleCoaches (vehicleId, coachId, coachType, seatsAvailable, price) VALUES
+(1, 'H1', 'first class', 50, 200.00),
+(1, 'A1', 'second class', 100, 150.00),
+(1, 'B1', 'third class', 200, 100.00),
+(1, 'S1', 'sleeper', 150, 80.00),
+(6, 'H2', 'first class', 60, 220.00),
+(6, 'A2', 'second class', 120, 160.00),
+(6, 'B2', 'third class', 180, 110.00),
+(6, 'S2', 'sleeper', 140, 90.00);
+
+INSERT INTO seats (vehicleId, coachId, seatNumber) VALUES
+-- Train seats (1,2,3 format)
+(1, 'H1', '1'), (1, 'H1', '2'), (1, 'H1', '3'),
+(1, 'A1', '1'), (1, 'A1', '2'), (1, 'A1', '3'),
+-- Flight seats (A1, A2, etc.)
+(2, 'A1', 'A1'), (2, 'A1', 'A2'), (2, 'A1', 'B1'),
+(7, 'A2', 'A3'), (7, 'A2', 'A4'), (7, 'A2', 'B2');
+
+INSERT INTO trips (userId, name, startDate, endDate, status) VALUES
+(1, 'Vacation 1', '2025-06-01', '2025-06-10', 'booked'),
+(2, 'Business Trip', '2025-07-01', '2025-07-05', 'planning');
+
+INSERT INTO bookings (userId, tripId, totalPrice, status) VALUES
+(1, 1, 500.00, 'confirmed'),
+(2, 2, 1000.00, 'pending');
+
+INSERT INTO payments (bookingId, amount, paid, paymentMethod, transactionId, paymentDate, status) VALUES
+(1, 500.00, TRUE, 'Credit Card', 'TXN12345', '2025-06-01 12:00:00', 'completed'),
+(2, 1000.00, FALSE, 'Debit Card', 'TXN67890', '2025-07-01 15:00:00', 'pending');
+
+INSERT INTO reviews (userId, itemType, itemId, rating, comment) VALUES
+(1, 'vehicle', 1, 4.5, 'Great train service!'),
+(2, 'accommodation', 1, 4.0, 'Comfortable stay.');

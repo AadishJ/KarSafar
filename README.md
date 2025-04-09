@@ -7,12 +7,14 @@ This project is a MERN stack application using MySQL as the database. The basic 
 ### Install Dependencies
 
 1. Navigate to the `frontend` directory and install the dependencies:
+
     ```bash
     cd frontend
     npm install
     ```
 
 2. Navigate to the `backend` directory and install the dependencies:
+
     ```bash
     cd ../backend
     npm install
@@ -21,15 +23,17 @@ This project is a MERN stack application using MySQL as the database. The basic 
 ### Start the Project
 
 1. Start the frontend development server:
+
     ```bash
     cd ../frontend
     npm run dev
     ```
 
 2. Start the backend development server:
+
     ```bash
     cd ../backend
     npm run dev
     ```
 
-Now, your project should be up and running!
+Now, your project should be up and running

@@ -9,19 +9,49 @@ import {
     Typography,
     Autocomplete,
     Grid2 as Grid,
-    IconButton
+    IconButton,
+    FormControl,
+    InputLabel,
+    Select,
+    MenuItem
 } from '@mui/material';
 import { addDays, format } from 'date-fns';
 import SwapHorizIcon from '@mui/icons-material/SwapHoriz';
-import popularAirports from '../assets/airports.json';
 
-const FlightDateSelector = ( { onDateChange, onLocationChange } ) => {
+// Sample data - replace with actual train stations data
+const popularStations = [
+    { code: 'NDLS', name: 'New Delhi', fullName: 'New Delhi Railway Station' },
+    { code: 'BCT', name: 'Mumbai Central', fullName: 'Mumbai Central Railway Station' },
+    { code: 'HWH', name: 'Howrah', fullName: 'Howrah Junction Railway Station' },
+    { code: 'MAS', name: 'Chennai Central', fullName: 'Chennai Central Railway Station' },
+    { code: 'SBC', name: 'Bengaluru', fullName: 'KSR Bengaluru City Junction' },
+    { code: 'CSTM', name: 'Mumbai CST', fullName: 'Chhatrapati Shivaji Terminus' },
+    { code: 'BZA', name: 'Vijayawada', fullName: 'Vijayawada Junction Railway Station' },
+    { code: 'BPL', name: 'Bhopal', fullName: 'Bhopal Junction Railway Station' },
+    { code: 'CNB', name: 'Kanpur', fullName: 'Kanpur Central Railway Station' },
+    { code: 'PNBE', name: 'Patna', fullName: 'Patna Junction Railway Station' },
+    { code: 'ALD', name: 'Prayagraj', fullName: 'Prayagraj Junction' },
+    { code: 'SDAH', name: 'Sealdah', fullName: 'Sealdah Railway Station' }
+];
+
+const TrainDateSelector = ( { onDateChange, onLocationChange, onClassChange } ) => {
     const today = new Date();
     const [ departureDate, setDepartureDate ] = useState( today );
     const [ returnDate, setReturnDate ] = useState( addDays( today, 7 ) );
     const [ isRoundTrip, setIsRoundTrip ] = useState( true );
     const [ source, setSource ] = useState( null );
     const [ destination, setDestination ] = useState( null );
+    const [ travelClass, setTravelClass ] = useState( 'SL' ); // Default to Sleeper Class
+
+    // Available train classes
+    const trainClasses = [
+        { value: '1A', label: '1st AC' },
+        { value: '2A', label: '2nd AC' },
+        { value: '3A', label: '3rd AC' },
+        { value: 'SL', label: 'Sleeper' },
+        { value: 'CC', label: 'Chair Car' },
+        { value: '2S', label: '2nd Sitting' }
+    ];
 
     const handleDepartureDateChange = ( newDate ) => {
         setDepartureDate( newDate );
@@ -88,6 +118,12 @@ const FlightDateSelector = ( { onDateChange, onLocationChange } ) => {
         } );
     };
 
+    const handleClassChange = ( event ) => {
+        setTravelClass( event.target.value );
+
+        onClassChange?.( event.target.value );
+    };
+
     return (
         <LocalizationProvider dateAdapter={AdapterDateFns}>
             <Box className="p-6 bg-white rounded-lg shadow-md">
@@ -102,7 +138,7 @@ const FlightDateSelector = ( { onDateChange, onLocationChange } ) => {
                         }
                         label={
                             <Typography variant="body1" className="font-medium">
-                                {isRoundTrip ? 'Round Trip' : 'One Way'}
+                                {isRoundTrip ? 'Return Journey' : 'One Way'}
                             </Typography>
                         }
                     />
@@ -117,12 +153,12 @@ const FlightDateSelector = ( { onDateChange, onLocationChange } ) => {
                         <Autocomplete
                             value={source}
                             onChange={handleSourceChange}
-                            options={popularAirports}
+                            options={popularStations}
                             getOptionLabel={( option ) => option ? `${ option.name } (${ option.code })` : ''}
                             renderInput={( params ) => (
                                 <TextField
                                     {...params}
-                                    placeholder="Select departure city"
+                                    placeholder="Select departure station"
                                     fullWidth
                                     variant="outlined"
                                     size="medium"
@@ -162,12 +198,12 @@ const FlightDateSelector = ( { onDateChange, onLocationChange } ) => {
                         <Autocomplete
                             value={destination}
                             onChange={handleDestinationChange}
-                            options={popularAirports}
+                            options={popularStations}
                             getOptionLabel={( option ) => option ? `${ option.name } (${ option.code })` : ''}
                             renderInput={( params ) => (
                                 <TextField
                                     {...params}
-                                    placeholder="Select arrival city"
+                                    placeholder="Select arrival station"
                                     fullWidth
                                     variant="outlined"
                                     size="medium"
@@ -187,6 +223,31 @@ const FlightDateSelector = ( { onDateChange, onLocationChange } ) => {
                         />
                     </Grid>
                 </Grid>
+
+                {/* Travel Class Selection */}
+                <div className="mb-6">
+                    <Typography variant="subtitle2" className="mb-1 text-gray-700 font-medium">
+                        Travel Class
+                    </Typography>
+                    <FormControl fullWidth sx={{ bgcolor: '#f9fafb' }}>
+                        <Select
+                            value={travelClass}
+                            onChange={handleClassChange}
+                            displayEmpty
+                            variant="outlined"
+                            size="medium"
+                        >
+                            {trainClasses.map( ( option ) => (
+                                <MenuItem key={option.value} value={option.value}>
+                                    {option.label}
+                                </MenuItem>
+                            ) )}
+                        </Select>
+                    </FormControl>
+                    <Typography variant="caption" className="text-gray-500 mt-1 block">
+                        {trainClasses.find( c => c.value === travelClass )?.label || 'Select class'}
+                    </Typography>
+                </div>
 
                 {/* Date Selection */}
                 <div className="flex flex-col md:flex-row gap-4">
@@ -241,4 +302,4 @@ const FlightDateSelector = ( { onDateChange, onLocationChange } ) => {
     );
 };
 
-export default FlightDateSelector;
+export default TrainDateSelector;

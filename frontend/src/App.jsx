@@ -6,6 +6,8 @@ import { Route, Routes } from 'react-router-dom'
 import Login from './Pages/Login'
 import Register from './Pages/Register'
 import Flight from './Pages/Flight'
+import Train from './Pages/Train'
+import Bus from './Pages/Bus'
 
 
 const App = () => {
@@ -20,6 +22,8 @@ const App = () => {
           <Route path='/login' element={<Login />} />
           <Route path='/register' element={<Register />} />
           <Route path='/flights' element={<Flight/>} />
+          <Route path='/trains' element={<Train/>} />
+          <Route path='/buses' element={<Bus/>} />
           </Routes>
       </div>
     </>

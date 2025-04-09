@@ -5,6 +5,7 @@ import "dotenv/config";
 import userRouter from "./Routes/UserRouter.js";
 import { connectDB } from "./Config/ConnectDB.js";
 import flightRouter from "./Routes/FlightRouter.js";
+import trainRouter from "./Routes/TrainRouter.js";
 
 const app = express();
 connectDB();
@@ -30,6 +31,7 @@ app.use( cors( corsOptions ) );
 
 app.use( "/auth", userRouter );
 app.use( "/flight", flightRouter );
+app.use( "/train", trainRouter );
 
 app.get( "/", ( req, res ) => {
     res.send( "Hello World" );

@@ -9,19 +9,49 @@ import {
     Typography,
     Autocomplete,
     Grid2 as Grid,
-    IconButton
+    IconButton,
+    FormControl,
+    InputLabel,
+    Select,
+    MenuItem
 } from '@mui/material';
 import { addDays, format } from 'date-fns';
 import SwapHorizIcon from '@mui/icons-material/SwapHoriz';
-import popularAirports from '../assets/airports.json';
 
-const FlightDateSelector = ( { onDateChange, onLocationChange } ) => {
+// Sample bus cities data - replace with actual data from your backend
+const popularCities = [
+    { id: 'DEL', name: 'Delhi', region: 'NCR' },
+    { id: 'MUM', name: 'Mumbai', region: 'Maharashtra' },
+    { id: 'BLR', name: 'Bangalore', region: 'Karnataka' },
+    { id: 'HYD', name: 'Hyderabad', region: 'Telangana' },
+    { id: 'CHN', name: 'Chennai', region: 'Tamil Nadu' },
+    { id: 'KOL', name: 'Kolkata', region: 'West Bengal' },
+    { id: 'PUN', name: 'Pune', region: 'Maharashtra' },
+    { id: 'JAI', name: 'Jaipur', region: 'Rajasthan' },
+    { id: 'AHD', name: 'Ahmedabad', region: 'Gujarat' },
+    { id: 'LKW', name: 'Lucknow', region: 'Uttar Pradesh' },
+    { id: 'NGP', name: 'Nagpur', region: 'Maharashtra' },
+    { id: 'CDB', name: 'Chandigarh', region: 'Punjab/Haryana' }
+];
+
+// Bus seat types
+const busTypes = [
+    { value: 'AC_SLEEPER', label: 'AC Sleeper' },
+    { value: 'NON_AC_SLEEPER', label: 'Non-AC Sleeper' },
+    { value: 'AC_SEATER', label: 'AC Seater' },
+    { value: 'NON_AC_SEATER', label: 'Non-AC Seater' },
+    { value: 'VOLVO', label: 'Volvo' },
+    { value: 'DELUXE', label: 'Deluxe' }
+];
+
+const BusDateSelector = ( { onDateChange, onLocationChange, onBusTypeChange } ) => {
     const today = new Date();
     const [ departureDate, setDepartureDate ] = useState( today );
-    const [ returnDate, setReturnDate ] = useState( addDays( today, 7 ) );
-    const [ isRoundTrip, setIsRoundTrip ] = useState( true );
+    const [ returnDate, setReturnDate ] = useState( addDays( today, 3 ) ); // Shorter default for bus trips
+    const [ isRoundTrip, setIsRoundTrip ] = useState( false ); // Default to one-way for buses
     const [ source, setSource ] = useState( null );
     const [ destination, setDestination ] = useState( null );
+    const [ busType, setBusType ] = useState( '' );
 
     const handleDepartureDateChange = ( newDate ) => {
         setDepartureDate( newDate );
@@ -33,7 +63,7 @@ const FlightDateSelector = ( { onDateChange, onLocationChange } ) => {
 
         onDateChange?.( {
             departureDate: newDate,
-            returnDate: isRoundTrip ? returnDate < newDate ? newDate : returnDate : null,
+            returnDate: isRoundTrip ? ( returnDate < newDate ? newDate : returnDate ) : null,
             isRoundTrip
         } );
     };
@@ -88,6 +118,11 @@ const FlightDateSelector = ( { onDateChange, onLocationChange } ) => {
         } );
     };
 
+    const handleBusTypeChange = ( event ) => {
+        setBusType( event.target.value );
+        onBusTypeChange?.( event.target.value );
+    };
+
     return (
         <LocalizationProvider dateAdapter={AdapterDateFns}>
             <Box className="p-6 bg-white rounded-lg shadow-md">
@@ -117,8 +152,8 @@ const FlightDateSelector = ( { onDateChange, onLocationChange } ) => {
                         <Autocomplete
                             value={source}
                             onChange={handleSourceChange}
-                            options={popularAirports}
-                            getOptionLabel={( option ) => option ? `${ option.name } (${ option.code })` : ''}
+                            options={popularCities}
+                            getOptionLabel={( option ) => option ? `${ option.name }, ${ option.region }` : ''}
                             renderInput={( params ) => (
                                 <TextField
                                     {...params}
@@ -131,12 +166,10 @@ const FlightDateSelector = ( { onDateChange, onLocationChange } ) => {
                             )}
                             renderOption={( props, option ) => (
                                 <li {...props}>
-                                    <div>
-                                        <Typography variant="body1">{option.name} ({option.code})</Typography>
-                                        <Typography variant="caption" className="text-gray-500">
-                                            {option.fullName}
-                                        </Typography>
-                                    </div>
+                                    <Typography variant="body1">{option.name}</Typography>
+                                    <Typography variant="caption" className="text-gray-500 ml-1">
+                                        {option.region}
+                                    </Typography>
                                 </li>
                             )}
                         />
@@ -162,8 +195,8 @@ const FlightDateSelector = ( { onDateChange, onLocationChange } ) => {
                         <Autocomplete
                             value={destination}
                             onChange={handleDestinationChange}
-                            options={popularAirports}
-                            getOptionLabel={( option ) => option ? `${ option.name } (${ option.code })` : ''}
+                            options={popularCities}
+                            getOptionLabel={( option ) => option ? `${ option.name }, ${ option.region }` : ''}
                             renderInput={( params ) => (
                                 <TextField
                                     {...params}
@@ -176,17 +209,43 @@ const FlightDateSelector = ( { onDateChange, onLocationChange } ) => {
                             )}
                             renderOption={( props, option ) => (
                                 <li {...props}>
-                                    <div>
-                                        <Typography variant="body1">{option.name} ({option.code})</Typography>
-                                        <Typography variant="caption" className="text-gray-500">
-                                            {option.fullName}
-                                        </Typography>
-                                    </div>
+                                    <Typography variant="body1">{option.name}</Typography>
+                                    <Typography variant="caption" className="text-gray-500 ml-1">
+                                        {option.region}
+                                    </Typography>
                                 </li>
                             )}
                         />
                     </Grid>
                 </Grid>
+
+                {/* Bus Type Selection */}
+                <div className="mb-6">
+                    <Typography variant="subtitle2" className="mb-1 text-gray-700 font-medium">
+                        Bus Type (Optional)
+                    </Typography>
+                    <FormControl fullWidth sx={{ bgcolor: '#f9fafb' }}>
+                        <Select
+                            value={busType}
+                            onChange={handleBusTypeChange}
+                            displayEmpty
+                            variant="outlined"
+                            size="medium"
+                        >
+                            <MenuItem value="">
+                                <em>All Bus Types</em>
+                            </MenuItem>
+                            {busTypes.map( ( option ) => (
+                                <MenuItem key={option.value} value={option.value}>
+                                    {option.label}
+                                </MenuItem>
+                            ) )}
+                        </Select>
+                    </FormControl>
+                    <Typography variant="caption" className="text-gray-500 mt-1 block">
+                        {busType ? busTypes.find( b => b.value === busType )?.label : 'Select bus type or leave empty for all types'}
+                    </Typography>
+                </div>
 
                 {/* Date Selection */}
                 <div className="flex flex-col md:flex-row gap-4">
@@ -241,4 +300,4 @@ const FlightDateSelector = ( { onDateChange, onLocationChange } ) => {
     );
 };
 
-export default FlightDateSelector;
+export default BusDateSelector;

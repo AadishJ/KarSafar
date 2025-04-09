@@ -5,6 +5,7 @@ import Navbar from './Component/Navbar'
 import { Route, Routes } from 'react-router-dom'
 import Login from './Pages/Login'
 import Register from './Pages/Register'
+import Flight from './Pages/Flight'
 
 
 const App = () => {
@@ -18,6 +19,7 @@ const App = () => {
           <Route path='/' element={<Home />} />
           <Route path='/login' element={<Login />} />
           <Route path='/register' element={<Register />} />
+          <Route path='/flights' element={<Flight/>} />
           </Routes>
       </div>
     </>

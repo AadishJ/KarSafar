@@ -4,6 +4,7 @@ import cookieParser from "cookie-parser";
 import "dotenv/config";
 import userRouter from "./Routes/UserRouter.js";
 import { connectDB } from "./Config/ConnectDB.js";
+import flightRouter from "./Routes/FlightRouter.js";
 
 const app = express();
 connectDB();
@@ -28,6 +29,7 @@ app.use( express.urlencoded( { extended: true } ) );
 app.use( cors( corsOptions ) );
 
 app.use( "/auth", userRouter );
+app.use( "/flight", flightRouter );
 
 app.get( "/", ( req, res ) => {
     res.send( "Hello World" );

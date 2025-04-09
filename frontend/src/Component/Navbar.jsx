@@ -10,15 +10,15 @@ const Navbar = () => {
     const navigate = useNavigate();
 
     return (
-        <nav className="bg-white shadow-md py-4 sticky top-0 z-50">
-            <div className="max-w-7xl ml-16 lg:px-16 flex justify-between items-center">
+        <nav className="bg-white shadow-md py-4 sticky top-0 z-50 w-full">
+            <div className="container mx-auto px-4 lg:px-8 flex justify-between items-center">
                 {/* Logo */}
-                <Link to="/" className="flex items-center space-x-2 mr-8">
-                    <span className="text-2xl font-bold text-blue-600 hover:text-blue-700 transition duration-300">KarSafar</span>
+                <Link to="/" className="flex items-center">
+                    <span className="text-2xl mx-4 font-bold text-blue-600 hover:text-blue-700 transition duration-300">KarSafar</span>
                 </Link>
 
                 {/* Desktop Navigation */}
-                <div className="hidden md:flex items-center space-x-6 lg:space-x-8">
+                <div className="hidden md:flex items-center space-x-4 lg:space-x-8">
                     <Link to="/flights" className="flex items-center text-gray-700 hover:text-blue-600 transition duration-300 font-medium">
                         <FaPlane className="mr-1.5 text-blue-500" /> Flights
                     </Link>
@@ -71,7 +71,7 @@ const Navbar = () => {
                             inputProps={{ 'aria-label': 'search' }}
                             sx={{
                                 fontSize: '0.875rem',
-                                width: '240px',
+                                width: '200px',
                                 '& input': {
                                     padding: '4px 0'
                                 }
@@ -81,24 +81,26 @@ const Navbar = () => {
                     </Paper>
                 </div>
 
-                {/* Login/Register */}
-                <div className="hidden md:flex items-center space-x-4 ml-6">
-                    <Link to="/login" className="flex items-center text-gray-700 hover:text-blue-600 transition duration-300 font-medium">
-                        <FaUser className="mr-1.5 text-blue-500" /> Login
-                    </Link>
-                    <Link
-                        to="/register"
-                        className="py-1.5 px-4 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition duration-300 font-medium text-sm"
-                    >
-                        Register
-                    </Link>
-                </div>
+                <div className="flex items-center">
+                    {/* Login/Register */}
+                    <div className="hidden md:flex items-center space-x-4 ml-6">
+                        <Link to="/login" className="flex items-center text-gray-700 hover:text-blue-600 transition duration-300 font-medium">
+                            <FaUser className="mr-1.5 text-blue-500" /> Login
+                        </Link>
+                        <Link
+                            to="/register"
+                            className="py-1.5 px-4 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition duration-300 font-medium text-sm"
+                        >
+                            Register
+                        </Link>
+                    </div>
 
-                {/* Mobile menu button */}
-                <div className="md:hidden flex items-center mr-8">
-                    <button onClick={() => setIsOpen( !isOpen )} className="text-gray-700 hover:text-blue-600 focus:outline-none transition duration-300">
-                        {isOpen ? <FaTimes className="h-6 w-6" /> : <FaBars className="h-6 w-6" />}
-                    </button>
+                    {/* Mobile menu button */}
+                    <div className="md:hidden ml-4">
+                        <button onClick={() => setIsOpen( !isOpen )} className="text-gray-700 hover:text-blue-600 focus:outline-none transition duration-300">
+                            {isOpen ? <FaTimes className="h-6 w-6" /> : <FaBars className="h-6 w-6" />}
+                        </button>
+                    </div>
                 </div>
             </div>
 

@@ -1,0 +1,389 @@
+[
+    {
+        "code": "DEL",
+        "name": "Delhi",
+        "fullName": "Indira Gandhi International Airport",
+        "city": "New Delhi",
+        "state": "Delhi",
+        "domestic": true,
+        "international": true
+    },
+    {
+        "code": "BOM",
+        "name": "Mumbai",
+        "fullName": "Chhatrapati Shivaji Maharaj International Airport",
+        "city": "Mumbai",
+        "state": "Maharashtra",
+        "domestic": true,
+        "international": true
+    },
+    {
+        "code": "MAA",
+        "name": "Chennai",
+        "fullName": "Chennai International Airport",
+        "city": "Chennai",
+        "state": "Tamil Nadu",
+        "domestic": true,
+        "international": true
+    },
+    {
+        "code": "BLR",
+        "name": "Bangalore",
+        "fullName": "Kempegowda International Airport",
+        "city": "Bengaluru",
+        "state": "Karnataka",
+        "domestic": true,
+        "international": true
+    },
+    {
+        "code": "HYD",
+        "name": "Hyderabad",
+        "fullName": "Rajiv Gandhi International Airport",
+        "city": "Hyderabad",
+        "state": "Telangana",
+        "domestic": true,
+        "international": true
+    },
+    {
+        "code": "CCU",
+        "name": "Kolkata",
+        "fullName": "Netaji Subhas Chandra Bose International Airport",
+        "city": "Kolkata",
+        "state": "West Bengal",
+        "domestic": true,
+        "international": true
+    },
+    {
+        "code": "COK",
+        "name": "Kochi",
+        "fullName": "Cochin International Airport",
+        "city": "Kochi",
+        "state": "Kerala",
+        "domestic": true,
+        "international": true
+    },
+    {
+        "code": "AMD",
+        "name": "Ahmedabad",
+        "fullName": "Sardar Vallabhbhai Patel International Airport",
+        "city": "Ahmedabad",
+        "state": "Gujarat",
+        "domestic": true,
+        "international": true
+    },
+    {
+        "code": "TRV",
+        "name": "Thiruvananthapuram",
+        "fullName": "Trivandrum International Airport",
+        "city": "Thiruvananthapuram",
+        "state": "Kerala",
+        "domestic": true,
+        "international": true
+    },
+    {
+        "code": "PNQ",
+        "name": "Pune",
+        "fullName": "Pune Airport",
+        "city": "Pune",
+        "state": "Maharashtra",
+        "domestic": true,
+        "international": true
+    },
+    {
+        "code": "GOI",
+        "name": "Goa",
+        "fullName": "Dabolim Airport",
+        "city": "Vasco da Gama",
+        "state": "Goa",
+        "domestic": true,
+        "international": true
+    },
+    {
+        "code": "LKO",
+        "name": "Lucknow",
+        "fullName": "Chaudhary Charan Singh International Airport",
+        "city": "Lucknow",
+        "state": "Uttar Pradesh",
+        "domestic": true,
+        "international": true
+    },
+    {
+        "code": "JAI",
+        "name": "Jaipur",
+        "fullName": "Jaipur International Airport",
+        "city": "Jaipur",
+        "state": "Rajasthan",
+        "domestic": true,
+        "international": true
+    },
+    {
+        "code": "IXC",
+        "name": "Chandigarh",
+        "fullName": "Chandigarh International Airport",
+        "city": "Chandigarh",
+        "state": "Chandigarh",
+        "domestic": true,
+        "international": true
+    },
+    {
+        "code": "GAU",
+        "name": "Guwahati",
+        "fullName": "Lokpriya Gopinath Bordoloi International Airport",
+        "city": "Guwahati",
+        "state": "Assam",
+        "domestic": true,
+        "international": true
+    },
+    {
+        "code": "PAT",
+        "name": "Patna",
+        "fullName": "Jay Prakash Narayan International Airport",
+        "city": "Patna",
+        "state": "Bihar",
+        "domestic": true,
+        "international": false
+    },
+    {
+        "code": "STV",
+        "name": "Surat",
+        "fullName": "Surat Airport",
+        "city": "Surat",
+        "state": "Gujarat",
+        "domestic": true,
+        "international": false
+    },
+    {
+        "code": "BBI",
+        "name": "Bhubaneswar",
+        "fullName": "Biju Patnaik International Airport",
+        "city": "Bhubaneswar",
+        "state": "Odisha",
+        "domestic": true,
+        "international": true
+    },
+    {
+        "code": "IXR",
+        "name": "Ranchi",
+        "fullName": "Birsa Munda Airport",
+        "city": "Ranchi",
+        "state": "Jharkhand",
+        "domestic": true,
+        "international": false
+    },
+    {
+        "code": "VTZ",
+        "name": "Visakhapatnam",
+        "fullName": "Visakhapatnam Airport",
+        "city": "Visakhapatnam",
+        "state": "Andhra Pradesh",
+        "domestic": true,
+        "international": true
+    },
+    {
+        "code": "IXB",
+        "name": "Bagdogra",
+        "fullName": "Bagdogra Airport",
+        "city": "Siliguri",
+        "state": "West Bengal",
+        "domestic": true,
+        "international": false
+    },
+    {
+        "code": "RPR",
+        "name": "Raipur",
+        "fullName": "Swami Vivekananda Airport",
+        "city": "Raipur",
+        "state": "Chhattisgarh",
+        "domestic": true,
+        "international": false
+    },
+    {
+        "code": "IXE",
+        "name": "Mangalore",
+        "fullName": "Mangalore International Airport",
+        "city": "Mangalore",
+        "state": "Karnataka",
+        "domestic": true,
+        "international": true
+    },
+    {
+        "code": "NAG",
+        "name": "Nagpur",
+        "fullName": "Dr. Babasaheb Ambedkar International Airport",
+        "city": "Nagpur",
+        "state": "Maharashtra",
+        "domestic": true,
+        "international": true
+    },
+    {
+        "code": "IXM",
+        "name": "Madurai",
+        "fullName": "Madurai Airport",
+        "city": "Madurai",
+        "state": "Tamil Nadu",
+        "domestic": true,
+        "international": true
+    },
+    {
+        "code": "VNS",
+        "name": "Varanasi",
+        "fullName": "Lal Bahadur Shastri International Airport",
+        "city": "Varanasi",
+        "state": "Uttar Pradesh",
+        "domestic": true,
+        "international": true
+    },
+    {
+        "code": "IDR",
+        "name": "Indore",
+        "fullName": "Devi Ahilya Bai Holkar Airport",
+        "city": "Indore",
+        "state": "Madhya Pradesh",
+        "domestic": true,
+        "international": false
+    },
+    {
+        "code": "CJB",
+        "name": "Coimbatore",
+        "fullName": "Coimbatore International Airport",
+        "city": "Coimbatore",
+        "state": "Tamil Nadu",
+        "domestic": true,
+        "international": true
+    },
+    {
+        "code": "TRZ",
+        "name": "Tiruchirapalli",
+        "fullName": "Tiruchirappalli International Airport",
+        "city": "Tiruchirapalli",
+        "state": "Tamil Nadu",
+        "domestic": true,
+        "international": true
+    },
+    {
+        "code": "IXZ",
+        "name": "Port Blair",
+        "fullName": "Veer Savarkar International Airport",
+        "city": "Port Blair",
+        "state": "Andaman and Nicobar Islands",
+        "domestic": true,
+        "international": false
+    },
+    {
+        "code": "AGX",
+        "name": "Agatti",
+        "fullName": "Agatti Island Airport",
+        "city": "Agatti",
+        "state": "Lakshadweep",
+        "domestic": true,
+        "international": false
+    },
+    {
+        "code": "IXJ",
+        "name": "Jammu",
+        "fullName": "Jammu Airport",
+        "city": "Jammu",
+        "state": "Jammu and Kashmir",
+        "domestic": true,
+        "international": false
+    },
+    {
+        "code": "SXR",
+        "name": "Srinagar",
+        "fullName": "Sheikh ul-Alam International Airport",
+        "city": "Srinagar",
+        "state": "Jammu and Kashmir",
+        "domestic": true,
+        "international": true
+    },
+    {
+        "code": "IXL",
+        "name": "Leh",
+        "fullName": "Kushok Bakula Rimpochee Airport",
+        "city": "Leh",
+        "state": "Ladakh",
+        "domestic": true,
+        "international": false
+    },
+    {
+        "code": "BHO",
+        "name": "Bhopal",
+        "fullName": "Raja Bhoj Airport",
+        "city": "Bhopal",
+        "state": "Madhya Pradesh",
+        "domestic": true,
+        "international": false
+    },
+    {
+        "code": "JRH",
+        "name": "Jorhat",
+        "fullName": "Jorhat Airport",
+        "city": "Jorhat",
+        "state": "Assam",
+        "domestic": true,
+        "international": false
+    },
+    {
+        "code": "IXS",
+        "name": "Silchar",
+        "fullName": "Silchar Airport",
+        "city": "Silchar",
+        "state": "Assam",
+        "domestic": true,
+        "international": false
+    },
+    {
+        "code": "IXD",
+        "name": "Allahabad",
+        "fullName": "Prayagraj Airport",
+        "city": "Prayagraj",
+        "state": "Uttar Pradesh",
+        "domestic": true,
+        "international": false
+    },
+    {
+        "code": "IMF",
+        "name": "Imphal",
+        "fullName": "Imphal International Airport",
+        "city": "Imphal",
+        "state": "Manipur",
+        "domestic": true,
+        "international": true
+    },
+    {
+        "code": "ATQ",
+        "name": "Amritsar",
+        "fullName": "Sri Guru Ram Dass Jee International Airport",
+        "city": "Amritsar",
+        "state": "Punjab",
+        "domestic": true,
+        "international": true
+    },
+    {
+        "code": "IXU",
+        "name": "Aurangabad",
+        "fullName": "Chhatrapati Sambhaji Raje Airport",
+        "city": "Aurangabad",
+        "state": "Maharashtra",
+        "domestic": true,
+        "international": false
+    },
+    {
+        "code": "IXY",
+        "name": "Kandla",
+        "fullName": "Kandla Airport",
+        "city": "Gandhidham",
+        "state": "Gujarat",
+        "domestic": true,
+        "international": false
+    },
+    {
+        "code": "DIB",
+        "name": "Dibrugarh",
+        "fullName": "Dibrugarh Airport",
+        "city": "Dibrugarh",
+        "state": "Assam",
+        "domestic": true,
+        "international": false
+    }
+]

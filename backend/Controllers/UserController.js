@@ -15,7 +15,6 @@ const handleRegisterPost = async ( req, res ) => {
     try {
         const { name, email, password, phone } = req.body;
 
-        // Validate input
         if ( !name || !email || !password || !phone ) {
             return res.status( 400 ).json( {
                 success: false,
@@ -23,7 +22,6 @@ const handleRegisterPost = async ( req, res ) => {
             } );
         }
 
-        // Check if email already exists
         const [ existingUsers ] = await pool.execute(
             'SELECT * FROM users WHERE email = ?',
             [ email ]
@@ -36,32 +34,26 @@ const handleRegisterPost = async ( req, res ) => {
             } );
         }
 
-        // Split name into firstName and lastName
         const nameParts = name.split( ' ' );
         const firstName = nameParts[ 0 ];
         const lastName = nameParts.length > 1 ? nameParts.slice( 1 ).join( ' ' ) : '';
 
-        // Hash password
         const salt = await bcrypt.genSalt( 10 );
         const hashedPassword = await bcrypt.hash( password, salt );
 
-        // Generate UUID and convert to binary
         const userId = uuidv4().replace( /-/g, '' );
 
-        // Insert user into database
         await pool.execute(
             'INSERT INTO users (userId, firstName, lastName, phoneNo, email, password) VALUES (UNHEX(?), ?, ?, ?, ?, ?)',
             [ userId, firstName, lastName, phone, email, hashedPassword ]
         );
 
-        // Generate JWT token
         const token = jwt.sign(
             { id: userId },
             process.env.JWT_SECRET || 'your_jwt_secret',
             { expiresIn: '7d' }
         );
 
-        // Return success response with token
         res.status( 201 ).json( {
             success: true,
             message: 'User registered successfully',

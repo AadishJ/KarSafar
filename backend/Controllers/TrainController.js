@@ -22,7 +22,7 @@ async function handleTrainListGet( req, res ) {
                     SELECT 
                         JSON_OBJECTAGG(vc2.coachType, vc2.seatsAvailable) 
                     FROM 
-                        vehicleCoaches vc2 
+                        vehiclecoaches vc2 
                     WHERE 
                         vc2.vehicleId = t.vehicleId
                 ) as availableSeats,
@@ -30,7 +30,7 @@ async function handleTrainListGet( req, res ) {
                     SELECT 
                         JSON_OBJECTAGG(vc3.coachType, vc3.price) 
                     FROM 
-                        vehicleCoaches vc3 
+                        vehiclecoaches vc3 
                     WHERE 
                         vc3.vehicleId = t.vehicleId
                 ) as price
@@ -39,11 +39,11 @@ async function handleTrainListGet( req, res ) {
             JOIN 
                 vehicles v ON t.vehicleId = v.vehicleId
             JOIN 
-                vehicleStations source ON t.vehicleId = source.vehicleId
+                vehiclestations source ON t.vehicleId = source.vehicleId
             JOIN 
-                vehicleStations destination ON t.vehicleId = destination.vehicleId
+                vehiclestations destination ON t.vehicleId = destination.vehicleId
             LEFT JOIN
-                vehicleCoaches vc ON t.vehicleId = vc.vehicleId
+                vehiclecoaches vc ON t.vehicleId = vc.vehicleId
             WHERE 
                 source.stationOrder < destination.stationOrder
                 AND v.status = 'active'
@@ -69,7 +69,7 @@ async function handleTrainListGet( req, res ) {
         }
 
         if ( travelClass ) {
-            query += " AND EXISTS (SELECT 1 FROM vehicleCoaches vc4 WHERE vc4.vehicleId = t.vehicleId AND vc4.coachType = ?)";
+            query += " AND EXISTS (SELECT 1 FROM vehiclecoaches vc4 WHERE vc4.vehicleId = t.vehicleId AND vc4.coachType = ?)";
             params.push( travelClass );
         }
 
@@ -199,7 +199,7 @@ async function handleTrainDetailGet( req, res ) {
                 stoppage,
                 stationOrder
             FROM 
-                vehicleStations
+                vehiclestations
             WHERE 
                 vehicleId = UNHEX(?)
             ORDER BY 
@@ -215,7 +215,7 @@ async function handleTrainDetailGet( req, res ) {
                 seatsAvailable,
                 price
             FROM 
-                vehicleCoaches
+                vehiclecoaches
             WHERE 
                 vehicleId = UNHEX(?)`,
             [ trainId ]
@@ -341,7 +341,7 @@ async function handleTrainCreate( req, res ) {
                 }
 
                 await connection.execute(
-                    `INSERT INTO vehicleCoaches (coachId, vehicleId, coachType, seatsAvailable, price) 
+                    `INSERT INTO vehiclecoaches (coachId, vehicleId, coachType, seatsAvailable, price) 
                      VALUES (?, UNHEX(?), ?, ?, ?)`,
                     [ coach.coachId, vehicleId, coach.coachType, coach.seatsAvailable, coach.price ]
                 );
@@ -368,7 +368,7 @@ async function handleTrainCreate( req, res ) {
 
                 const stationId = uuidv4().replace( /-/g, '' );
                 await connection.execute(
-                    `INSERT INTO vehicleStations 
+                    `INSERT INTO vehiclestations 
                      (stationId, vehicleId, stationName, arrivalTime, departureTime, stoppage, stationOrder) 
                      VALUES (UNHEX(?), UNHEX(?), ?, ?, ?, ?, ?)`,
                     [

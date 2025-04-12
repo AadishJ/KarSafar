@@ -1,0 +1,614 @@
+[
+    {
+        "stopId": "NDLA",
+        "name": "Delhi Airport T3",
+        "city": "New Delhi",
+        "state": "Delhi",
+        "address": "Indira Gandhi International Airport, Terminal 3, New Delhi-110037",
+        "type": "airport",
+        "major": true,
+        "facilities": [
+            "waiting-lounge",
+            "food-court",
+            "restrooms",
+            "parking",
+            "wheelchair-access"
+        ]
+    },
+    {
+        "stopId": "NDLR",
+        "name": "New Delhi Railway Station",
+        "city": "New Delhi",
+        "state": "Delhi",
+        "address": "Paharganj, New Delhi-110055",
+        "type": "railway",
+        "major": true,
+        "facilities": [
+            "waiting-area",
+            "restrooms",
+            "parking"
+        ]
+    },
+    {
+        "stopId": "NDLC",
+        "name": "Connaught Place",
+        "city": "New Delhi",
+        "state": "Delhi",
+        "address": "Connaught Place, New Delhi-110001",
+        "type": "landmark",
+        "major": true,
+        "facilities": [
+            "parking",
+            "restrooms"
+        ]
+    },
+    {
+        "stopId": "MUMA",
+        "name": "Mumbai Airport T2",
+        "city": "Mumbai",
+        "state": "Maharashtra",
+        "address": "Chhatrapati Shivaji International Airport, Terminal 2, Mumbai-400099",
+        "type": "airport",
+        "major": true,
+        "facilities": [
+            "waiting-lounge",
+            "food-court",
+            "restrooms",
+            "parking",
+            "wheelchair-access"
+        ]
+    },
+    {
+        "stopId": "MUMR",
+        "name": "Mumbai CST Railway",
+        "city": "Mumbai",
+        "state": "Maharashtra",
+        "address": "Fort, Mumbai-400001",
+        "type": "railway",
+        "major": true,
+        "facilities": [
+            "waiting-area",
+            "restrooms",
+            "parking"
+        ]
+    },
+    {
+        "stopId": "MUMB",
+        "name": "Bandra Kurla Complex",
+        "city": "Mumbai",
+        "state": "Maharashtra",
+        "address": "Bandra East, Mumbai-400051",
+        "type": "business",
+        "major": true,
+        "facilities": [
+            "parking",
+            "restrooms"
+        ]
+    },
+    {
+        "stopId": "BNGA",
+        "name": "Bangalore Airport",
+        "city": "Bengaluru",
+        "state": "Karnataka",
+        "address": "Kempegowda International Airport, Bengaluru-560300",
+        "type": "airport",
+        "major": true,
+        "facilities": [
+            "waiting-lounge",
+            "food-court",
+            "restrooms",
+            "parking",
+            "wheelchair-access"
+        ]
+    },
+    {
+        "stopId": "BNGM",
+        "name": "MG Road",
+        "city": "Bengaluru",
+        "state": "Karnataka",
+        "address": "MG Road, Bengaluru-560001",
+        "type": "commercial",
+        "major": true,
+        "facilities": [
+            "parking",
+            "restrooms"
+        ]
+    },
+    {
+        "stopId": "BNGE",
+        "name": "Electronic City",
+        "city": "Bengaluru",
+        "state": "Karnataka",
+        "address": "Electronic City Phase 1, Bengaluru-560100",
+        "type": "business",
+        "major": true,
+        "facilities": [
+            "parking",
+            "restrooms"
+        ]
+    },
+    {
+        "stopId": "CHNA",
+        "name": "Chennai Airport",
+        "city": "Chennai",
+        "state": "Tamil Nadu",
+        "address": "Chennai International Airport, Chennai-600027",
+        "type": "airport",
+        "major": true,
+        "facilities": [
+            "waiting-lounge",
+            "food-court",
+            "restrooms",
+            "parking",
+            "wheelchair-access"
+        ]
+    },
+    {
+        "stopId": "CHNR",
+        "name": "Chennai Central Railway",
+        "city": "Chennai",
+        "state": "Tamil Nadu",
+        "address": "Chennai Central, Chennai-600003",
+        "type": "railway",
+        "major": true,
+        "facilities": [
+            "waiting-area",
+            "restrooms",
+            "parking"
+        ]
+    },
+    {
+        "stopId": "CHNT",
+        "name": "T. Nagar",
+        "city": "Chennai",
+        "state": "Tamil Nadu",
+        "address": "T. Nagar, Chennai-600017",
+        "type": "commercial",
+        "major": false,
+        "facilities": [
+            "parking"
+        ]
+    },
+    {
+        "stopId": "HYDA",
+        "name": "Hyderabad Airport",
+        "city": "Hyderabad",
+        "state": "Telangana",
+        "address": "Rajiv Gandhi International Airport, Hyderabad-500409",
+        "type": "airport",
+        "major": true,
+        "facilities": [
+            "waiting-lounge",
+            "food-court",
+            "restrooms",
+            "parking",
+            "wheelchair-access"
+        ]
+    },
+    {
+        "stopId": "HYDH",
+        "name": "Hitech City",
+        "city": "Hyderabad",
+        "state": "Telangana",
+        "address": "HITEC City, Hyderabad-500081",
+        "type": "business",
+        "major": true,
+        "facilities": [
+            "parking",
+            "restrooms"
+        ]
+    },
+    {
+        "stopId": "HYDD",
+        "name": "Banjara Hills",
+        "city": "Hyderabad",
+        "state": "Telangana",
+        "address": "Banjara Hills, Hyderabad-500034",
+        "type": "residential",
+        "major": false,
+        "facilities": [
+            "parking"
+        ]
+    },
+    {
+        "stopId": "KOLA",
+        "name": "Kolkata Airport",
+        "city": "Kolkata",
+        "state": "West Bengal",
+        "address": "Netaji Subhash Chandra Bose International Airport, Kolkata-700052",
+        "type": "airport",
+        "major": true,
+        "facilities": [
+            "waiting-lounge",
+            "food-court",
+            "restrooms",
+            "parking",
+            "wheelchair-access"
+        ]
+    },
+    {
+        "stopId": "KOLH",
+        "name": "Howrah Station",
+        "city": "Kolkata",
+        "state": "West Bengal",
+        "address": "Howrah Station, Howrah-711101",
+        "type": "railway",
+        "major": true,
+        "facilities": [
+            "waiting-area",
+            "food-court",
+            "restrooms",
+            "parking"
+        ]
+    },
+    {
+        "stopId": "KOLP",
+        "name": "Park Street",
+        "city": "Kolkata",
+        "state": "West Bengal",
+        "address": "Park Street, Kolkata-700016",
+        "type": "commercial",
+        "major": true,
+        "facilities": [
+            "parking",
+            "restrooms"
+        ]
+    },
+    {
+        "stopId": "AHMA",
+        "name": "Ahmedabad Airport",
+        "city": "Ahmedabad",
+        "state": "Gujarat",
+        "address": "Sardar Vallabhbhai Patel International Airport, Ahmedabad-380003",
+        "type": "airport",
+        "major": true,
+        "facilities": [
+            "waiting-lounge",
+            "food-court",
+            "restrooms",
+            "parking",
+            "wheelchair-access"
+        ]
+    },
+    {
+        "stopId": "AHMR",
+        "name": "Ahmedabad Railway Station",
+        "city": "Ahmedabad",
+        "state": "Gujarat",
+        "address": "Kalupur, Ahmedabad-380002",
+        "type": "railway",
+        "major": true,
+        "facilities": [
+            "waiting-area",
+            "restrooms",
+            "parking"
+        ]
+    },
+    {
+        "stopId": "PUNA",
+        "name": "Pune Airport",
+        "city": "Pune",
+        "state": "Maharashtra",
+        "address": "Lohegaon Airport, Pune-411032",
+        "type": "airport",
+        "major": true,
+        "facilities": [
+            "waiting-lounge",
+            "restrooms",
+            "parking",
+            "wheelchair-access"
+        ]
+    },
+    {
+        "stopId": "PUNR",
+        "name": "Pune Railway Station",
+        "city": "Pune",
+        "state": "Maharashtra",
+        "address": "Pune Station Road, Pune-411001",
+        "type": "railway",
+        "major": true,
+        "facilities": [
+            "waiting-area",
+            "restrooms",
+            "parking"
+        ]
+    },
+    {
+        "stopId": "PUNH",
+        "name": "Hinjewadi IT Park",
+        "city": "Pune",
+        "state": "Maharashtra",
+        "address": "Hinjewadi Phase 1, Pune-411057",
+        "type": "business",
+        "major": true,
+        "facilities": [
+            "parking",
+            "restrooms"
+        ]
+    },
+    {
+        "stopId": "GOIA",
+        "name": "Goa Airport",
+        "city": "Dabolim",
+        "state": "Goa",
+        "address": "Dabolim Airport, Goa-403801",
+        "type": "airport",
+        "major": true,
+        "facilities": [
+            "waiting-lounge",
+            "food-court",
+            "restrooms",
+            "parking",
+            "wheelchair-access"
+        ]
+    },
+    {
+        "stopId": "GOIB",
+        "name": "Baga Beach",
+        "city": "Calangute",
+        "state": "Goa",
+        "address": "Baga Beach Road, Calangute, Goa-403516",
+        "type": "tourist",
+        "major": true,
+        "facilities": [
+            "parking"
+        ]
+    },
+    {
+        "stopId": "GOIP",
+        "name": "Panjim Bus Stand",
+        "city": "Panaji",
+        "state": "Goa",
+        "address": "Patto, Panaji, Goa-403001",
+        "type": "transit",
+        "major": true,
+        "facilities": [
+            "waiting-area",
+            "restrooms",
+            "parking"
+        ]
+    },
+    {
+        "stopId": "JAIA",
+        "name": "Jaipur Airport",
+        "city": "Jaipur",
+        "state": "Rajasthan",
+        "address": "Jaipur International Airport, Jaipur-302029",
+        "type": "airport",
+        "major": true,
+        "facilities": [
+            "waiting-lounge",
+            "food-court",
+            "restrooms",
+            "parking",
+            "wheelchair-access"
+        ]
+    },
+    {
+        "stopId": "JAIF",
+        "name": "Jaipur Fort",
+        "city": "Jaipur",
+        "state": "Rajasthan",
+        "address": "Amer Fort, Jaipur-302028",
+        "type": "tourist",
+        "major": true,
+        "facilities": [
+            "parking",
+            "restrooms"
+        ]
+    },
+    {
+        "stopId": "LCKA",
+        "name": "Lucknow Airport",
+        "city": "Lucknow",
+        "state": "Uttar Pradesh",
+        "address": "Chaudhary Charan Singh International Airport, Lucknow-226009",
+        "type": "airport",
+        "major": true,
+        "facilities": [
+            "waiting-lounge",
+            "food-court",
+            "restrooms",
+            "parking",
+            "wheelchair-access"
+        ]
+    },
+    {
+        "stopId": "LCKC",
+        "name": "Lucknow Charbagh",
+        "city": "Lucknow",
+        "state": "Uttar Pradesh",
+        "address": "Charbagh Railway Station, Lucknow-226004",
+        "type": "railway",
+        "major": true,
+        "facilities": [
+            "waiting-area",
+            "restrooms",
+            "parking"
+        ]
+    },
+    {
+        "stopId": "CHNZ",
+        "name": "Chandigarh Airport",
+        "city": "Chandigarh",
+        "state": "Chandigarh",
+        "address": "Chandigarh International Airport, Mohali-160055",
+        "type": "airport",
+        "major": true,
+        "facilities": [
+            "waiting-lounge",
+            "restrooms",
+            "parking",
+            "wheelchair-access"
+        ]
+    },
+    {
+        "stopId": "CHNS",
+        "name": "Sector 17",
+        "city": "Chandigarh",
+        "state": "Chandigarh",
+        "address": "Sector 17, Chandigarh-160017",
+        "type": "commercial",
+        "major": true,
+        "facilities": [
+            "parking",
+            "restrooms"
+        ]
+    },
+    {
+        "stopId": "COKA",
+        "name": "Kochi Airport",
+        "city": "Kochi",
+        "state": "Kerala",
+        "address": "Cochin International Airport, Kochi-683111",
+        "type": "airport",
+        "major": true,
+        "facilities": [
+            "waiting-lounge",
+            "food-court",
+            "restrooms",
+            "parking",
+            "wheelchair-access"
+        ]
+    },
+    {
+        "stopId": "COKM",
+        "name": "Marine Drive",
+        "city": "Kochi",
+        "state": "Kerala",
+        "address": "Marine Drive, Kochi-682011",
+        "type": "tourist",
+        "major": true,
+        "facilities": [
+            "parking",
+            "restrooms"
+        ]
+    },
+    {
+        "stopId": "GUWA",
+        "name": "Guwahati Airport",
+        "city": "Guwahati",
+        "state": "Assam",
+        "address": "Lokpriya Gopinath Bordoloi International Airport, Guwahati-781015",
+        "type": "airport",
+        "major": true,
+        "facilities": [
+            "waiting-lounge",
+            "restrooms",
+            "parking",
+            "wheelchair-access"
+        ]
+    },
+    {
+        "stopId": "INDP",
+        "name": "Indore Airport",
+        "city": "Indore",
+        "state": "Madhya Pradesh",
+        "address": "Devi Ahilyabai Holkar Airport, Indore-452005",
+        "type": "airport",
+        "major": true,
+        "facilities": [
+            "waiting-lounge",
+            "restrooms",
+            "parking",
+            "wheelchair-access"
+        ]
+    },
+    {
+        "stopId": "INDK",
+        "name": "Indore Rajwada",
+        "city": "Indore",
+        "state": "Madhya Pradesh",
+        "address": "Rajwada, Indore-452004",
+        "type": "tourist",
+        "major": true,
+        "facilities": [
+            "parking"
+        ]
+    },
+    {
+        "stopId": "BHPA",
+        "name": "Bhopal Airport",
+        "city": "Bhopal",
+        "state": "Madhya Pradesh",
+        "address": "Raja Bhoj Airport, Bhopal-462030",
+        "type": "airport",
+        "major": true,
+        "facilities": [
+            "waiting-lounge",
+            "restrooms",
+            "parking",
+            "wheelchair-access"
+        ]
+    },
+    {
+        "stopId": "VISZ",
+        "name": "Visakhapatnam Airport",
+        "city": "Visakhapatnam",
+        "state": "Andhra Pradesh",
+        "address": "Visakhapatnam Airport, Visakhapatnam-530009",
+        "type": "airport",
+        "major": true,
+        "facilities": [
+            "waiting-lounge",
+            "restrooms",
+            "parking",
+            "wheelchair-access"
+        ]
+    },
+    {
+        "stopId": "VISB",
+        "name": "Beach Road",
+        "city": "Visakhapatnam",
+        "state": "Andhra Pradesh",
+        "address": "Beach Road, Visakhapatnam-530017",
+        "type": "tourist",
+        "major": true,
+        "facilities": [
+            "parking",
+            "restrooms"
+        ]
+    },
+    {
+        "stopId": "TRZC",
+        "name": "Trichy Airport",
+        "city": "Tiruchirappalli",
+        "state": "Tamil Nadu",
+        "address": "Tiruchirappalli International Airport, Trichy-620007",
+        "type": "airport",
+        "major": true,
+        "facilities": [
+            "waiting-lounge",
+            "restrooms",
+            "parking",
+            "wheelchair-access"
+        ]
+    },
+    {
+        "stopId": "VARN",
+        "name": "Varanasi Airport",
+        "city": "Varanasi",
+        "state": "Uttar Pradesh",
+        "address": "Lal Bahadur Shastri Airport, Varanasi-221006",
+        "type": "airport",
+        "major": true,
+        "facilities": [
+            "waiting-lounge",
+            "restrooms",
+            "parking",
+            "wheelchair-access"
+        ]
+    },
+    {
+        "stopId": "VARG",
+        "name": "Varanasi Ghats",
+        "city": "Varanasi",
+        "state": "Uttar Pradesh",
+        "address": "Dashashwamedh Ghat, Varanasi-221001",
+        "type": "tourist",
+        "major": true,
+        "facilities": [
+            "parking"
+        ]
+    }
+]

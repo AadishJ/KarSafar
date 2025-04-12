@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
-import { LocalizationProvider, DatePicker } from '@mui/x-date-pickers';
+import { LocalizationProvider, DatePicker, TimePicker } from '@mui/x-date-pickers';
 import {
     TextField,
     FormControlLabel,
@@ -10,38 +10,68 @@ import {
     Autocomplete,
     IconButton,
     Paper,
-    InputAdornment
+    InputAdornment,
+    Grid
 } from '@mui/material';
-import { addDays, format } from 'date-fns';
+import { addDays, addHours, format, setHours, setMinutes } from 'date-fns';
 import SwapHorizIcon from '@mui/icons-material/SwapHoriz';
-import DirectionsBus from '@mui/icons-material/DirectionsBus';
-import LocationOn from '@mui/icons-material/LocationOn';
-import busStops from '../assets/busStops.json';
+import LocationOnIcon from '@mui/icons-material/LocationOn';
+import PlaceIcon from '@mui/icons-material/Place';
+import CabIcon from '@mui/icons-material/LocalTaxi';
+import ScheduleIcon from '@mui/icons-material/Schedule';
+import cabStops from '../assets/cabStops.json';
 
-const BusDateSelector = ( { onDateChange, onLocationChange } ) => {
+const CabDateSelector = ( { onDateChange, onLocationChange } ) => {
     const today = new Date();
-    const [ departureDate, setDepartureDate ] = useState( addDays( today, 1 ) );
-    const [ returnDate, setReturnDate ] = useState( addDays( today, 7 ) );
-    const [ isRoundTrip, setIsRoundTrip ] = useState( true );
+    // Set default pickup time 2 hours from now
+    const defaultPickupTime = addHours( today, 2 );
+
+    const [ pickupDate, setPickupDate ] = useState( defaultPickupTime );
+    const [ pickupTime, setPickupTime ] = useState( defaultPickupTime );
+    const [ returnDate, setReturnDate ] = useState( addDays( today, 1 ) );
+    const [ isRoundTrip, setIsRoundTrip ] = useState( false );
     const [ source, setSource ] = useState( null );
     const [ destination, setDestination ] = useState( null );
 
-    const handleDepartureDateChange = ( newDate ) => {
-        setDepartureDate( newDate );
-        if ( returnDate < newDate ) {
-            setReturnDate( newDate );
+    const handlePickupDateChange = ( newDate ) => {
+        setPickupDate( newDate );
+        const combinedDateTime = combineDateTime( newDate, pickupTime );
+
+        if ( returnDate < combinedDateTime ) {
+            setReturnDate( addDays( combinedDateTime, 1 ) );
         }
+
         onDateChange?.( {
-            departureDate: newDate,
-            returnDate: isRoundTrip ? returnDate < newDate ? newDate : returnDate : null,
+            departureDate: combinedDateTime,
+            returnDate: isRoundTrip ? returnDate < combinedDateTime ? addDays( combinedDateTime, 1 ) : returnDate : null,
             isRoundTrip
         } );
+    };
+
+    const handlePickupTimeChange = ( newTime ) => {
+        setPickupTime( newTime );
+        const combinedDateTime = combineDateTime( pickupDate, newTime );
+
+        onDateChange?.( {
+            departureDate: combinedDateTime,
+            returnDate: isRoundTrip ? returnDate : null,
+            isRoundTrip
+        } );
+    };
+
+    // Combine date and time into a single Date object
+    const combineDateTime = ( date, time ) => {
+        if ( !date || !time ) return date;
+        const combined = new Date( date );
+        combined.setHours( time.getHours() );
+        combined.setMinutes( time.getMinutes() );
+        return combined;
     };
 
     const handleReturnDateChange = ( newDate ) => {
         setReturnDate( newDate );
         onDateChange?.( {
-            departureDate,
+            departureDate: combineDateTime( pickupDate, pickupTime ),
             returnDate: newDate,
             isRoundTrip
         } );
@@ -51,7 +81,7 @@ const BusDateSelector = ( { onDateChange, onLocationChange } ) => {
         const newIsRoundTrip = event.target.checked;
         setIsRoundTrip( newIsRoundTrip );
         onDateChange?.( {
-            departureDate,
+            departureDate: combineDateTime( pickupDate, pickupTime ),
             returnDate: newIsRoundTrip ? returnDate : null,
             isRoundTrip: newIsRoundTrip
         } );
@@ -124,13 +154,13 @@ const BusDateSelector = ( { onDateChange, onLocationChange } ) => {
                             {/* Source field - takes 45% on desktop */}
                             <Box sx={{ width: { xs: '100%', md: '45%' } }}>
                                 <Typography variant="subtitle1" sx={{ mb: 1, color: 'text.secondary', fontWeight: 500 }}>
-                                    From
+                                    Pickup Location
                                 </Typography>
                                 <Autocomplete
                                     value={source}
                                     onChange={handleSourceChange}
-                                    options={busStops}
-                                    getOptionLabel={( option ) => option ? `${ option.name } (${ option.stopId })` : ''}
+                                    options={cabStops}
+                                    getOptionLabel={( option ) => option ? `${ option.name }` : ''}
                                     fullWidth
                                     disablePortal
                                     sx={{
@@ -142,14 +172,14 @@ const BusDateSelector = ( { onDateChange, onLocationChange } ) => {
                                     renderInput={( params ) => (
                                         <TextField
                                             {...params}
-                                            placeholder="Select departure bus stop"
+                                            placeholder="Enter pickup location"
                                             fullWidth
                                             variant="outlined"
                                             InputProps={{
                                                 ...params.InputProps,
                                                 startAdornment: (
                                                     <InputAdornment position="start">
-                                                        <DirectionsBus color="primary" />
+                                                        <LocationOnIcon color="primary" />
                                                     </InputAdornment>
                                                 ),
                                             }}
@@ -159,10 +189,10 @@ const BusDateSelector = ( { onDateChange, onLocationChange } ) => {
                                         <Box component="li" {...props} sx={{ py: 2, px: 3 }}>
                                             <Box>
                                                 <Typography sx={{ fontWeight: 600 }}>
-                                                    {option.name} ({option.stopId})
+                                                    {option.name}
                                                 </Typography>
                                                 <Typography variant="body2" color="text.secondary">
-                                                    {option.address || `${ option.city }, ${ option.state }`}
+                                                    {option.address}
                                                 </Typography>
                                             </Box>
                                         </Box>
@@ -170,6 +200,7 @@ const BusDateSelector = ( { onDateChange, onLocationChange } ) => {
                                     ListboxProps={{
                                         sx: { maxHeight: '350px', py: 1 }
                                     }}
+                                    groupBy={( option ) => option.city}
                                 />
                             </Box>
 
@@ -200,13 +231,13 @@ const BusDateSelector = ( { onDateChange, onLocationChange } ) => {
                             {/* Destination field - takes 45% on desktop */}
                             <Box sx={{ width: { xs: '100%', md: '45%' } }}>
                                 <Typography variant="subtitle1" sx={{ mb: 1, color: 'text.secondary', fontWeight: 500 }}>
-                                    To
+                                    Drop Location
                                 </Typography>
                                 <Autocomplete
                                     value={destination}
                                     onChange={handleDestinationChange}
-                                    options={busStops}
-                                    getOptionLabel={( option ) => option ? `${ option.name } (${ option.stopId })` : ''}
+                                    options={cabStops}
+                                    getOptionLabel={( option ) => option ? `${ option.name }` : ''}
                                     fullWidth
                                     disablePortal
                                     sx={{
@@ -218,14 +249,14 @@ const BusDateSelector = ( { onDateChange, onLocationChange } ) => {
                                     renderInput={( params ) => (
                                         <TextField
                                             {...params}
-                                            placeholder="Select arrival bus stop"
+                                            placeholder="Enter drop location"
                                             fullWidth
                                             variant="outlined"
                                             InputProps={{
                                                 ...params.InputProps,
                                                 startAdornment: (
                                                     <InputAdornment position="start">
-                                                        <LocationOn color="primary" />
+                                                        <PlaceIcon color="primary" />
                                                     </InputAdornment>
                                                 ),
                                             }}
@@ -235,10 +266,10 @@ const BusDateSelector = ( { onDateChange, onLocationChange } ) => {
                                         <Box component="li" {...props} sx={{ py: 2, px: 3 }}>
                                             <Box>
                                                 <Typography sx={{ fontWeight: 600 }}>
-                                                    {option.name} ({option.stopId})
+                                                    {option.name}
                                                 </Typography>
                                                 <Typography variant="body2" color="text.secondary">
-                                                    {option.address || `${ option.city }, ${ option.state }`}
+                                                    {option.address}
                                                 </Typography>
                                             </Box>
                                         </Box>
@@ -246,59 +277,37 @@ const BusDateSelector = ( { onDateChange, onLocationChange } ) => {
                                     ListboxProps={{
                                         sx: { maxHeight: '350px', py: 1 }
                                     }}
+                                    groupBy={( option ) => option.city}
                                 />
                             </Box>
                         </Box>
                     </Box>
 
-                    {/* Date Selection row using flexbox */}
-                    <Box sx={{
-                        display: 'flex',
-                        flexDirection: { xs: 'column', md: 'row' },
-                        gap: 3
-                    }}>
-                        {/* Departure date - full width or 50% */}
-                        <Box sx={{
-                            width: { xs: '100%', md: isRoundTrip ? '50%' : '100%' }
-                        }}>
-                            <Typography variant="subtitle1" sx={{ mb: 1, color: 'text.secondary', fontWeight: 500 }}>
-                                Departure Date
-                            </Typography>
-                            <DatePicker
-                                value={departureDate}
-                                onChange={handleDepartureDateChange}
-                                minDate={today}
-                                slotProps={{
-                                    textField: {
-                                        fullWidth: true,
-                                        variant: "outlined",
-                                        sx: {
-                                            '& .MuiOutlinedInput-root': {
-                                                ...inputStyle
-                                            }
-                                        }
-                                    }
-                                }}
-                            />
-                            <Typography variant="body2" sx={{ mt: 1, color: 'text.secondary' }}>
-                                {format( departureDate, 'EEEE, MMMM d, yyyy' )}
-                            </Typography>
-                        </Box>
+                    {/* Date and Time Selection */}
+                    <Box sx={{ mb: 3 }}>
+                        <Typography variant="subtitle1" sx={{ mb: 2, color: 'text.secondary', fontWeight: 500 }}>
+                            Pickup Details
+                        </Typography>
 
-                        {/* Return date - 50% width when round trip */}
-                        {isRoundTrip && (
-                            <Box sx={{ width: { xs: '100%', md: '50%' } }}>
-                                <Typography variant="subtitle1" sx={{ mb: 1, color: 'text.secondary', fontWeight: 500 }}>
-                                    Return Date
-                                </Typography>
+                        <Grid container spacing={3}>
+                            {/* Pickup date */}
+                            <Grid item xs={12} md={6}>
                                 <DatePicker
-                                    value={returnDate}
-                                    onChange={handleReturnDateChange}
-                                    minDate={departureDate}
+                                    label="Pickup Date"
+                                    value={pickupDate}
+                                    onChange={handlePickupDateChange}
+                                    minDate={today}
                                     slotProps={{
                                         textField: {
                                             fullWidth: true,
                                             variant: "outlined",
+                                            InputProps: {
+                                                startAdornment: (
+                                                    <InputAdornment position="start">
+                                                        <CabIcon color="primary" />
+                                                    </InputAdornment>
+                                                ),
+                                            },
                                             sx: {
                                                 '& .MuiOutlinedInput-root': {
                                                     ...inputStyle
@@ -308,15 +317,86 @@ const BusDateSelector = ( { onDateChange, onLocationChange } ) => {
                                     }}
                                 />
                                 <Typography variant="body2" sx={{ mt: 1, color: 'text.secondary' }}>
-                                    {format( returnDate, 'EEEE, MMMM d, yyyy' )}
+                                    {format( pickupDate, 'EEEE, MMMM d, yyyy' )}
                                 </Typography>
-                            </Box>
-                        )}
+                            </Grid>
+
+                            {/* Pickup time */}
+                            <Grid item xs={12} md={6}>
+                                <TimePicker
+                                    label="Pickup Time"
+                                    value={pickupTime}
+                                    onChange={handlePickupTimeChange}
+                                    slotProps={{
+                                        textField: {
+                                            fullWidth: true,
+                                            variant: "outlined",
+                                            InputProps: {
+                                                startAdornment: (
+                                                    <InputAdornment position="start">
+                                                        <ScheduleIcon color="primary" />
+                                                    </InputAdornment>
+                                                ),
+                                            },
+                                            sx: {
+                                                '& .MuiOutlinedInput-root': {
+                                                    ...inputStyle
+                                                }
+                                            }
+                                        }
+                                    }}
+                                />
+                                <Typography variant="body2" sx={{ mt: 1, color: 'text.secondary' }}>
+                                    Estimated arrival time: {format( addHours( pickupTime, 1 ), 'hh:mm a' )}
+                                </Typography>
+                            </Grid>
+                        </Grid>
                     </Box>
+
+                    {/* Return date - only when round trip is selected */}
+                    {isRoundTrip && (
+                        <Box sx={{ mt: 4 }}>
+                            <Typography variant="subtitle1" sx={{ mb: 2, color: 'text.secondary', fontWeight: 500 }}>
+                                Return Details
+                            </Typography>
+
+                            <Grid container spacing={3}>
+                                <Grid item xs={12} md={6}>
+                                    <DatePicker
+                                        label="Return Date"
+                                        value={returnDate}
+                                        onChange={handleReturnDateChange}
+                                        minDate={combineDateTime( pickupDate, pickupTime )}
+                                        slotProps={{
+                                            textField: {
+                                                fullWidth: true,
+                                                variant: "outlined",
+                                                InputProps: {
+                                                    startAdornment: (
+                                                        <InputAdornment position="start">
+                                                            <CabIcon color="primary" />
+                                                        </InputAdornment>
+                                                    ),
+                                                },
+                                                sx: {
+                                                    '& .MuiOutlinedInput-root': {
+                                                        ...inputStyle
+                                                    }
+                                                }
+                                            }
+                                        }}
+                                    />
+                                    <Typography variant="body2" sx={{ mt: 1, color: 'text.secondary' }}>
+                                        {format( returnDate, 'EEEE, MMMM d, yyyy' )}
+                                    </Typography>
+                                </Grid>
+                            </Grid>
+                        </Box>
+                    )}
                 </Box>
             </Paper>
         </LocalizationProvider>
     );
 };
 
-export default BusDateSelector;
+export default CabDateSelector;

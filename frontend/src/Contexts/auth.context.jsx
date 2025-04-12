@@ -9,36 +9,38 @@ export const useAuth = () => {
     const context = useContext( AuthContext );
     if ( !context ) {
         throw new Error( 'useAuth must be used within an AuthProvider' );
-    }   
+    }
     return context;
 };
 
 export const AuthProvider = ( { children } ) => {
-    // State for authentication information
+    // Simplified state - user contains all user data
     const [ user, setUser ] = useState( null );
     const [ isAuthenticated, setIsAuthenticated ] = useState( false );
     const [ loading, setLoading ] = useState( true );
     const [ error, setError ] = useState( null );
 
-    // Initialize auth state by checking if user is already logged in
+    // Initialize auth state by checking if user data exists in localStorage
     useEffect( () => {
-        const loadUser = async () => {
+        const loadUser = () => {
             try {
-                // Check if token exists in localStorage
-                const token = localStorage.getItem( 'user' );
+                // Get user data from localStorage
+                const userData = localStorage.getItem( 'user' );
 
-                if ( !token ) {
+                if ( !userData ) {
                     setLoading( false );
                     return;
                 }
 
-                // Get user data
-                const response = await axiosInstance.get( `/auth/login` );
+                // Parse stored user JSON
+                const parsedUser = JSON.parse( userData );
 
-                setUser( response.data );
+                // Set user state
+                setUser( parsedUser );
                 setIsAuthenticated( true );
                 setLoading( false );
             } catch ( err ) {
+                console.error( 'Error loading user data:', err );
                 localStorage.removeItem( 'user' );
                 setUser( null );
                 setIsAuthenticated( false );
@@ -60,14 +62,23 @@ export const AuthProvider = ( { children } ) => {
 
             const { token, user } = response.data;
 
-            // Store token in localStorage
-            localStorage.setItem( 'user', token );
+            // Add token to user object
+            const userData = {
+                ...user,
+                token
+            };
 
-            setUser( user );
+            // Store complete user data in localStorage
+            localStorage.setItem( 'user', JSON.stringify( userData ) );
+
+            setUser( userData );
             setIsAuthenticated( true );
             setError( null );
 
-            return user;
+            // Configure axios to use the token
+            axiosInstance.defaults.headers.common[ 'Authorization' ] = `Bearer ${ token }`;
+
+            return userData;
         } catch ( err ) {
             setError( err.response?.data?.message || 'Login failed. Please check your credentials.' );
             throw err;
@@ -86,13 +97,23 @@ export const AuthProvider = ( { children } ) => {
 
             const { token, user } = response.data;
 
-            localStorage.setItem( 'user', token );
+            // Add token to user object
+            const userData = {
+                ...user,
+                token
+            };
 
-            setUser( user );
+            // Store complete user data in localStorage
+            localStorage.setItem( 'user', JSON.stringify( userData ) );
+
+            setUser( userData );
             setIsAuthenticated( true );
             setError( null );
 
-            return user;
+            // Configure axios to use the token
+            axiosInstance.defaults.headers.common[ 'Authorization' ] = `Bearer ${ token }`;
+
+            return userData;
         } catch ( err ) {
             setError( err.response?.data?.message || 'Registration failed. Please try again.' );
             throw err;
@@ -101,8 +122,16 @@ export const AuthProvider = ( { children } ) => {
 
     // Logout function
     const logout = () => {
-        // Remove token from localStorage
+        // API call to logout (keeping this)
+        axiosInstance.get( `/auth/logout` ).catch( err =>
+            console.error( 'Logout API error:', err )
+        );
+
+        // Remove user data from localStorage
         localStorage.removeItem( 'user' );
+
+        // Remove auth header
+        delete axiosInstance.defaults.headers.common[ 'Authorization' ];
 
         // Reset state
         setUser( null );
@@ -115,10 +144,23 @@ export const AuthProvider = ( { children } ) => {
         try {
             const response = await axiosInstance.put( `/auth/profile`, userData );
 
-            setUser( response.data );
+            // Get the updated user data
+            const updatedUserData = response.data;
+
+            // Preserve the token from the current user data
+            const updatedUser = {
+                ...updatedUserData,
+                token: user.token
+            };
+
+            // Update localStorage
+            localStorage.setItem( 'user', JSON.stringify( updatedUser ) );
+
+            // Update state
+            setUser( updatedUser );
             setError( null );
 
-            return response.data;
+            return updatedUser;
         } catch ( err ) {
             setError( err.response?.data?.message || 'Failed to update profile.' );
             throw err;
@@ -128,6 +170,11 @@ export const AuthProvider = ( { children } ) => {
     // Clear error function
     const clearError = () => {
         setError( null );
+    };
+
+    // Get user's name helper (for avatar, etc.)
+    const getUserName = () => {
+        return user?.name || '';
     };
 
     // Create the context value object containing state and functions
@@ -140,7 +187,8 @@ export const AuthProvider = ( { children } ) => {
         register,
         logout,
         updateProfile,
-        clearError
+        clearError,
+        userName: getUserName()
     };
 
     return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

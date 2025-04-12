@@ -8,6 +8,8 @@ import Register from './Pages/Register'
 import Flight from './Pages/Flight'
 import Train from './Pages/Train'
 import Bus from './Pages/Bus'
+import Cab from './Pages/Cab'
+import Cruise from './Pages/Cruise'
 
 
 const App = () => {
@@ -23,7 +25,9 @@ const App = () => {
           <Route path='/register' element={<Register />} />
           <Route path='/flights' element={<Flight/>} />
           <Route path='/trains' element={<Train/>} />
-          <Route path='/buses' element={<Bus/>} />
+          <Route path='/buses' element={<Bus />} />
+          <Route path='/cabs' element={<Cab />} />
+          <Route path='/cruises' element={<Cruise />} />
           </Routes>
       </div>
     </>

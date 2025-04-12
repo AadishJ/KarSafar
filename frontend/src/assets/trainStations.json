@@ -1,0 +1,425 @@
+[
+    {
+        "stationCode": "NDLS",
+        "stationName": "New Delhi",
+        "fullName": "New Delhi Railway Station",
+        "city": "New Delhi",
+        "state": "Delhi",
+        "zone": "Northern Railway",
+        "major": true
+    },
+    {
+        "stationCode": "CSTM",
+        "stationName": "Mumbai CST",
+        "fullName": "Chhatrapati Shivaji Terminus",
+        "city": "Mumbai",
+        "state": "Maharashtra",
+        "zone": "Central Railway",
+        "major": true
+    },
+    {
+        "stationCode": "MAS",
+        "stationName": "Chennai Central",
+        "fullName": "Dr. M.G. Ramachandran Chennai Central",
+        "city": "Chennai",
+        "state": "Tamil Nadu",
+        "zone": "Southern Railway",
+        "major": true
+    },
+    {
+        "stationCode": "HWH",
+        "stationName": "Howrah",
+        "fullName": "Howrah Junction Railway Station",
+        "city": "Kolkata",
+        "state": "West Bengal",
+        "zone": "Eastern Railway",
+        "major": true
+    },
+    {
+        "stationCode": "SBC",
+        "stationName": "Bangalore",
+        "fullName": "KSR Bengaluru City Junction",
+        "city": "Bengaluru",
+        "state": "Karnataka",
+        "zone": "South Western Railway",
+        "major": true
+    },
+    {
+        "stationCode": "SC",
+        "stationName": "Secunderabad",
+        "fullName": "Secunderabad Junction",
+        "city": "Hyderabad",
+        "state": "Telangana",
+        "zone": "South Central Railway",
+        "major": true
+    },
+    {
+        "stationCode": "LKO",
+        "stationName": "Lucknow",
+        "fullName": "Lucknow Charbagh",
+        "city": "Lucknow",
+        "state": "Uttar Pradesh",
+        "zone": "Northern Railway",
+        "major": true
+    },
+    {
+        "stationCode": "PNBE",
+        "stationName": "Patna",
+        "fullName": "Patna Junction",
+        "city": "Patna",
+        "state": "Bihar",
+        "zone": "East Central Railway",
+        "major": true
+    },
+    {
+        "stationCode": "JP",
+        "stationName": "Jaipur",
+        "fullName": "Jaipur Junction",
+        "city": "Jaipur",
+        "state": "Rajasthan",
+        "zone": "North Western Railway",
+        "major": true
+    },
+    {
+        "stationCode": "BCT",
+        "stationName": "Mumbai Central",
+        "fullName": "Mumbai Central Railway Station",
+        "city": "Mumbai",
+        "state": "Maharashtra",
+        "zone": "Western Railway",
+        "major": true
+    },
+    {
+        "stationCode": "ADI",
+        "stationName": "Ahmedabad",
+        "fullName": "Ahmedabad Junction",
+        "city": "Ahmedabad",
+        "state": "Gujarat",
+        "zone": "Western Railway",
+        "major": true
+    },
+    {
+        "stationCode": "BPL",
+        "stationName": "Bhopal",
+        "fullName": "Bhopal Junction",
+        "city": "Bhopal",
+        "state": "Madhya Pradesh",
+        "zone": "West Central Railway",
+        "major": true
+    },
+    {
+        "stationCode": "CNB",
+        "stationName": "Kanpur",
+        "fullName": "Kanpur Central",
+        "city": "Kanpur",
+        "state": "Uttar Pradesh",
+        "zone": "North Central Railway",
+        "major": true
+    },
+    {
+        "stationCode": "ALD",
+        "stationName": "Allahabad",
+        "fullName": "Prayagraj Junction",
+        "city": "Prayagraj",
+        "state": "Uttar Pradesh",
+        "zone": "North Central Railway",
+        "major": true
+    },
+    {
+        "stationCode": "PUNE",
+        "stationName": "Pune",
+        "fullName": "Pune Junction",
+        "city": "Pune",
+        "state": "Maharashtra",
+        "zone": "Central Railway",
+        "major": true
+    },
+    {
+        "stationCode": "BBS",
+        "stationName": "Bhubaneswar",
+        "fullName": "Bhubaneswar Railway Station",
+        "city": "Bhubaneswar",
+        "state": "Odisha",
+        "zone": "East Coast Railway",
+        "major": true
+    },
+    {
+        "stationCode": "VSKP",
+        "stationName": "Visakhapatnam",
+        "fullName": "Visakhapatnam Railway Station",
+        "city": "Visakhapatnam",
+        "state": "Andhra Pradesh",
+        "zone": "East Coast Railway",
+        "major": true
+    },
+    {
+        "stationCode": "ERS",
+        "stationName": "Ernakulam",
+        "fullName": "Ernakulam Junction",
+        "city": "Kochi",
+        "state": "Kerala",
+        "zone": "Southern Railway",
+        "major": true
+    },
+    {
+        "stationCode": "TVC",
+        "stationName": "Thiruvananthapuram",
+        "fullName": "Thiruvananthapuram Central",
+        "city": "Thiruvananthapuram",
+        "state": "Kerala",
+        "zone": "Southern Railway",
+        "major": true
+    },
+    {
+        "stationCode": "NJP",
+        "stationName": "New Jalpaiguri",
+        "fullName": "New Jalpaiguri Junction",
+        "city": "Siliguri",
+        "state": "West Bengal",
+        "zone": "Northeast Frontier Railway",
+        "major": true
+    },
+    {
+        "stationCode": "RNC",
+        "stationName": "Ranchi",
+        "fullName": "Ranchi Junction",
+        "city": "Ranchi",
+        "state": "Jharkhand",
+        "zone": "South Eastern Railway",
+        "major": true
+    },
+    {
+        "stationCode": "GHY",
+        "stationName": "Guwahati",
+        "fullName": "Guwahati Railway Station",
+        "city": "Guwahati",
+        "state": "Assam",
+        "zone": "Northeast Frontier Railway",
+        "major": true
+    },
+    {
+        "stationCode": "NGP",
+        "stationName": "Nagpur",
+        "fullName": "Nagpur Junction",
+        "city": "Nagpur",
+        "state": "Maharashtra",
+        "zone": "Central Railway",
+        "major": true
+    },
+    {
+        "stationCode": "DBRG",
+        "stationName": "Dibrugarh",
+        "fullName": "Dibrugarh Railway Station",
+        "city": "Dibrugarh",
+        "state": "Assam",
+        "zone": "Northeast Frontier Railway",
+        "major": false
+    },
+    {
+        "stationCode": "ASR",
+        "stationName": "Amritsar",
+        "fullName": "Amritsar Junction",
+        "city": "Amritsar",
+        "state": "Punjab",
+        "zone": "Northern Railway",
+        "major": true
+    },
+    {
+        "stationCode": "JAT",
+        "stationName": "Jammu",
+        "fullName": "Jammu Tawi",
+        "city": "Jammu",
+        "state": "Jammu and Kashmir",
+        "zone": "Northern Railway",
+        "major": true
+    },
+    {
+        "stationCode": "UDZ",
+        "stationName": "Udaipur",
+        "fullName": "Udaipur City",
+        "city": "Udaipur",
+        "state": "Rajasthan",
+        "zone": "North Western Railway",
+        "major": false
+    },
+    {
+        "stationCode": "INDB",
+        "stationName": "Indore",
+        "fullName": "Indore Junction",
+        "city": "Indore",
+        "state": "Madhya Pradesh",
+        "zone": "Western Railway",
+        "major": false
+    },
+    {
+        "stationCode": "MDU",
+        "stationName": "Madurai",
+        "fullName": "Madurai Junction",
+        "city": "Madurai",
+        "state": "Tamil Nadu",
+        "zone": "Southern Railway",
+        "major": false
+    },
+    {
+        "stationCode": "TPJ",
+        "stationName": "Tiruchirappalli",
+        "fullName": "Tiruchirappalli Junction",
+        "city": "Tiruchirappalli",
+        "state": "Tamil Nadu",
+        "zone": "Southern Railway",
+        "major": false
+    },
+    {
+        "stationCode": "CBE",
+        "stationName": "Coimbatore",
+        "fullName": "Coimbatore Junction",
+        "city": "Coimbatore",
+        "state": "Tamil Nadu",
+        "zone": "Southern Railway",
+        "major": true
+    },
+    {
+        "stationCode": "SRE",
+        "stationName": "Surat",
+        "fullName": "Surat Railway Station",
+        "city": "Surat",
+        "state": "Gujarat",
+        "zone": "Western Railway",
+        "major": true
+    },
+    {
+        "stationCode": "BSB",
+        "stationName": "Varanasi",
+        "fullName": "Varanasi Junction",
+        "city": "Varanasi",
+        "state": "Uttar Pradesh",
+        "zone": "Northern Railway",
+        "major": true
+    },
+    {
+        "stationCode": "CDG",
+        "stationName": "Chandigarh",
+        "fullName": "Chandigarh Junction",
+        "city": "Chandigarh",
+        "state": "Chandigarh",
+        "zone": "Northern Railway",
+        "major": true
+    },
+    {
+        "stationCode": "DBG",
+        "stationName": "Darbhanga",
+        "fullName": "Darbhanga Junction",
+        "city": "Darbhanga",
+        "state": "Bihar",
+        "zone": "East Central Railway",
+        "major": false
+    },
+    {
+        "stationCode": "GKP",
+        "stationName": "Gorakhpur",
+        "fullName": "Gorakhpur Junction",
+        "city": "Gorakhpur",
+        "state": "Uttar Pradesh",
+        "zone": "North Eastern Railway",
+        "major": true
+    },
+    {
+        "stationCode": "AGC",
+        "stationName": "Agra",
+        "fullName": "Agra Cantt",
+        "city": "Agra",
+        "state": "Uttar Pradesh",
+        "zone": "North Central Railway",
+        "major": true
+    },
+    {
+        "stationCode": "JU",
+        "stationName": "Jodhpur",
+        "fullName": "Jodhpur Junction",
+        "city": "Jodhpur",
+        "state": "Rajasthan",
+        "zone": "North Western Railway",
+        "major": false
+    },
+    {
+        "stationCode": "BKN",
+        "stationName": "Bikaner",
+        "fullName": "Bikaner Junction",
+        "city": "Bikaner",
+        "state": "Rajasthan",
+        "zone": "North Western Railway",
+        "major": false
+    },
+    {
+        "stationCode": "KYQ",
+        "stationName": "Kanyakumari",
+        "fullName": "Kanyakumari Railway Station",
+        "city": "Kanyakumari",
+        "state": "Tamil Nadu",
+        "zone": "Southern Railway",
+        "major": false
+    },
+    {
+        "stationCode": "BJU",
+        "stationName": "Barauni",
+        "fullName": "Barauni Junction",
+        "city": "Barauni",
+        "state": "Bihar",
+        "zone": "East Central Railway",
+        "major": false
+    },
+    {
+        "stationCode": "RJT",
+        "stationName": "Rajkot",
+        "fullName": "Rajkot Junction",
+        "city": "Rajkot",
+        "state": "Gujarat",
+        "zone": "Western Railway",
+        "major": false
+    },
+    {
+        "stationCode": "RJPB",
+        "stationName": "Rajendra Nagar",
+        "fullName": "Patna Rajendra Nagar Terminal",
+        "city": "Patna",
+        "state": "Bihar",
+        "zone": "East Central Railway",
+        "major": false
+    },
+    {
+        "stationCode": "JHS",
+        "stationName": "Jhansi",
+        "fullName": "Jhansi Junction",
+        "city": "Jhansi",
+        "state": "Uttar Pradesh",
+        "zone": "North Central Railway",
+        "major": false
+    },
+    {
+        "stationCode": "TATA",
+        "stationName": "Tatanagar",
+        "fullName": "Tatanagar Junction",
+        "city": "Jamshedpur",
+        "state": "Jharkhand",
+        "zone": "South Eastern Railway",
+        "major": false
+    },
+    {
+        "stationCode": "AJJ",
+        "stationName": "Arakkonam",
+        "fullName": "Arakkonam Junction",
+        "city": "Arakkonam",
+        "state": "Tamil Nadu",
+        "zone": "Southern Railway",
+        "major": false
+    },
+    {
+        "stationCode": "KGP",
+        "stationName": "Kharagpur",
+        "fullName": "Kharagpur Junction",
+        "city": "Kharagpur",
+        "state": "West Bengal",
+        "zone": "South Eastern Railway",
+        "major": false
+    }
+]

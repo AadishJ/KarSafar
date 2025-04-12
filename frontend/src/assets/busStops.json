@@ -1,0 +1,638 @@
+[
+    {
+        "stopId": "NDLS",
+        "name": "Delhi ISBT Kashmere Gate",
+        "city": "New Delhi",
+        "state": "Delhi",
+        "address": "Kashmere Gate, Delhi-110006",
+        "type": "ISBT",
+        "major": true,
+        "facilities": [
+            "waiting-room",
+            "food-court",
+            "restrooms",
+            "parking",
+            "wheelchair-access"
+        ]
+    },
+    {
+        "stopId": "DLSA",
+        "name": "Delhi Sarai Kale Khan ISBT",
+        "city": "New Delhi",
+        "state": "Delhi",
+        "address": "Sarai Kale Khan, Ring Road, Delhi-110013",
+        "type": "ISBT",
+        "major": true,
+        "facilities": [
+            "waiting-room",
+            "food-court",
+            "restrooms",
+            "parking"
+        ]
+    },
+    {
+        "stopId": "DLAJ",
+        "name": "Delhi Anand Vihar ISBT",
+        "city": "New Delhi",
+        "state": "Delhi",
+        "address": "Anand Vihar, Delhi-110092",
+        "type": "ISBT",
+        "major": true,
+        "facilities": [
+            "waiting-room",
+            "food-court",
+            "restrooms",
+            "parking",
+            "wheelchair-access"
+        ]
+    },
+    {
+        "stopId": "MUMB",
+        "name": "Mumbai Central Bus Station",
+        "city": "Mumbai",
+        "state": "Maharashtra",
+        "address": "Dr. Dadabhai Naoroji Rd, Mumbai-400008",
+        "type": "CBS",
+        "major": true,
+        "facilities": [
+            "waiting-room",
+            "food-court",
+            "restrooms",
+            "parking"
+        ]
+    },
+    {
+        "stopId": "MUBO",
+        "name": "Borivali Bus Station",
+        "city": "Mumbai",
+        "state": "Maharashtra",
+        "address": "Western Express Highway, Borivali East, Mumbai-400066",
+        "type": "CBS",
+        "major": true,
+        "facilities": [
+            "waiting-room",
+            "restrooms",
+            "parking"
+        ]
+    },
+    {
+        "stopId": "CHNM",
+        "name": "Chennai Mofussil Bus Terminus",
+        "city": "Chennai",
+        "state": "Tamil Nadu",
+        "address": "Koyambedu, Chennai-600107",
+        "type": "CMBT",
+        "major": true,
+        "facilities": [
+            "waiting-room",
+            "food-court",
+            "restrooms",
+            "parking",
+            "wheelchair-access"
+        ]
+    },
+    {
+        "stopId": "CHNT",
+        "name": "Chennai T. Nagar Bus Terminal",
+        "city": "Chennai",
+        "state": "Tamil Nadu",
+        "address": "T. Nagar, Chennai-600017",
+        "type": "CBS",
+        "major": false,
+        "facilities": [
+            "restrooms",
+            "parking"
+        ]
+    },
+    {
+        "stopId": "BNGM",
+        "name": "Bengaluru Majestic KSRTC",
+        "city": "Bengaluru",
+        "state": "Karnataka",
+        "address": "Kempegowda Bus Station, Majestic, Bengaluru-560009",
+        "type": "KSRTC",
+        "major": true,
+        "facilities": [
+            "waiting-room",
+            "food-court",
+            "restrooms",
+            "parking",
+            "wheelchair-access"
+        ]
+    },
+    {
+        "stopId": "BNGS",
+        "name": "Bengaluru Shantinagar KSRTC",
+        "city": "Bengaluru",
+        "state": "Karnataka",
+        "address": "Shantinagar, Bengaluru-560027",
+        "type": "KSRTC",
+        "major": true,
+        "facilities": [
+            "waiting-room",
+            "restrooms",
+            "parking"
+        ]
+    },
+    {
+        "stopId": "BNGB",
+        "name": "Bengaluru Satellite Bus Station",
+        "city": "Bengaluru",
+        "state": "Karnataka",
+        "address": "Mysore Road, Bengaluru-560026",
+        "type": "KSRTC",
+        "major": false,
+        "facilities": [
+            "waiting-room",
+            "restrooms",
+            "parking"
+        ]
+    },
+    {
+        "stopId": "HYDB",
+        "name": "Hyderabad MGBS",
+        "city": "Hyderabad",
+        "state": "Telangana",
+        "address": "Imlibun Bus Station, Hyderabad-500027",
+        "type": "CBS",
+        "major": true,
+        "facilities": [
+            "waiting-room",
+            "food-court",
+            "restrooms",
+            "parking",
+            "wheelchair-access"
+        ]
+    },
+    {
+        "stopId": "HYDK",
+        "name": "Hyderabad Kukatpally Bus Station",
+        "city": "Hyderabad",
+        "state": "Telangana",
+        "address": "Kukatpally, Hyderabad-500072",
+        "type": "CBS",
+        "major": false,
+        "facilities": [
+            "waiting-room",
+            "restrooms",
+            "parking"
+        ]
+    },
+    {
+        "stopId": "KOLH",
+        "name": "Kolkata Esplanade Bus Terminus",
+        "city": "Kolkata",
+        "state": "West Bengal",
+        "address": "Esplanade, Kolkata-700069",
+        "type": "CBS",
+        "major": true,
+        "facilities": [
+            "waiting-room",
+            "food-court",
+            "restrooms",
+            "parking"
+        ]
+    },
+    {
+        "stopId": "KOLB",
+        "name": "Kolkata Barrackpore Bus Station",
+        "city": "Kolkata",
+        "state": "West Bengal",
+        "address": "Barrackpore Trunk Road, Kolkata-700120",
+        "type": "CBS",
+        "major": false,
+        "facilities": [
+            "restrooms",
+            "parking"
+        ]
+    },
+    {
+        "stopId": "KOCM",
+        "name": "Kochi KSRTC Bus Stand",
+        "city": "Kochi",
+        "state": "Kerala",
+        "address": "Park Avenue Road, Ernakulam, Kochi-682011",
+        "type": "KSRTC",
+        "major": true,
+        "facilities": [
+            "waiting-room",
+            "food-court",
+            "restrooms",
+            "parking"
+        ]
+    },
+    {
+        "stopId": "AHMC",
+        "name": "Ahmedabad Central Bus Station",
+        "city": "Ahmedabad",
+        "state": "Gujarat",
+        "address": "Gheekanta Road, Ahmedabad-380001",
+        "type": "CBS",
+        "major": true,
+        "facilities": [
+            "waiting-room",
+            "food-court",
+            "restrooms",
+            "parking",
+            "wheelchair-access"
+        ]
+    },
+    {
+        "stopId": "TRVM",
+        "name": "Trivandrum Central Bus Station",
+        "city": "Thiruvananthapuram",
+        "state": "Kerala",
+        "address": "Thampanoor, Thiruvananthapuram-695001",
+        "type": "KSRTC",
+        "major": true,
+        "facilities": [
+            "waiting-room",
+            "restrooms",
+            "parking"
+        ]
+    },
+    {
+        "stopId": "PUNS",
+        "name": "Pune Shivajinagar ST Stand",
+        "city": "Pune",
+        "state": "Maharashtra",
+        "address": "Shivajinagar, Pune-411005",
+        "type": "CBS",
+        "major": true,
+        "facilities": [
+            "waiting-room",
+            "food-court",
+            "restrooms",
+            "parking"
+        ]
+    },
+    {
+        "stopId": "PUNM",
+        "name": "Pune Swargate Bus Station",
+        "city": "Pune",
+        "state": "Maharashtra",
+        "address": "Swargate, Pune-411042",
+        "type": "CBS",
+        "major": true,
+        "facilities": [
+            "waiting-room",
+            "restrooms",
+            "parking"
+        ]
+    },
+    {
+        "stopId": "GOAP",
+        "name": "Goa Panaji KTC Bus Stand",
+        "city": "Panaji",
+        "state": "Goa",
+        "address": "Panaji, Goa-403001",
+        "type": "KTC",
+        "major": true,
+        "facilities": [
+            "waiting-room",
+            "food-court",
+            "restrooms",
+            "parking"
+        ]
+    },
+    {
+        "stopId": "GOAM",
+        "name": "Goa Margao KTC Bus Stand",
+        "city": "Margao",
+        "state": "Goa",
+        "address": "Margao, Goa-403601",
+        "type": "KTC",
+        "major": true,
+        "facilities": [
+            "waiting-room",
+            "restrooms",
+            "parking"
+        ]
+    },
+    {
+        "stopId": "LCKC",
+        "name": "Lucknow Charbagh Bus Station",
+        "city": "Lucknow",
+        "state": "Uttar Pradesh",
+        "address": "Charbagh, Lucknow-226004",
+        "type": "CBS",
+        "major": true,
+        "facilities": [
+            "waiting-room",
+            "food-court",
+            "restrooms",
+            "parking"
+        ]
+    },
+    {
+        "stopId": "JAIP",
+        "name": "Jaipur Sindhi Camp Bus Stand",
+        "city": "Jaipur",
+        "state": "Rajasthan",
+        "address": "Station Road, Jaipur-302006",
+        "type": "CBS",
+        "major": true,
+        "facilities": [
+            "waiting-room",
+            "food-court",
+            "restrooms",
+            "parking",
+            "wheelchair-access"
+        ]
+    },
+    {
+        "stopId": "CHAN",
+        "name": "Chandigarh ISBT Sector 17",
+        "city": "Chandigarh",
+        "state": "Chandigarh",
+        "address": "Sector 17, Chandigarh-160017",
+        "type": "ISBT",
+        "major": true,
+        "facilities": [
+            "waiting-room",
+            "food-court",
+            "restrooms",
+            "parking",
+            "wheelchair-access"
+        ]
+    },
+    {
+        "stopId": "CHAN43",
+        "name": "Chandigarh ISBT Sector 43",
+        "city": "Chandigarh",
+        "state": "Chandigarh",
+        "address": "Sector 43, Chandigarh-160043",
+        "type": "ISBT",
+        "major": true,
+        "facilities": [
+            "waiting-room",
+            "food-court",
+            "restrooms",
+            "parking",
+            "wheelchair-access"
+        ]
+    },
+    {
+        "stopId": "GUWC",
+        "name": "Guwahati ISBT",
+        "city": "Guwahati",
+        "state": "Assam",
+        "address": "Betkuchi, NH-37, Guwahati-781040",
+        "type": "ISBT",
+        "major": true,
+        "facilities": [
+            "waiting-room",
+            "restrooms",
+            "parking"
+        ]
+    },
+    {
+        "stopId": "PATG",
+        "name": "Patna Gandhi Maidan Bus Stand",
+        "city": "Patna",
+        "state": "Bihar",
+        "address": "Gandhi Maidan, Patna-800001",
+        "type": "CBS",
+        "major": true,
+        "facilities": [
+            "waiting-room",
+            "restrooms",
+            "parking"
+        ]
+    },
+    {
+        "stopId": "SURK",
+        "name": "Surat Central Bus Station",
+        "city": "Surat",
+        "state": "Gujarat",
+        "address": "Lal Darwaza, Surat-395003",
+        "type": "CBS",
+        "major": true,
+        "facilities": [
+            "waiting-room",
+            "restrooms",
+            "parking"
+        ]
+    },
+    {
+        "stopId": "BHUB",
+        "name": "Bhubaneswar Baramunda Bus Stand",
+        "city": "Bhubaneswar",
+        "state": "Odisha",
+        "address": "Baramunda, Bhubaneswar-751003",
+        "type": "CBS",
+        "major": true,
+        "facilities": [
+            "waiting-room",
+            "food-court",
+            "restrooms",
+            "parking"
+        ]
+    },
+    {
+        "stopId": "RANC",
+        "name": "Ranchi Khadgarha Bus Stand",
+        "city": "Ranchi",
+        "state": "Jharkhand",
+        "address": "Khadgarha, Ranchi-834001",
+        "type": "CBS",
+        "major": true,
+        "facilities": [
+            "waiting-room",
+            "restrooms",
+            "parking"
+        ]
+    },
+    {
+        "stopId": "VSKB",
+        "name": "Visakhapatnam RTC Complex",
+        "city": "Visakhapatnam",
+        "state": "Andhra Pradesh",
+        "address": "Dwaraka Bus Station, Visakhapatnam-530020",
+        "type": "APSRTC",
+        "major": true,
+        "facilities": [
+            "waiting-room",
+            "food-court",
+            "restrooms",
+            "parking"
+        ]
+    },
+    {
+        "stopId": "MANG",
+        "name": "Mangalore State Bus Stand",
+        "city": "Mangalore",
+        "state": "Karnataka",
+        "address": "Bejai, Mangalore-575004",
+        "type": "KSRTC",
+        "major": true,
+        "facilities": [
+            "waiting-room",
+            "restrooms",
+            "parking"
+        ]
+    },
+    {
+        "stopId": "NAGP",
+        "name": "Nagpur Ganeshpeth Bus Station",
+        "city": "Nagpur",
+        "state": "Maharashtra",
+        "address": "Ganeshpeth, Nagpur-440018",
+        "type": "CBS",
+        "major": true,
+        "facilities": [
+            "waiting-room",
+            "restrooms",
+            "parking"
+        ]
+    },
+    {
+        "stopId": "MADP",
+        "name": "Madurai Periyar Bus Stand",
+        "city": "Madurai",
+        "state": "Tamil Nadu",
+        "address": "Periyar, Madurai-625001",
+        "type": "CBS",
+        "major": true,
+        "facilities": [
+            "waiting-room",
+            "food-court",
+            "restrooms",
+            "parking"
+        ]
+    },
+    {
+        "stopId": "VARK",
+        "name": "Varanasi Kashi Bus Terminal",
+        "city": "Varanasi",
+        "state": "Uttar Pradesh",
+        "address": "Kashi, Varanasi-221001",
+        "type": "CBS",
+        "major": true,
+        "facilities": [
+            "waiting-room",
+            "restrooms",
+            "parking"
+        ]
+    },
+    {
+        "stopId": "INDG",
+        "name": "Indore Gangwal Bus Stand",
+        "city": "Indore",
+        "state": "Madhya Pradesh",
+        "address": "Gangwal, Indore-452007",
+        "type": "CBS",
+        "major": true,
+        "facilities": [
+            "waiting-room",
+            "food-court",
+            "restrooms",
+            "parking"
+        ]
+    },
+    {
+        "stopId": "COIC",
+        "name": "Coimbatore Central Bus Stand",
+        "city": "Coimbatore",
+        "state": "Tamil Nadu",
+        "address": "Gandhipuram, Coimbatore-641012",
+        "type": "CBS",
+        "major": true,
+        "facilities": [
+            "waiting-room",
+            "restrooms",
+            "parking"
+        ]
+    },
+    {
+        "stopId": "TIRB",
+        "name": "Tiruchirapalli Central Bus Stand",
+        "city": "Tiruchirapalli",
+        "state": "Tamil Nadu",
+        "address": "Central Bus Stand, Tiruchirapalli-620001",
+        "type": "CBS",
+        "major": true,
+        "facilities": [
+            "waiting-room",
+            "food-court",
+            "restrooms",
+            "parking"
+        ]
+    },
+    {
+        "stopId": "AMRS",
+        "name": "Amritsar ISBT",
+        "city": "Amritsar",
+        "state": "Punjab",
+        "address": "Amritsar ISBT, Grand Trunk Road, Amritsar-143001",
+        "type": "ISBT",
+        "major": true,
+        "facilities": [
+            "waiting-room",
+            "food-court",
+            "restrooms",
+            "parking"
+        ]
+    },
+    {
+        "stopId": "AURC",
+        "name": "Aurangabad Central Bus Stand",
+        "city": "Aurangabad",
+        "state": "Maharashtra",
+        "address": "Central Bus Stand, Aurangabad-431001",
+        "type": "CBS",
+        "major": true,
+        "facilities": [
+            "waiting-room",
+            "restrooms",
+            "parking"
+        ]
+    },
+    {
+        "stopId": "BHOC",
+        "name": "Bhopal ISBT",
+        "city": "Bhopal",
+        "state": "Madhya Pradesh",
+        "address": "ISBT, Habibganj, Bhopal-462023",
+        "type": "ISBT",
+        "major": true,
+        "facilities": [
+            "waiting-room",
+            "food-court",
+            "restrooms",
+            "parking",
+            "wheelchair-access"
+        ]
+    },
+    {
+        "stopId": "DEHC",
+        "name": "Dehradun ISBT",
+        "city": "Dehradun",
+        "state": "Uttarakhand",
+        "address": "Clement Town, Dehradun-248002",
+        "type": "ISBT",
+        "major": true,
+        "facilities": [
+            "waiting-room",
+            "food-court",
+            "restrooms",
+            "parking"
+        ]
+    },
+    {
+        "stopId": "VIJR",
+        "name": "Vijayawada Pandit Nehru Bus Station",
+        "city": "Vijayawada",
+        "state": "Andhra Pradesh",
+        "address": "Governorpet, Vijayawada-520002",
+        "type": "APSRTC",
+        "major": true,
+        "facilities": [
+            "waiting-room",
+            "food-court",
+            "restrooms",
+            "parking",
+            "wheelchair-access"
+        ]
+    }
+]

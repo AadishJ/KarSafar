@@ -6,6 +6,9 @@ import userRouter from "./Routes/UserRouter.js";
 import { connectDB } from "./Config/ConnectDB.js";
 import flightRouter from "./Routes/FlightRouter.js";
 import trainRouter from "./Routes/TrainRouter.js";
+import busRouter from "./Routes/BusRouter.js";
+import cabRouter from "./Routes/CabRouter.js";
+import cruiseRouter from "./Routes/CruiseController.js";
 
 const app = express();
 connectDB();
@@ -32,6 +35,9 @@ app.use( cors( corsOptions ) );
 app.use( "/auth", userRouter );
 app.use( "/flight", flightRouter );
 app.use( "/train", trainRouter );
+app.use( "/bus", busRouter );
+app.use( "/cab", cabRouter );
+app.use( "/cruise", cruiseRouter );
 
 app.get( "/", ( req, res ) => {
     res.send( "Hello World" );

@@ -1,0 +1,218 @@
+[
+    {
+        "code": "MUM",
+        "name": "Mumbai",
+        "fullName": "Mumbai International Cruise Terminal",
+        "city": "Mumbai",
+        "state": "Maharashtra",
+        "domestic": true,
+        "international": true
+    },
+    {
+        "code": "GOA",
+        "name": "Mormugao",
+        "fullName": "Mormugao Cruise Terminal",
+        "city": "Vasco da Gama",
+        "state": "Goa",
+        "domestic": true,
+        "international": true
+    },
+    {
+        "code": "CCU",
+        "name": "Kolkata",
+        "fullName": "Kolkata Port Trust Cruise Terminal",
+        "city": "Kolkata",
+        "state": "West Bengal",
+        "domestic": true,
+        "international": true
+    },
+    {
+        "code": "CHN",
+        "name": "Chennai",
+        "fullName": "Chennai International Cruise Terminal",
+        "city": "Chennai",
+        "state": "Tamil Nadu",
+        "domestic": true,
+        "international": true
+    },
+    {
+        "code": "COK",
+        "name": "Kochi",
+        "fullName": "Cochin International Cruise Terminal",
+        "city": "Kochi",
+        "state": "Kerala",
+        "domestic": true,
+        "international": true
+    },
+    {
+        "code": "VTZ",
+        "name": "Visakhapatnam",
+        "fullName": "Visakhapatnam Cruise Terminal",
+        "city": "Visakhapatnam",
+        "state": "Andhra Pradesh",
+        "domestic": true,
+        "international": true
+    },
+    {
+        "code": "PBR",
+        "name": "Port Blair",
+        "fullName": "Port Blair Harbour Cruise Terminal",
+        "city": "Port Blair",
+        "state": "Andaman and Nicobar Islands",
+        "domestic": true,
+        "international": false
+    },
+    {
+        "code": "MNG",
+        "name": "Mangalore",
+        "fullName": "New Mangalore Port Cruise Terminal",
+        "city": "Mangalore",
+        "state": "Karnataka",
+        "domestic": true,
+        "international": true
+    },
+    {
+        "code": "AGT",
+        "name": "Agatti",
+        "fullName": "Agatti Island Cruise Port",
+        "city": "Agatti",
+        "state": "Lakshadweep",
+        "domestic": true,
+        "international": false
+    },
+    {
+        "code": "TUT",
+        "name": "Tuticorin",
+        "fullName": "V.O. Chidambaranar Port Cruise Terminal",
+        "city": "Thoothukudi",
+        "state": "Tamil Nadu",
+        "domestic": true,
+        "international": true
+    },
+    {
+        "code": "KVR",
+        "name": "Kavaratti",
+        "fullName": "Kavaratti Island Cruise Port",
+        "city": "Kavaratti",
+        "state": "Lakshadweep",
+        "domestic": true,
+        "international": false
+    },
+    {
+        "code": "PAR",
+        "name": "Paradip",
+        "fullName": "Paradip Port Cruise Terminal",
+        "city": "Paradip",
+        "state": "Odisha",
+        "domestic": true,
+        "international": false
+    },
+    {
+        "code": "HVR",
+        "name": "Haldia",
+        "fullName": "Haldia Dock Complex Cruise Terminal",
+        "city": "Haldia",
+        "state": "West Bengal",
+        "domestic": true,
+        "international": false
+    },
+    {
+        "code": "KND",
+        "name": "Kandla",
+        "fullName": "Deendayal Port Cruise Terminal",
+        "city": "Gandhidham",
+        "state": "Gujarat",
+        "domestic": true,
+        "international": false
+    },
+    {
+        "code": "JXN",
+        "name": "Jamnagar",
+        "fullName": "Jamnagar Port Cruise Terminal",
+        "city": "Jamnagar",
+        "state": "Gujarat",
+        "domestic": true,
+        "international": false
+    },
+    {
+        "code": "MND",
+        "name": "Mundra",
+        "fullName": "Adani Mundra Port Cruise Terminal",
+        "city": "Mundra",
+        "state": "Gujarat",
+        "domestic": true,
+        "international": true
+    },
+    {
+        "code": "POR",
+        "name": "Porbandar",
+        "fullName": "Porbandar Port Cruise Terminal",
+        "city": "Porbandar",
+        "state": "Gujarat",
+        "domestic": true,
+        "international": false
+    },
+    {
+        "code": "KRW",
+        "name": "Karwar",
+        "fullName": "Karwar Port Cruise Terminal",
+        "city": "Karwar",
+        "state": "Karnataka",
+        "domestic": true,
+        "international": false
+    },
+    {
+        "code": "KVA",
+        "name": "Kakinada",
+        "fullName": "Kakinada Deep Water Port",
+        "city": "Kakinada",
+        "state": "Andhra Pradesh",
+        "domestic": true,
+        "international": false
+    },
+    {
+        "code": "PJP",
+        "name": "Pondicherry",
+        "fullName": "Pondicherry Port Cruise Terminal",
+        "city": "Puducherry",
+        "state": "Puducherry",
+        "domestic": true,
+        "international": false
+    },
+    {
+        "code": "TVC",
+        "name": "Trivandrum",
+        "fullName": "Vizhinjam International Seaport",
+        "city": "Thiruvananthapuram",
+        "state": "Kerala",
+        "domestic": true,
+        "international": true
+    },
+    {
+        "code": "ALY",
+        "name": "Alappuzha",
+        "fullName": "Alappuzha Port Terminal",
+        "city": "Alappuzha",
+        "state": "Kerala",
+        "domestic": true,
+        "international": false
+    },
+    {
+        "code": "DVG",
+        "name": "Diu",
+        "fullName": "Diu Port Cruise Terminal",
+        "city": "Diu",
+        "state": "Daman and Diu",
+        "domestic": true,
+        "international": false
+    },
+    {
+        "code": "DMN",
+        "name": "Daman",
+        "fullName": "Daman Port Terminal",
+        "city": "Daman",
+        "state": "Daman and Diu",
+        "domestic": true,
+        "international": false
+    }
+]

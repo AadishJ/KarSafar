@@ -10,46 +10,72 @@ import {
     Autocomplete,
     IconButton,
     Paper,
-    InputAdornment
+    InputAdornment,
+    Select,
+    MenuItem,
+    FormControl,
+    InputLabel
 } from '@mui/material';
 import { addDays, format } from 'date-fns';
 import SwapHorizIcon from '@mui/icons-material/SwapHoriz';
-import DirectionsBus from '@mui/icons-material/DirectionsBus';
+import DirectionsBoatIcon from '@mui/icons-material/DirectionsBoat';
 import LocationOn from '@mui/icons-material/LocationOn';
-import busStops from '../assets/busStops.json';
+import AccessTimeIcon from '@mui/icons-material/AccessTime';
+import cruisePorts from '../assets/cruisePorts.json';
 
-const BusDateSelector = ( { onDateChange, onLocationChange } ) => {
+const CruiseDateSelector = ( { onDateChange, onLocationChange, onDurationChange } ) => {
     const today = new Date();
-    const [ departureDate, setDepartureDate ] = useState( addDays( today, 1 ) );
-    const [ returnDate, setReturnDate ] = useState( addDays( today, 7 ) );
+    const [ departureDate, setDepartureDate ] = useState( addDays( today, 14 ) ); // Cruises typically need more lead time
+    const [ returnDate, setReturnDate ] = useState( addDays( today, 21 ) );
     const [ isRoundTrip, setIsRoundTrip ] = useState( true );
-    const [ source, setSource ] = useState( null );
-    const [ destination, setDestination ] = useState( null );
+    const [ departurePort, setDeparturePort ] = useState( null );
+    const [ destinationPort, setDestinationPort ] = useState( null );
+    const [ duration, setDuration ] = useState( 7 ); // Default cruise duration in days
+
+    const durations = [
+        { value: 2, label: '2-3 Days (Weekend Cruise)' },
+        { value: 4, label: '4-5 Days (Short Cruise)' },
+        { value: 7, label: '7 Days (1 Week)' },
+        { value: 10, label: '10-12 Days (Extended Cruise)' },
+        { value: 14, label: '14 Days (2 Weeks)' },
+        { value: 21, label: '21+ Days (Long Voyage)' }
+    ];
 
     const handleDepartureDateChange = ( newDate ) => {
         setDepartureDate( newDate );
-        if ( returnDate < newDate ) {
-            setReturnDate( newDate );
-        }
+        // Calculate new return date based on duration
+        const calculatedReturnDate = addDays( newDate, duration );
+        setReturnDate( calculatedReturnDate );
+
         onDateChange?.( {
             departureDate: newDate,
-            returnDate: isRoundTrip ? returnDate < newDate ? newDate : returnDate : null,
+            returnDate: isRoundTrip ? calculatedReturnDate : null,
             isRoundTrip
         } );
     };
 
     const handleReturnDateChange = ( newDate ) => {
         setReturnDate( newDate );
+        // Calculate new duration based on new return date
+        const days = Math.round( ( newDate - departureDate ) / ( 1000 * 60 * 60 * 24 ) );
+        setDuration( days );
+
         onDateChange?.( {
             departureDate,
             returnDate: newDate,
-            isRoundTrip
+            isRoundTrip,
+            duration: days
+        } );
+
+        onDurationChange?.( {
+            duration: days
         } );
     };
 
     const handleTripTypeChange = ( event ) => {
         const newIsRoundTrip = event.target.checked;
         setIsRoundTrip( newIsRoundTrip );
+
         onDateChange?.( {
             departureDate,
             returnDate: newIsRoundTrip ? returnDate : null,
@@ -57,29 +83,51 @@ const BusDateSelector = ( { onDateChange, onLocationChange } ) => {
         } );
     };
 
-    const handleSourceChange = ( event, newValue ) => {
-        setSource( newValue );
+    const handleDeparturePortChange = ( event, newValue ) => {
+        setDeparturePort( newValue );
+
         onLocationChange?.( {
-            source: newValue,
-            destination
+            departurePort: newValue,
+            destinationPort
         } );
     };
 
-    const handleDestinationChange = ( event, newValue ) => {
-        setDestination( newValue );
+    const handleDestinationPortChange = ( event, newValue ) => {
+        setDestinationPort( newValue );
+
         onLocationChange?.( {
-            source,
-            destination: newValue
+            departurePort,
+            destinationPort: newValue
         } );
     };
 
-    const handleSwapLocations = () => {
-        const temp = source;
-        setSource( destination );
-        setDestination( temp );
+    const handleSwapPorts = () => {
+        const temp = departurePort;
+        setDeparturePort( destinationPort );
+        setDestinationPort( temp );
+
         onLocationChange?.( {
-            source: destination,
-            destination: source
+            departurePort: destinationPort,
+            destinationPort: departurePort
+        } );
+    };
+
+    const handleDurationChange = ( event ) => {
+        const newDuration = event.target.value;
+        setDuration( newDuration );
+
+        // Update return date based on new duration
+        const newReturnDate = addDays( departureDate, newDuration );
+        setReturnDate( newReturnDate );
+
+        onDateChange?.( {
+            departureDate,
+            returnDate: isRoundTrip ? newReturnDate : null,
+            isRoundTrip
+        } );
+
+        onDurationChange?.( {
+            duration: newDuration
         } );
     };
 
@@ -107,13 +155,13 @@ const BusDateSelector = ( { onDateChange, onLocationChange } ) => {
                         }
                         label={
                             <Typography variant="h6" sx={{ fontWeight: 500 }}>
-                                {isRoundTrip ? 'Round Trip' : 'One Way'}
+                                {isRoundTrip ? 'Round Trip' : 'One Way Cruise'}
                             </Typography>
                         }
                         sx={{ mb: 3, display: 'block' }}
                     />
 
-                    {/* Source and Destination row using flexbox */}
+                    {/* Departure and Destination ports row */}
                     <Box sx={{ mb: 4 }}>
                         <Box sx={{
                             display: 'flex',
@@ -121,16 +169,16 @@ const BusDateSelector = ( { onDateChange, onLocationChange } ) => {
                             alignItems: 'center',
                             gap: 2
                         }}>
-                            {/* Source field - takes 45% on desktop */}
+                            {/* Departure Port field */}
                             <Box sx={{ width: { xs: '100%', md: '45%' } }}>
                                 <Typography variant="subtitle1" sx={{ mb: 1, color: 'text.secondary', fontWeight: 500 }}>
-                                    From
+                                    Departure Port
                                 </Typography>
                                 <Autocomplete
-                                    value={source}
-                                    onChange={handleSourceChange}
-                                    options={busStops}
-                                    getOptionLabel={( option ) => option ? `${ option.name } (${ option.stopId })` : ''}
+                                    value={departurePort}
+                                    onChange={handleDeparturePortChange}
+                                    options={cruisePorts}
+                                    getOptionLabel={( option ) => option ? `${ option.name } (${ option.code })` : ''}
                                     fullWidth
                                     disablePortal
                                     sx={{
@@ -142,14 +190,14 @@ const BusDateSelector = ( { onDateChange, onLocationChange } ) => {
                                     renderInput={( params ) => (
                                         <TextField
                                             {...params}
-                                            placeholder="Select departure bus stop"
+                                            placeholder="Select departure port"
                                             fullWidth
                                             variant="outlined"
                                             InputProps={{
                                                 ...params.InputProps,
                                                 startAdornment: (
                                                     <InputAdornment position="start">
-                                                        <DirectionsBus color="primary" />
+                                                        <DirectionsBoatIcon color="primary" />
                                                     </InputAdornment>
                                                 ),
                                             }}
@@ -159,10 +207,10 @@ const BusDateSelector = ( { onDateChange, onLocationChange } ) => {
                                         <Box component="li" {...props} sx={{ py: 2, px: 3 }}>
                                             <Box>
                                                 <Typography sx={{ fontWeight: 600 }}>
-                                                    {option.name} ({option.stopId})
+                                                    {option.name} ({option.code})
                                                 </Typography>
                                                 <Typography variant="body2" color="text.secondary">
-                                                    {option.address || `${ option.city }, ${ option.state }`}
+                                                    {option.city}, {option.state}
                                                 </Typography>
                                             </Box>
                                         </Box>
@@ -173,7 +221,7 @@ const BusDateSelector = ( { onDateChange, onLocationChange } ) => {
                                 />
                             </Box>
 
-                            {/* Swap button - fixed width */}
+                            {/* Swap button */}
                             <Box sx={{
                                 display: 'flex',
                                 justifyContent: 'center',
@@ -181,7 +229,7 @@ const BusDateSelector = ( { onDateChange, onLocationChange } ) => {
                                 mt: { xs: 0, md: 4 }
                             }}>
                                 <IconButton
-                                    onClick={handleSwapLocations}
+                                    onClick={handleSwapPorts}
                                     sx={{
                                         bgcolor: 'primary.main',
                                         color: 'white',
@@ -197,16 +245,16 @@ const BusDateSelector = ( { onDateChange, onLocationChange } ) => {
                                 </IconButton>
                             </Box>
 
-                            {/* Destination field - takes 45% on desktop */}
+                            {/* Destination Port field */}
                             <Box sx={{ width: { xs: '100%', md: '45%' } }}>
                                 <Typography variant="subtitle1" sx={{ mb: 1, color: 'text.secondary', fontWeight: 500 }}>
-                                    To
+                                    Destination Port
                                 </Typography>
                                 <Autocomplete
-                                    value={destination}
-                                    onChange={handleDestinationChange}
-                                    options={busStops}
-                                    getOptionLabel={( option ) => option ? `${ option.name } (${ option.stopId })` : ''}
+                                    value={destinationPort}
+                                    onChange={handleDestinationPortChange}
+                                    options={cruisePorts}
+                                    getOptionLabel={( option ) => option ? `${ option.name } (${ option.code })` : ''}
                                     fullWidth
                                     disablePortal
                                     sx={{
@@ -218,7 +266,7 @@ const BusDateSelector = ( { onDateChange, onLocationChange } ) => {
                                     renderInput={( params ) => (
                                         <TextField
                                             {...params}
-                                            placeholder="Select arrival bus stop"
+                                            placeholder="Select destination port"
                                             fullWidth
                                             variant="outlined"
                                             InputProps={{
@@ -235,10 +283,10 @@ const BusDateSelector = ( { onDateChange, onLocationChange } ) => {
                                         <Box component="li" {...props} sx={{ py: 2, px: 3 }}>
                                             <Box>
                                                 <Typography sx={{ fontWeight: 600 }}>
-                                                    {option.name} ({option.stopId})
+                                                    {option.name} ({option.code})
                                                 </Typography>
                                                 <Typography variant="body2" color="text.secondary">
-                                                    {option.address || `${ option.city }, ${ option.state }`}
+                                                    {option.city}, {option.state}
                                                 </Typography>
                                             </Box>
                                         </Box>
@@ -251,13 +299,41 @@ const BusDateSelector = ( { onDateChange, onLocationChange } ) => {
                         </Box>
                     </Box>
 
-                    {/* Date Selection row using flexbox */}
+                    {/* Cruise duration selection */}
+                    <Box sx={{ mb: 4 }}>
+                        <Typography variant="subtitle1" sx={{ mb: 1, color: 'text.secondary', fontWeight: 500 }}>
+                            Cruise Duration
+                        </Typography>
+                        <FormControl fullWidth sx={{ '& .MuiOutlinedInput-root': { ...inputStyle } }}>
+                            <InputLabel id="cruise-duration-label">Select Duration</InputLabel>
+                            <Select
+                                labelId="cruise-duration-label"
+                                id="cruise-duration"
+                                value={duration}
+                                onChange={handleDurationChange}
+                                label="Select Duration"
+                                startAdornment={
+                                    <InputAdornment position="start">
+                                        <AccessTimeIcon color="primary" />
+                                    </InputAdornment>
+                                }
+                            >
+                                {durations.map( ( option ) => (
+                                    <MenuItem key={option.value} value={option.value}>
+                                        {option.label}
+                                    </MenuItem>
+                                ) )}
+                            </Select>
+                        </FormControl>
+                    </Box>
+
+                    {/* Date Selection row */}
                     <Box sx={{
                         display: 'flex',
                         flexDirection: { xs: 'column', md: 'row' },
                         gap: 3
                     }}>
-                        {/* Departure date - full width or 50% */}
+                        {/* Departure date */}
                         <Box sx={{
                             width: { xs: '100%', md: isRoundTrip ? '50%' : '100%' }
                         }}>
@@ -285,7 +361,7 @@ const BusDateSelector = ( { onDateChange, onLocationChange } ) => {
                             </Typography>
                         </Box>
 
-                        {/* Return date - 50% width when round trip */}
+                        {/* Return date - shown when round trip is selected */}
                         {isRoundTrip && (
                             <Box sx={{ width: { xs: '100%', md: '50%' } }}>
                                 <Typography variant="subtitle1" sx={{ mb: 1, color: 'text.secondary', fontWeight: 500 }}>
@@ -309,6 +385,9 @@ const BusDateSelector = ( { onDateChange, onLocationChange } ) => {
                                 />
                                 <Typography variant="body2" sx={{ mt: 1, color: 'text.secondary' }}>
                                     {format( returnDate, 'EEEE, MMMM d, yyyy' )}
+                                    <span style={{ fontStyle: 'italic', marginLeft: 8 }}>
+                                        ({Math.round( ( returnDate - departureDate ) / ( 1000 * 60 * 60 * 24 ) )} days)
+                                    </span>
                                 </Typography>
                             </Box>
                         )}
@@ -319,4 +398,4 @@ const BusDateSelector = ( { onDateChange, onLocationChange } ) => {
     );
 };
 
-export default BusDateSelector;
+export default CruiseDateSelector;

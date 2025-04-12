@@ -1,5 +1,5 @@
 import express from "express";
-import { handleLoginGet, handleLoginPost, handleRegisterPost } from "../Controllers/UserController.js";
+import { handleLoginGet, handleLoginPost, handleLogout, handleRegisterPost } from "../Controllers/UserController.js";
 const userRouter = express.Router();
 
 userRouter
@@ -10,5 +10,9 @@ userRouter
 userRouter
     .route( "/register" )
     .post( handleRegisterPost );
+
+userRouter
+    .route( "/logout" )
+    .get(handleLogout);
 
 export default userRouter;

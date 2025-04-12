@@ -36,7 +36,7 @@ const handleLoginGet = async ( req, res ) => {
         return res.status( 200 ).json( {
             success: true,
             user: {
-                id: user.userId,
+                id: user.userId.toLowerCase(), // Ensure consistent format
                 name: `${ user.firstName } ${ user.lastName }`.trim(),
                 email: user.email,
                 phone: user.phoneNo,
@@ -110,7 +110,7 @@ const handleLoginPost = async ( req, res ) => {
             { expiresIn: '7d' }
         );
 
-        // Set HTTP-only cookie with the token (same as register)
+        // Set HTTP-only cookie with the token
         res.cookie( 'user', token, {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
@@ -124,7 +124,7 @@ const handleLoginPost = async ( req, res ) => {
             message: 'Login successful',
             token,
             user: {
-                id: user.userId,
+                id: user.userId.toLowerCase(), // Ensure consistent format
                 name: `${ user.firstName } ${ user.lastName }`.trim(),
                 email: user.email,
                 phone: user.phoneNo,
@@ -171,6 +171,7 @@ const handleRegisterPost = async ( req, res ) => {
         const salt = await bcrypt.genSalt( 10 );
         const hashedPassword = await bcrypt.hash( password, salt );
 
+        // Generate UUID without hyphens
         const userId = uuidv4().replace( /-/g, '' );
 
         await pool.execute(
@@ -183,19 +184,21 @@ const handleRegisterPost = async ( req, res ) => {
             process.env.JWT_SECRET || 'your_jwt_secret',
             { expiresIn: '7d' }
         );
+
         // Set HTTP-only cookie with the token
         res.cookie( 'user', token, {
             httpOnly: true,
-            secure: process.env.NODE_ENV === 'production', // Use secure cookies in production
-            maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days matching JWT expiry
+            secure: process.env.NODE_ENV === 'production',
+            maxAge: 7 * 24 * 60 * 60 * 1000,
             sameSite: 'strict'
         } );
+
         res.status( 201 ).json( {
             success: true,
             message: 'User registered successfully',
             token,
             user: {
-                id: userId,
+                id: userId.toLowerCase(), // Use the UUID directly, not the DB's hex representation
                 name: `${ firstName } ${ lastName }`.trim(),
                 email,
                 phone

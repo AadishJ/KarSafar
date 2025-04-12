@@ -74,7 +74,7 @@ const Navbar = () => {
                         <FaHotel className="mr-1.5 text-blue-500" /> Hotels
                     </Link>
 
-                    <Link to="/airbnb" className="flex items-center text-gray-700 hover:text-blue-600 transition duration-300 font-medium">
+                    <Link to="/airbnbs" className="flex items-center text-gray-700 hover:text-blue-600 transition duration-300 font-medium">
                         <FaHome className="mr-1.5 text-blue-500" /> Airbnb
                     </Link>
                 </div>

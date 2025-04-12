@@ -1,0 +1,514 @@
+[
+    {
+        "id": "del",
+        "name": "New Delhi",
+        "state": "Delhi",
+        "country": "India",
+        "code": "DEL",
+        "tourist_attractions": [
+            "Red Fort",
+            "India Gate",
+            "Qutub Minar"
+        ],
+        "popular": true
+    },
+    {
+        "id": "mum",
+        "name": "Mumbai",
+        "state": "Maharashtra",
+        "country": "India",
+        "code": "BOM",
+        "tourist_attractions": [
+            "Gateway of India",
+            "Marine Drive",
+            "Elephanta Caves"
+        ],
+        "popular": true
+    },
+    {
+        "id": "blr",
+        "name": "Bangalore",
+        "state": "Karnataka",
+        "country": "India",
+        "code": "BLR",
+        "tourist_attractions": [
+            "Lalbagh Botanical Garden",
+            "Bangalore Palace",
+            "Cubbon Park"
+        ],
+        "popular": true
+    },
+    {
+        "id": "chn",
+        "name": "Chennai",
+        "state": "Tamil Nadu",
+        "country": "India",
+        "code": "MAA",
+        "tourist_attractions": [
+            "Marina Beach",
+            "Kapaleeshwarar Temple",
+            "Fort St. George"
+        ],
+        "popular": true
+    },
+    {
+        "id": "kol",
+        "name": "Kolkata",
+        "state": "West Bengal",
+        "country": "India",
+        "code": "CCU",
+        "tourist_attractions": [
+            "Victoria Memorial",
+            "Howrah Bridge",
+            "Park Street"
+        ],
+        "popular": true
+    },
+    {
+        "id": "hyd",
+        "name": "Hyderabad",
+        "state": "Telangana",
+        "country": "India",
+        "code": "HYD",
+        "tourist_attractions": [
+            "Charminar",
+            "Golconda Fort",
+            "Hussain Sagar Lake"
+        ],
+        "popular": true
+    },
+    {
+        "id": "jai",
+        "name": "Jaipur",
+        "state": "Rajasthan",
+        "country": "India",
+        "code": "JAI",
+        "tourist_attractions": [
+            "Hawa Mahal",
+            "Amber Fort",
+            "City Palace"
+        ],
+        "popular": true
+    },
+    {
+        "id": "goa",
+        "name": "Goa",
+        "state": "Goa",
+        "country": "India",
+        "code": "GOI",
+        "tourist_attractions": [
+            "Calangute Beach",
+            "Baga Beach",
+            "Basilica of Bom Jesus"
+        ],
+        "popular": true
+    },
+    {
+        "id": "cok",
+        "name": "Kochi",
+        "state": "Kerala",
+        "country": "India",
+        "code": "COK",
+        "tourist_attractions": [
+            "Fort Kochi",
+            "Chinese Fishing Nets",
+            "Mattancherry Palace"
+        ],
+        "popular": true
+    },
+    {
+        "id": "ahd",
+        "name": "Ahmedabad",
+        "state": "Gujarat",
+        "country": "India",
+        "code": "AMD",
+        "tourist_attractions": [
+            "Sabarmati Ashram",
+            "Kankaria Lake",
+            "Jama Masjid"
+        ],
+        "popular": true
+    },
+    {
+        "id": "pun",
+        "name": "Pune",
+        "state": "Maharashtra",
+        "country": "India",
+        "code": "PNQ",
+        "tourist_attractions": [
+            "Aga Khan Palace",
+            "Shaniwar Wada",
+            "Dagdusheth Halwai Ganapati Temple"
+        ],
+        "popular": false
+    },
+    {
+        "id": "lko",
+        "name": "Lucknow",
+        "state": "Uttar Pradesh",
+        "country": "India",
+        "code": "LKO",
+        "tourist_attractions": [
+            "Bara Imambara",
+            "Rumi Darwaza",
+            "Hazratganj"
+        ],
+        "popular": false
+    },
+    {
+        "id": "chd",
+        "name": "Chandigarh",
+        "state": "Punjab & Haryana",
+        "country": "India",
+        "code": "IXC",
+        "tourist_attractions": [
+            "Rock Garden",
+            "Sukhna Lake",
+            "Rose Garden"
+        ],
+        "popular": false
+    },
+    {
+        "id": "agr",
+        "name": "Agra",
+        "state": "Uttar Pradesh",
+        "country": "India",
+        "code": "AGR",
+        "tourist_attractions": [
+            "Taj Mahal",
+            "Agra Fort",
+            "Fatehpur Sikri"
+        ],
+        "popular": true
+    },
+    {
+        "id": "vns",
+        "name": "Varanasi",
+        "state": "Uttar Pradesh",
+        "country": "India",
+        "code": "VNS",
+        "tourist_attractions": [
+            "Dashashwamedh Ghat",
+            "Kashi Vishwanath Temple",
+            "Sarnath"
+        ],
+        "popular": false
+    },
+    {
+        "id": "shl",
+        "name": "Shimla",
+        "state": "Himachal Pradesh",
+        "country": "India",
+        "code": "SLV",
+        "tourist_attractions": [
+            "The Ridge",
+            "Mall Road",
+            "Christ Church"
+        ],
+        "popular": false
+    },
+    {
+        "id": "udi",
+        "name": "Udaipur",
+        "state": "Rajasthan",
+        "country": "India",
+        "code": "UDR",
+        "tourist_attractions": [
+            "Lake Palace",
+            "City Palace",
+            "Lake Pichola"
+        ],
+        "popular": false
+    },
+    {
+        "id": "drj",
+        "name": "Darjeeling",
+        "state": "West Bengal",
+        "country": "India",
+        "code": "DAI",
+        "tourist_attractions": [
+            "Tiger Hill",
+            "Batasia Loop",
+            "Himalayan Mountaineering Institute"
+        ],
+        "popular": false
+    },
+    {
+        "id": "mys",
+        "name": "Mysore",
+        "state": "Karnataka",
+        "country": "India",
+        "code": "MYQ",
+        "tourist_attractions": [
+            "Mysore Palace",
+            "Chamundi Hill",
+            "St. Philomena's Church"
+        ],
+        "popular": false
+    },
+    {
+        "id": "mnl",
+        "name": "Manali",
+        "state": "Himachal Pradesh",
+        "country": "India",
+        "code": "KUU",
+        "tourist_attractions": [
+            "Rohtang Pass",
+            "Solang Valley",
+            "Hadimba Temple"
+        ],
+        "popular": false
+    },
+    {
+        "id": "sng",
+        "name": "Singapore",
+        "state": "",
+        "country": "Singapore",
+        "code": "SIN",
+        "tourist_attractions": [
+            "Marina Bay Sands",
+            "Gardens by the Bay",
+            "Sentosa Island"
+        ],
+        "popular": true,
+        "international": true
+    },
+    {
+        "id": "bkk",
+        "name": "Bangkok",
+        "state": "",
+        "country": "Thailand",
+        "code": "BKK",
+        "tourist_attractions": [
+            "Grand Palace",
+            "Wat Arun",
+            "Chatuchak Market"
+        ],
+        "popular": true,
+        "international": true
+    },
+    {
+        "id": "dxb",
+        "name": "Dubai",
+        "state": "Dubai",
+        "country": "United Arab Emirates",
+        "code": "DXB",
+        "tourist_attractions": [
+            "Burj Khalifa",
+            "Palm Jumeirah",
+            "Dubai Mall"
+        ],
+        "popular": true,
+        "international": true
+    },
+    {
+        "id": "lon",
+        "name": "London",
+        "state": "",
+        "country": "United Kingdom",
+        "code": "LHR",
+        "tourist_attractions": [
+            "Big Ben",
+            "Tower Bridge",
+            "Buckingham Palace"
+        ],
+        "popular": true,
+        "international": true
+    },
+    {
+        "id": "nyc",
+        "name": "New York",
+        "state": "New York",
+        "country": "United States",
+        "code": "JFK",
+        "tourist_attractions": [
+            "Statue of Liberty",
+            "Times Square",
+            "Central Park"
+        ],
+        "popular": true,
+        "international": true
+    },
+    {
+        "id": "par",
+        "name": "Paris",
+        "state": "",
+        "country": "France",
+        "code": "CDG",
+        "tourist_attractions": [
+            "Eiffel Tower",
+            "Louvre Museum",
+            "Notre-Dame Cathedral"
+        ],
+        "popular": true,
+        "international": true
+    },
+    {
+        "id": "tyo",
+        "name": "Tokyo",
+        "state": "",
+        "country": "Japan",
+        "code": "HND",
+        "tourist_attractions": [
+            "Tokyo Tower",
+            "Senso-ji Temple",
+            "Shibuya Crossing"
+        ],
+        "popular": true,
+        "international": true
+    },
+    {
+        "id": "syd",
+        "name": "Sydney",
+        "state": "New South Wales",
+        "country": "Australia",
+        "code": "SYD",
+        "tourist_attractions": [
+            "Sydney Opera House",
+            "Sydney Harbour Bridge",
+            "Bondi Beach"
+        ],
+        "popular": true,
+        "international": true
+    },
+    {
+        "id": "rme",
+        "name": "Rome",
+        "state": "",
+        "country": "Italy",
+        "code": "FCO",
+        "tourist_attractions": [
+            "Colosseum",
+            "Vatican City",
+            "Trevi Fountain"
+        ],
+        "popular": true,
+        "international": true
+    },
+    {
+        "id": "hkg",
+        "name": "Hong Kong",
+        "state": "",
+        "country": "Hong Kong",
+        "code": "HKG",
+        "tourist_attractions": [
+            "Victoria Harbour",
+            "Victoria Peak",
+            "Disneyland"
+        ],
+        "popular": true,
+        "international": true
+    },
+    {
+        "id": "ams",
+        "name": "Amsterdam",
+        "state": "",
+        "country": "Netherlands",
+        "code": "AMS",
+        "tourist_attractions": [
+            "Rijksmuseum",
+            "Anne Frank House",
+            "Van Gogh Museum"
+        ],
+        "popular": false,
+        "international": true
+    },
+    {
+        "id": "brln",
+        "name": "Berlin",
+        "state": "",
+        "country": "Germany",
+        "code": "BER",
+        "tourist_attractions": [
+            "Brandenburg Gate",
+            "Berlin Wall",
+            "Reichstag Building"
+        ],
+        "popular": false,
+        "international": true
+    },
+    {
+        "id": "bcn",
+        "name": "Barcelona",
+        "state": "Catalonia",
+        "country": "Spain",
+        "code": "BCN",
+        "tourist_attractions": [
+            "Sagrada Familia",
+            "Park Güell",
+            "La Rambla"
+        ],
+        "popular": false,
+        "international": true
+    },
+    {
+        "id": "ist",
+        "name": "Istanbul",
+        "state": "",
+        "country": "Turkey",
+        "code": "IST",
+        "tourist_attractions": [
+            "Hagia Sophia",
+            "Blue Mosque",
+            "Grand Bazaar"
+        ],
+        "popular": false,
+        "international": true
+    },
+    {
+        "id": "rio",
+        "name": "Rio de Janeiro",
+        "state": "",
+        "country": "Brazil",
+        "code": "GIG",
+        "tourist_attractions": [
+            "Christ the Redeemer",
+            "Copacabana Beach",
+            "Sugarloaf Mountain"
+        ],
+        "popular": false,
+        "international": true
+    },
+    {
+        "id": "pkt",
+        "name": "Phuket",
+        "state": "",
+        "country": "Thailand",
+        "code": "HKT",
+        "tourist_attractions": [
+            "Patong Beach",
+            "Phi Phi Islands",
+            "Big Buddha"
+        ],
+        "popular": false,
+        "international": true
+    },
+    {
+        "id": "kul",
+        "name": "Kuala Lumpur",
+        "state": "",
+        "country": "Malaysia",
+        "code": "KUL",
+        "tourist_attractions": [
+            "Petronas Towers",
+            "Batu Caves",
+            "KLCC Park"
+        ],
+        "popular": false,
+        "international": true
+    },
+    {
+        "id": "bali",
+        "name": "Bali",
+        "state": "",
+        "country": "Indonesia",
+        "code": "DPS",
+        "tourist_attractions": [
+            "Ubud Monkey Forest",
+            "Tanah Lot",
+            "Uluwatu Temple"
+        ],
+        "popular": true,
+        "international": true
+    }
+]

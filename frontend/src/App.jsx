@@ -10,6 +10,8 @@ import Train from './Pages/Train'
 import Bus from './Pages/Bus'
 import Cab from './Pages/Cab'
 import Cruise from './Pages/Cruise'
+import Hotel from './Pages/Hotel'
+import Airbnb from './Pages/Airbnb'
 
 
 const App = () => {
@@ -28,6 +30,8 @@ const App = () => {
           <Route path='/buses' element={<Bus />} />
           <Route path='/cabs' element={<Cab />} />
           <Route path='/cruises' element={<Cruise />} />
+          <Route path='/hotels' element={<Hotel />} />
+          <Route path='/airbnbs' element={<Airbnb />} />
           </Routes>
       </div>
     </>

@@ -9,6 +9,8 @@ import trainRouter from "./Routes/TrainRouter.js";
 import busRouter from "./Routes/BusRouter.js";
 import cabRouter from "./Routes/CabRouter.js";
 import cruiseRouter from "./Routes/CruiseController.js";
+import hotelRouter from "./Routes/HotelRouter.js";
+import airbnbRouter from "./Routes/AirbnbRouter.js";
 
 const app = express();
 connectDB();
@@ -38,6 +40,8 @@ app.use( "/train", trainRouter );
 app.use( "/bus", busRouter );
 app.use( "/cab", cabRouter );
 app.use( "/cruise", cruiseRouter );
+app.use( "/hotel", hotelRouter );
+app.use( "/airbnb", airbnbRouter );
 
 app.get( "/", ( req, res ) => {
     res.send( "Hello World" );

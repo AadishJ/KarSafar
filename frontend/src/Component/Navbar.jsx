@@ -37,8 +37,10 @@ const Navbar = () => {
 
     // Get user initials for avatar
     const getUserInitials = () => {
+        if ( !user || !user.name ) return "U";
         return user.name[ 0 ]?.toUpperCase() || "U";
     };
+
 
     return (
         <nav className="bg-white shadow-md py-4 sticky top-0 z-50 w-full">

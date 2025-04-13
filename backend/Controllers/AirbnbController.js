@@ -247,7 +247,7 @@ async function handleAirbnbDetailGet( req, res ) {
             );
             reviews = reviewsResult;
         } catch ( error ) {
-            console.log( "Reviews not available:", error.message );
+            console.error( "Reviews not available:", error.message );
         }
 
         // Combine all data

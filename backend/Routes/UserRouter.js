@@ -1,5 +1,6 @@
 import express from "express";
-import { handleLoginGet, handleLoginPost, handleLogout, handleRegisterPost } from "../Controllers/UserController.js";
+import { handleLoginGet, handleLoginPost, handleLogoutGet, handleLoginGooglePost, handleRegisterPost } from "../Controllers/UserController.js";
+import { authUser } from "../Middlewares/auth.js";
 const userRouter = express.Router();
 
 userRouter
@@ -13,6 +14,11 @@ userRouter
 
 userRouter
     .route( "/logout" )
-    .get(handleLogout);
+    .get( authUser, handleLogoutGet );
+    
+userRouter
+    .route( "/google/login" )
+    .post(handleLoginGooglePost)
+    
 
 export default userRouter;

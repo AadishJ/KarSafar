@@ -12,6 +12,7 @@ import Cab from './Pages/Cab'
 import Cruise from './Pages/Cruise'
 import Hotel from './Pages/Hotel'
 import Airbnb from './Pages/Airbnb'
+import GoogleAuth from './Pages/GoogleAuth'
 
 
 const App = () => {
@@ -32,6 +33,7 @@ const App = () => {
           <Route path='/cruises' element={<Cruise />} />
           <Route path='/hotels' element={<Hotel />} />
           <Route path='/airbnbs' element={<Airbnb />} />
+          <Route path='/api/auth/callback' element={<GoogleAuth/>} />
           </Routes>
       </div>
     </>

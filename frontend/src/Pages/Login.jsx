@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { FcGoogle } from 'react-icons/fc';
 import { FaUser, FaLock } from 'react-icons/fa';
@@ -48,6 +48,13 @@ const Login = () => {
         // Redirect to Google's OAuth page
         window.location.href = googleAuthUrl.toString();
     };
+    useEffect( () => {
+        const userData = localStorage.getItem( 'user' );
+        if ( userData ) {
+            navigate( '/' );
+        }
+    }
+    , [ navigate ] );
 
     return (
         <section className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-neutral-100 p-4">

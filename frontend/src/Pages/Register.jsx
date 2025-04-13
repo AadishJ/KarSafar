@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { FcGoogle } from 'react-icons/fc';
 import { FaUser, FaLock, FaEnvelope, FaCheck, FaEye, FaEyeSlash, FaPhone } from 'react-icons/fa';
@@ -49,7 +49,8 @@ const Register = () => {
         return 'bg-green-500';
     };
 
-    const handleGoogleSignup = async () => {
+
+    const handleGoogleLogin = async () => {
         const googleAuthUrl = new URL(
             "https://accounts.google.com/o/oauth2/v2/auth"
         );
@@ -66,11 +67,11 @@ const Register = () => {
         googleAuthUrl.searchParams.set( "response_type", "code" );
         googleAuthUrl.searchParams.set( "scope", "openid email profile" );
         googleAuthUrl.searchParams.set( "prompt", "select_account" );
-        googleAuthUrl.searchParams.set( "access_type", "offline" );
 
         // Redirect to Google's OAuth page
         window.location.href = googleAuthUrl.toString();
     };
+
 
     const handleSubmit = async ( e ) => {
         e.preventDefault();
@@ -105,6 +106,14 @@ const Register = () => {
             setLoading( false );
         }
     };
+
+    useEffect( () => {
+        const userData = localStorage.getItem( 'user' );
+        if ( userData ) {
+            navigate( '/' );
+        }
+    }
+        , [ navigate ] );
 
     return (
         <section className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-neutral-100 p-4">
@@ -177,7 +186,7 @@ const Register = () => {
                                 placeholder="+1234567890"
                                 required
                             />
-                    </div>   
+                        </div>
                     </div>
 
                     <div>
@@ -328,7 +337,7 @@ const Register = () => {
                 </div>
 
                 <button
-                    onClick={handleGoogleSignup}
+                    onClick={handleGoogleLogin}
                     type="button"
                     className="w-full flex items-center justify-center gap-3 px-4 py-3 
                           bg-white hover:bg-gray-50 text-gray-700 

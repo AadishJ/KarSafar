@@ -188,6 +188,7 @@ export const AuthProvider = ( { children } ) => {
         logout,
         updateProfile,
         clearError,
+        setUser,
         userName: getUserName()
     };
 

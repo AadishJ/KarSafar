@@ -27,11 +27,24 @@ const AppDownloadSection = () => {
                         </Box>
                     </Grid>
                     <Grid item xs={12} md={6} sx={{ textAlign: 'center' }}>
-                        <img
-                            src="https://cdn.dribbble.com/users/1859368/screenshots/16071111/media/1db80d0ef7c79652b861a87e6e65c1c8.png?compress=1&resize=800x600"
-                            alt="Mobile app"
-                            style={{ maxWidth: '90%', maxHeight: 400 }}
-                        />
+                        <Grid item xs={12} md={6} sx={{ textAlign: 'center' }}>
+                            <div className="w-64 h-64 mx-auto bg-blue-800 rounded-3xl shadow-lg flex flex-col items-center justify-center transform rotate-12 relative overflow-hidden">
+                                {/* App icon circle */}
+                                <div className="absolute w-80 h-80 bg-blue-700 rounded-full -top-20 -right-20"></div>
+
+                                {/* Icon shine effect */}
+                                <div className="absolute w-40 h-40 bg-blue-600 rounded-full -bottom-10 -left-10 opacity-70"></div>
+
+                                {/* App name */}
+                                <div className="relative z-10 text-center px-4">
+                                    <div className="text-4xl font-extrabold text-white mb-2 font-serif tracking-wide">KarSafar</div>
+                                    <div className="text-blue-200 text-sm">Your Travel Companion</div>
+                                </div>
+
+                                {/* App icon detail */}
+                                <div className="absolute bottom-6 w-16 h-1 bg-white/30 rounded-full"></div>
+                            </div>
+                        </Grid>
                     </Grid>
                 </Grid>
             </Container>

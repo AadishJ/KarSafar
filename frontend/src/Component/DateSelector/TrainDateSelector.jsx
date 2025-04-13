@@ -14,11 +14,11 @@ import {
 } from '@mui/material';
 import { addDays, format } from 'date-fns';
 import SwapHorizIcon from '@mui/icons-material/SwapHoriz';
-import DirectionsBus from '@mui/icons-material/DirectionsBus';
-import LocationOn from '@mui/icons-material/LocationOn';
-import busStops from '../assets/busStops.json';
+import TrainIcon from '@mui/icons-material/Train';
+import DirectionsTransitIcon from '@mui/icons-material/DirectionsTransit';
+import trainStations from '../../assets/trainStations.json';
 
-const BusDateSelector = ( { onDateChange, onLocationChange } ) => {
+const TrainDateSelector = ( { onDateChange, onLocationChange } ) => {
     const today = new Date();
     const [ departureDate, setDepartureDate ] = useState( addDays( today, 1 ) );
     const [ returnDate, setReturnDate ] = useState( addDays( today, 7 ) );
@@ -129,8 +129,8 @@ const BusDateSelector = ( { onDateChange, onLocationChange } ) => {
                                 <Autocomplete
                                     value={source}
                                     onChange={handleSourceChange}
-                                    options={busStops}
-                                    getOptionLabel={( option ) => option ? `${ option.name } (${ option.stopId })` : ''}
+                                    options={trainStations}
+                                    getOptionLabel={( option ) => option ? `${ option.stationName } (${ option.stationCode })` : ''}
                                     fullWidth
                                     disablePortal
                                     sx={{
@@ -142,14 +142,14 @@ const BusDateSelector = ( { onDateChange, onLocationChange } ) => {
                                     renderInput={( params ) => (
                                         <TextField
                                             {...params}
-                                            placeholder="Select departure bus stop"
+                                            placeholder="Select departure station"
                                             fullWidth
                                             variant="outlined"
                                             InputProps={{
                                                 ...params.InputProps,
                                                 startAdornment: (
                                                     <InputAdornment position="start">
-                                                        <DirectionsBus color="primary" />
+                                                        <TrainIcon color="primary" />
                                                     </InputAdornment>
                                                 ),
                                             }}
@@ -159,10 +159,10 @@ const BusDateSelector = ( { onDateChange, onLocationChange } ) => {
                                         <Box component="li" {...props} sx={{ py: 2, px: 3 }}>
                                             <Box>
                                                 <Typography sx={{ fontWeight: 600 }}>
-                                                    {option.name} ({option.stopId})
+                                                    {option.stationName} ({option.stationCode})
                                                 </Typography>
                                                 <Typography variant="body2" color="text.secondary">
-                                                    {option.address || `${ option.city }, ${ option.state }`}
+                                                    {option.fullName}, {option.city}, {option.state}
                                                 </Typography>
                                             </Box>
                                         </Box>
@@ -205,8 +205,8 @@ const BusDateSelector = ( { onDateChange, onLocationChange } ) => {
                                 <Autocomplete
                                     value={destination}
                                     onChange={handleDestinationChange}
-                                    options={busStops}
-                                    getOptionLabel={( option ) => option ? `${ option.name } (${ option.stopId })` : ''}
+                                    options={trainStations}
+                                    getOptionLabel={( option ) => option ? `${ option.stationName } (${ option.stationCode })` : ''}
                                     fullWidth
                                     disablePortal
                                     sx={{
@@ -218,14 +218,14 @@ const BusDateSelector = ( { onDateChange, onLocationChange } ) => {
                                     renderInput={( params ) => (
                                         <TextField
                                             {...params}
-                                            placeholder="Select arrival bus stop"
+                                            placeholder="Select arrival station"
                                             fullWidth
                                             variant="outlined"
                                             InputProps={{
                                                 ...params.InputProps,
                                                 startAdornment: (
                                                     <InputAdornment position="start">
-                                                        <LocationOn color="primary" />
+                                                        <DirectionsTransitIcon color="primary" />
                                                     </InputAdornment>
                                                 ),
                                             }}
@@ -235,10 +235,10 @@ const BusDateSelector = ( { onDateChange, onLocationChange } ) => {
                                         <Box component="li" {...props} sx={{ py: 2, px: 3 }}>
                                             <Box>
                                                 <Typography sx={{ fontWeight: 600 }}>
-                                                    {option.name} ({option.stopId})
+                                                    {option.stationName} ({option.stationCode})
                                                 </Typography>
                                                 <Typography variant="body2" color="text.secondary">
-                                                    {option.address || `${ option.city }, ${ option.state }`}
+                                                    {option.fullName}, {option.city}, {option.state}
                                                 </Typography>
                                             </Box>
                                         </Box>
@@ -319,4 +319,4 @@ const BusDateSelector = ( { onDateChange, onLocationChange } ) => {
     );
 };
 
-export default BusDateSelector;
+export default TrainDateSelector;

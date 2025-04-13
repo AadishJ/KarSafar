@@ -11,25 +11,28 @@ import {
     MenuItem,
     FormControl,
     Select,
-    Chip
+    Chip,
+    Slider
 } from '@mui/material';
 import { addDays, format, differenceInDays } from 'date-fns';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
-import HotelIcon from '@mui/icons-material/Hotel';
+import HomeIcon from '@mui/icons-material/Home';
 import PersonIcon from '@mui/icons-material/Person';
 import PublicIcon from '@mui/icons-material/Public';
 import FlagIcon from '@mui/icons-material/Flag';
+import WeekendIcon from '@mui/icons-material/Weekend';
+import NightShelterIcon from '@mui/icons-material/NightShelter';
 
 // Import cities data from JSON
-import cities from '../assets/cities.json';
+import cities from '../../assets/cities.json';
 
-const HotelDateSelector = ( { onDateChange, onLocationChange, onGuestsChange } ) => {
+const AirbnbDateSelector = ( { onDateChange, onLocationChange, onGuestsChange, onPropertyTypeChange } ) => {
     const today = new Date();
     const [ checkInDate, setCheckInDate ] = useState( addDays( today, 1 ) );
     const [ checkOutDate, setCheckOutDate ] = useState( addDays( today, 3 ) );
     const [ location, setLocation ] = useState( null );
     const [ guests, setGuests ] = useState( 2 );
-    const [ rooms, setRooms ] = useState( 1 );
+    const [ propertyType, setPropertyType ] = useState( 'entire_home' );
 
     // Get popular cities for initial display
     const popularCities = cities.filter( city => city.popular );
@@ -78,26 +81,17 @@ const HotelDateSelector = ( { onDateChange, onLocationChange, onGuestsChange } )
         const newGuests = event.target.value;
         setGuests( newGuests );
 
-        // Adjust rooms if needed (e.g., don't allow 1 room for 5+ people)
-        let newRooms = rooms;
-        if ( newGuests > 4 && rooms === 1 ) {
-            newRooms = 2;
-            setRooms( 2 );
-        }
-
         onGuestsChange?.( {
-            guests: newGuests,
-            rooms: newRooms
+            guests: newGuests
         } );
     };
 
-    const handleRoomsChange = ( event ) => {
-        const newRooms = event.target.value;
-        setRooms( newRooms );
+    const handlePropertyTypeChange = ( event ) => {
+        const newPropertyType = event.target.value;
+        setPropertyType( newPropertyType );
 
-        onGuestsChange?.( {
-            guests,
-            rooms: newRooms
+        onPropertyTypeChange?.( {
+            propertyType: newPropertyType
         } );
     };
 
@@ -114,6 +108,35 @@ const HotelDateSelector = ( { onDateChange, onLocationChange, onGuestsChange } )
         <LocalizationProvider dateAdapter={AdapterDateFns}>
             <Paper elevation={3} sx={{ borderRadius: 2, overflow: 'hidden' }}>
                 <Box sx={{ p: { xs: 3, sm: 4 }, bgcolor: 'white' }}>
+                    {/* Property type selector */}
+                    <Box sx={{ mb: 4 }}>
+                        <Typography variant="subtitle1" sx={{ mb: 1, color: 'text.secondary', fontWeight: 500 }}>
+                            Property Type
+                        </Typography>
+                        <FormControl fullWidth variant="outlined">
+                            <Select
+                                value={propertyType}
+                                onChange={handlePropertyTypeChange}
+                                sx={{ ...inputStyle }}
+                                startAdornment={
+                                    <InputAdornment position="start">
+                                        {propertyType === 'entire_home' ? (
+                                            <HomeIcon color="primary" />
+                                        ) : propertyType === 'private_room' ? (
+                                            <NightShelterIcon color="primary" />
+                                        ) : (
+                                            <WeekendIcon color="primary" />
+                                        )}
+                                    </InputAdornment>
+                                }
+                            >
+                                <MenuItem value="entire_home">Entire Home/Apartment</MenuItem>
+                                <MenuItem value="private_room">Private Room</MenuItem>
+                                <MenuItem value="shared_room">Shared Room</MenuItem>
+                            </Select>
+                        </FormControl>
+                    </Box>
+
                     {/* Location selector using cities.json */}
                     <Box sx={{ mb: 4 }}>
                         <Typography variant="subtitle1" sx={{ mb: 1, color: 'text.secondary', fontWeight: 500 }}>
@@ -250,57 +273,27 @@ const HotelDateSelector = ( { onDateChange, onLocationChange, onGuestsChange } )
                         </Box>
                     </Box>
 
-                    {/* Guests and rooms row */}
-                    <Box sx={{
-                        display: 'flex',
-                        flexDirection: { xs: 'column', md: 'row' },
-                        gap: 3
-                    }}>
-                        {/* Number of guests */}
-                        <Box sx={{ width: { xs: '100%', md: '50%' } }}>
-                            <Typography variant="subtitle1" sx={{ mb: 1, color: 'text.secondary', fontWeight: 500 }}>
-                                Number of Guests
-                            </Typography>
-                            <FormControl fullWidth variant="outlined">
-                                <Select
-                                    value={guests}
-                                    onChange={handleGuestsChange}
-                                    sx={{ ...inputStyle }}
-                                    startAdornment={
-                                        <InputAdornment position="start">
-                                            <PersonIcon color="primary" />
-                                        </InputAdornment>
-                                    }
-                                >
-                                    {[ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 ].map( ( num ) => (
-                                        <MenuItem key={num} value={num}>{num} {num === 1 ? 'Guest' : 'Guests'}</MenuItem>
-                                    ) )}
-                                </Select>
-                            </FormControl>
-                        </Box>
-
-                        {/* Number of rooms */}
-                        <Box sx={{ width: { xs: '100%', md: '50%' } }}>
-                            <Typography variant="subtitle1" sx={{ mb: 1, color: 'text.secondary', fontWeight: 500 }}>
-                                Number of Rooms
-                            </Typography>
-                            <FormControl fullWidth variant="outlined">
-                                <Select
-                                    value={rooms}
-                                    onChange={handleRoomsChange}
-                                    sx={{ ...inputStyle }}
-                                    startAdornment={
-                                        <InputAdornment position="start">
-                                            <HotelIcon color="primary" />
-                                        </InputAdornment>
-                                    }
-                                >
-                                    {[ 1, 2, 3, 4, 5 ].map( ( num ) => (
-                                        <MenuItem key={num} value={num}>{num} {num === 1 ? 'Room' : 'Rooms'}</MenuItem>
-                                    ) )}
-                                </Select>
-                            </FormControl>
-                        </Box>
+                    {/* Guests selector */}
+                    <Box>
+                        <Typography variant="subtitle1" sx={{ mb: 1, color: 'text.secondary', fontWeight: 500 }}>
+                            Number of Guests
+                        </Typography>
+                        <FormControl fullWidth variant="outlined">
+                            <Select
+                                value={guests}
+                                onChange={handleGuestsChange}
+                                sx={{ ...inputStyle }}
+                                startAdornment={
+                                    <InputAdornment position="start">
+                                        <PersonIcon color="primary" />
+                                    </InputAdornment>
+                                }
+                            >
+                                {[ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 16 ].map( ( num ) => (
+                                    <MenuItem key={num} value={num}>{num} {num === 1 ? 'Guest' : 'Guests'}</MenuItem>
+                                ) )}
+                            </Select>
+                        </FormControl>
                     </Box>
                 </Box>
             </Paper>
@@ -308,4 +301,4 @@ const HotelDateSelector = ( { onDateChange, onLocationChange, onGuestsChange } )
     );
 };
 
-export default HotelDateSelector;
+export default AirbnbDateSelector;

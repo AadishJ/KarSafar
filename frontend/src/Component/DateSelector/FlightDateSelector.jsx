@@ -14,13 +14,13 @@ import {
 } from '@mui/material';
 import { addDays, format } from 'date-fns';
 import SwapHorizIcon from '@mui/icons-material/SwapHoriz';
-import TrainIcon from '@mui/icons-material/Train';
-import DirectionsTransitIcon from '@mui/icons-material/DirectionsTransit';
-import trainStations from '../assets/trainStations.json';
+import FlightTakeoff from '@mui/icons-material/FlightTakeoff';
+import FlightLand from '@mui/icons-material/FlightLand';
+import popularAirports from '../../assets/airports.json';
 
-const TrainDateSelector = ( { onDateChange, onLocationChange } ) => {
+const FlightDateSelector = ( { onDateChange, onLocationChange } ) => {
     const today = new Date();
-    const [ departureDate, setDepartureDate ] = useState( addDays( today, 1 ) );
+    const [ departureDate, setDepartureDate ] = useState(addDays( today, 1 ));
     const [ returnDate, setReturnDate ] = useState( addDays( today, 7 ) );
     const [ isRoundTrip, setIsRoundTrip ] = useState( true );
     const [ source, setSource ] = useState( null );
@@ -129,8 +129,8 @@ const TrainDateSelector = ( { onDateChange, onLocationChange } ) => {
                                 <Autocomplete
                                     value={source}
                                     onChange={handleSourceChange}
-                                    options={trainStations}
-                                    getOptionLabel={( option ) => option ? `${ option.stationName } (${ option.stationCode })` : ''}
+                                    options={popularAirports}
+                                    getOptionLabel={( option ) => option ? `${ option.name } (${ option.code })` : ''}
                                     fullWidth
                                     disablePortal
                                     sx={{
@@ -142,14 +142,14 @@ const TrainDateSelector = ( { onDateChange, onLocationChange } ) => {
                                     renderInput={( params ) => (
                                         <TextField
                                             {...params}
-                                            placeholder="Select departure station"
+                                            placeholder="Select departure city"
                                             fullWidth
                                             variant="outlined"
                                             InputProps={{
                                                 ...params.InputProps,
                                                 startAdornment: (
                                                     <InputAdornment position="start">
-                                                        <TrainIcon color="primary" />
+                                                        <FlightTakeoff color="primary" />
                                                     </InputAdornment>
                                                 ),
                                             }}
@@ -159,10 +159,10 @@ const TrainDateSelector = ( { onDateChange, onLocationChange } ) => {
                                         <Box component="li" {...props} sx={{ py: 2, px: 3 }}>
                                             <Box>
                                                 <Typography sx={{ fontWeight: 600 }}>
-                                                    {option.stationName} ({option.stationCode})
+                                                    {option.name} ({option.code})
                                                 </Typography>
                                                 <Typography variant="body2" color="text.secondary">
-                                                    {option.fullName}, {option.city}, {option.state}
+                                                    {option.fullName}
                                                 </Typography>
                                             </Box>
                                         </Box>
@@ -205,8 +205,8 @@ const TrainDateSelector = ( { onDateChange, onLocationChange } ) => {
                                 <Autocomplete
                                     value={destination}
                                     onChange={handleDestinationChange}
-                                    options={trainStations}
-                                    getOptionLabel={( option ) => option ? `${ option.stationName } (${ option.stationCode })` : ''}
+                                    options={popularAirports}
+                                    getOptionLabel={( option ) => option ? `${ option.name } (${ option.code })` : ''}
                                     fullWidth
                                     disablePortal
                                     sx={{
@@ -218,14 +218,14 @@ const TrainDateSelector = ( { onDateChange, onLocationChange } ) => {
                                     renderInput={( params ) => (
                                         <TextField
                                             {...params}
-                                            placeholder="Select arrival station"
+                                            placeholder="Select arrival city"
                                             fullWidth
                                             variant="outlined"
                                             InputProps={{
                                                 ...params.InputProps,
                                                 startAdornment: (
                                                     <InputAdornment position="start">
-                                                        <DirectionsTransitIcon color="primary" />
+                                                        <FlightLand color="primary" />
                                                     </InputAdornment>
                                                 ),
                                             }}
@@ -235,10 +235,10 @@ const TrainDateSelector = ( { onDateChange, onLocationChange } ) => {
                                         <Box component="li" {...props} sx={{ py: 2, px: 3 }}>
                                             <Box>
                                                 <Typography sx={{ fontWeight: 600 }}>
-                                                    {option.stationName} ({option.stationCode})
+                                                    {option.name} ({option.code})
                                                 </Typography>
                                                 <Typography variant="body2" color="text.secondary">
-                                                    {option.fullName}, {option.city}, {option.state}
+                                                    {option.fullName}
                                                 </Typography>
                                             </Box>
                                         </Box>
@@ -319,4 +319,4 @@ const TrainDateSelector = ( { onDateChange, onLocationChange } ) => {
     );
 };
 
-export default TrainDateSelector;
+export default FlightDateSelector;

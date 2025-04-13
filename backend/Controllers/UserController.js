@@ -309,7 +309,7 @@ const handleLoginGooglePost = async ( req, res ) => {
             const hashedPassword = await bcrypt.hash( defaultPassword, salt );
 
             // Default phone number
-            const defaultPhone = "1111111111";
+            const defaultPhone = "+911111111111";
 
             // Insert new user
             await pool.execute(

@@ -20,7 +20,7 @@ import {
     DirectionsBoat as BoatIcon
 } from '@mui/icons-material';
 
-import CruiseDateSelector from '../Component/CruiseDateSelector';
+import CruiseDateSelector from '../Component/DateSelector/CruiseDateSelector';
 
 const Cruise = () => {
     const [ searchParams, setSearchParams ] = useState( {

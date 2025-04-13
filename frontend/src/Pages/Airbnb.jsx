@@ -25,7 +25,7 @@ import {
     Weekend
 } from '@mui/icons-material';
 
-import AirbnbDateSelector from '../Component/AirbnbDateSelector';
+import AirbnbDateSelector from '../Component/DateSelector/AirbnbDateSelector';
 
 const Airbnb = () => {
     const [ searchParams, setSearchParams ] = useState( {

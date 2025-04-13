@@ -21,7 +21,7 @@ import {
     DirectionsBus as BusIcon
 } from '@mui/icons-material';
 
-import BusDateSelector from '../Component/BusDateSelector';
+import BusDateSelector from '../Component/DateSelector/BusDateSelector';
 
 const Bus = () => {
     const [ searchParams, setSearchParams ] = useState( {

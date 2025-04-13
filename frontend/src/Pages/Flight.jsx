@@ -20,7 +20,7 @@ import {
   Flight as FlightIcon
 } from '@mui/icons-material';
 
-import FlightDateSelector from '../Component/FlightDateSelector';
+import FlightDateSelector from '../Component/DateSelector/FlightDateSelector';
 
 const Flight = () => {
   const [ searchParams, setSearchParams ] = useState( {

@@ -24,7 +24,7 @@ import {
     CurrencyRupee
 } from '@mui/icons-material';
 
-import CabDateSelector from '../Component/CabDateSelector';
+import CabDateSelector from '../Component/DateSelector/CabDateSelector';
 import cabStops from '../assets/cabStops.json';
 
 const Cab = () => {

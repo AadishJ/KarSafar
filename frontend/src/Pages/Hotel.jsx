@@ -20,7 +20,7 @@ import {
     Star
 } from '@mui/icons-material';
 
-import HotelDateSelector from '../Component/HotelDateSelector';
+import HotelDateSelector from '../Component/DateSelector/HotelDateSelector';
 
 const Hotel = () => {
     const [ searchParams, setSearchParams ] = useState( {

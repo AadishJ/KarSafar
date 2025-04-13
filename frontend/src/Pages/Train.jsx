@@ -20,7 +20,7 @@ import {
     Train as TrainIcon
 } from '@mui/icons-material';
 
-import TrainDateSelector from '../Component/TrainDateSelector';
+import TrainDateSelector from '../Component/DateSelector/TrainDateSelector';
 import { Link } from 'react-router-dom';
 
 const Train = () => {

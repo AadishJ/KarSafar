@@ -11,6 +11,9 @@ import cabRouter from "./Routes/CabRouter.js";
 import cruiseRouter from "./Routes/CruiseController.js";
 import hotelRouter from "./Routes/HotelRouter.js";
 import airbnbRouter from "./Routes/AirbnbRouter.js";
+import { auth } from "google-auth-library";
+import { authUser } from "./Middlewares/auth.js";
+import bookingRouter from "./Routes/BookingRouter.js";
 
 const app = express();
 connectDB();
@@ -42,6 +45,7 @@ app.use( "/cab", cabRouter );
 app.use( "/cruise", cruiseRouter );
 app.use( "/hotel", hotelRouter );
 app.use( "/airbnb", airbnbRouter );
+app.use( "/booking",authUser, bookingRouter );
 
 app.get( "/", ( req, res ) => {
     res.send( "Hello World" );

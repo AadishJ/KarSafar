@@ -150,7 +150,7 @@ async function handleFlightDetailGet( req, res ) {
                 stoppage,
                 stationOrder
             FROM 
-                vehicleStations
+                vehiclestations
             WHERE 
                 vehicleId = UNHEX(?)
             ORDER BY 
@@ -166,7 +166,7 @@ async function handleFlightDetailGet( req, res ) {
                 seatsAvailable,
                 price
             FROM 
-                vehicleCoaches
+                vehiclecoaches
             WHERE 
                 vehicleId = UNHEX(?)`,
             [ flightId ]
@@ -194,4 +194,120 @@ async function handleFlightDetailGet( req, res ) {
     }
 }
 
-export { handleFlightListGet, handleFlightDetailGet };
+async function handleFlightsSeatGet( req, res ) {
+    try {
+        const { flightId } = req.params;
+        const { coachId } = req.query;
+
+        if ( !flightId ) {
+            return res.status( 400 ).json( {
+                success: false,
+                message: 'Flight ID is required'
+            } );
+        }
+
+        if ( !coachId ) {
+            return res.status( 400 ).json( {
+                success: false,
+                message: 'Coach ID is required'
+            } );
+        }
+
+        // First verify the flight exists and is active
+        const [ flightRows ] = await pool.execute(
+            `SELECT 
+                v.vehicleId, 
+                v.status
+            FROM 
+                vehicles v
+            JOIN 
+                flights f ON v.vehicleId = f.vehicleId
+            WHERE 
+                v.vehicleId = UNHEX(?) 
+                AND v.vehicleType = 'flight'`,
+            [ flightId ]
+        );
+
+        if ( flightRows.length === 0 ) {
+            return res.status( 404 ).json( {
+                success: false,
+                message: 'Flight not found'
+            } );
+        }
+
+        if ( flightRows[ 0 ].status !== 'active' ) {
+            return res.status( 400 ).json( {
+                success: false,
+                message: 'This flight is not active'
+            } );
+        }
+
+        // Verify the coach exists for this flight
+        const [ coachRows ] = await pool.execute(
+            `SELECT 
+                vc.coachId, 
+                vc.coachType, 
+                vc.seatsAvailable
+            FROM 
+                vehiclecoaches vc
+            WHERE 
+                vc.vehicleId = UNHEX(?) AND vc.coachId = ?`,
+            [ flightId, coachId ]
+        );
+
+        if ( coachRows.length === 0 ) {
+            return res.status( 404 ).json( {
+                success: false,
+                message: 'Coach not found for this flight'
+            } );
+        }
+
+        // Get all seats that are available for this flight and coach
+        const [ seatsRows ] = await pool.execute(
+            `SELECT 
+                HEX(s.seatId) as seatId,
+                s.seatNumber,
+                'available' as status
+            FROM 
+                seats s
+            WHERE 
+                s.vehicleId = UNHEX(?)
+                AND s.coachId = ?
+                AND s.seatId NOT IN (
+                    -- Exclude seats that are already booked
+                    SELECT 
+                        ps.seatId
+                    FROM 
+                        passengerseats ps
+                    JOIN 
+                        vehiclebookingitems vbi ON ps.vehicleItemId = vbi.vehicleItemId
+                    WHERE 
+                        vbi.vehicleId = UNHEX(?)
+                        AND vbi.status != 'cancelled'
+                )`,
+            [ flightId, coachId, flightId ]
+        );
+
+        // Format the response
+        const formattedSeats = seatsRows.map( seat => ( {
+            seatId: seat.seatId,
+            seatNumber: seat.seatNumber,
+            status: seat.status
+        } ) );
+
+        return res.status( 200 ).json( {
+            success: true,
+            message: 'Seats retrieved successfully',
+            data: formattedSeats
+        } );
+
+    } catch ( error ) {
+        console.error( 'Error fetching flight seats:', error );
+        return res.status( 500 ).json( {
+            success: false,
+            message: 'Internal Server Error',
+            error: process.env.NODE_ENV === 'production' ? null : error.message
+        } );
+    }
+}
+export { handleFlightListGet, handleFlightDetailGet , handleFlightsSeatGet };

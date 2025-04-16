@@ -62,7 +62,7 @@ CREATE TABLE cruises (
     FOREIGN KEY (vehicleId) REFERENCES vehicles(vehicleId) ON DELETE CASCADE
 );
 
-CREATE TABLE vehicleDrivers (
+CREATE TABLE vehicledrivers (
     driverId BINARY(16) PRIMARY KEY,
     vehicleId BINARY(16) NOT NULL,
     driverName VARCHAR(100) NOT NULL,
@@ -70,7 +70,7 @@ CREATE TABLE vehicleDrivers (
     FOREIGN KEY (vehicleId) REFERENCES vehicles(vehicleId) ON DELETE CASCADE
 );
 
-CREATE TABLE vehicleCoaches (
+CREATE TABLE vehiclecoaches (
     coachId VARCHAR(5) PRIMARY KEY,
     vehicleId BINARY(16) NOT NULL,
     coachType VARCHAR(50) NOT NULL,
@@ -117,7 +117,7 @@ CREATE TABLE accommodations (
     description TEXT
 );
 
-CREATE TABLE accommodationAddresses (
+CREATE TABLE accommodationaddresses (
     addressId BINARY(16) PRIMARY KEY,
     accomId BINARY(16) NOT NULL,
     street VARCHAR(100) NOT NULL,
@@ -129,19 +129,19 @@ CREATE TABLE accommodationAddresses (
     FOREIGN KEY (accomId) REFERENCES accommodations(accomId) ON DELETE CASCADE
 );
 
-CREATE TABLE accommodationPhotos (
+CREATE TABLE accommodationphotos (
     photoId BINARY(16) PRIMARY KEY,
     accomId BINARY(16) NOT NULL,
     photoUrl VARCHAR(255) NOT NULL,
     FOREIGN KEY (accomId) REFERENCES accommodations(accomId) ON DELETE CASCADE
 );
 
-CREATE TABLE accommodationAmenities (
+CREATE TABLE accommodationamenities (
     amenityId BINARY(16) PRIMARY KEY,
     amenityType VARCHAR(50) NOT NULL UNIQUE
 );
 
-CREATE TABLE accomAmenityMap (
+CREATE TABLE accomamenitymap (
     accomId BINARY(16) NOT NULL,
     amenityId BINARY(16) NOT NULL,
     PRIMARY KEY (accomId, amenityId),
@@ -189,7 +189,7 @@ CREATE TABLE trips (
     FOREIGN KEY (userId) REFERENCES users(userId) ON DELETE CASCADE
 );
 
-CREATE TABLE vehicleBookingItems (
+CREATE TABLE vehiclebookingitems (
     vehicleItemId BINARY(16) PRIMARY KEY,
     vehicleId BINARY(16) NOT NULL,
     onboardingLocation VARCHAR(100) NOT NULL,
@@ -202,7 +202,7 @@ CREATE TABLE vehicleBookingItems (
     FOREIGN KEY (vehicleId) REFERENCES vehicles(vehicleId) ON DELETE CASCADE
 );
 
-CREATE TABLE accommodationBookingItems (
+CREATE TABLE accommodationbookingitems (
     accomItemId BINARY(16) PRIMARY KEY,
     accomId BINARY(16) NOT NULL,
     checkInDate DATE NOT NULL,
@@ -215,16 +215,16 @@ CREATE TABLE accommodationBookingItems (
     FOREIGN KEY (accomId) REFERENCES accommodations(accomId) ON DELETE CASCADE
 );
 
-CREATE TABLE accomBookingRooms (
+CREATE TABLE accombookingrooms (
     bookingRoomId BINARY(16) PRIMARY KEY,
     accomItemId BINARY(16) NOT NULL,
     roomId BINARY(16) NOT NULL,
     roomNumber VARCHAR(20),
-    FOREIGN KEY (accomItemId) REFERENCES accommodationBookingItems(accomItemId) ON DELETE CASCADE,
+    FOREIGN KEY (accomItemId) REFERENCES accommodationbookingitems(accomItemId) ON DELETE CASCADE,
     FOREIGN KEY (roomId) REFERENCES rooms(roomId) ON DELETE CASCADE
 );
 
-CREATE TABLE passengerSeats (
+CREATE TABLE passengerseats (
     passengerId BINARY(16) PRIMARY KEY,
     vehicleItemId BINARY(16) NOT NULL,
     seatId BINARY(16) NOT NULL,
@@ -232,7 +232,7 @@ CREATE TABLE passengerSeats (
     age INT NOT NULL,
     gender ENUM('male', 'female', 'other') NOT NULL,
     foodPreference ENUM('veg', 'non-veg', 'vegan', 'none') DEFAULT 'none',
-    FOREIGN KEY (vehicleItemId) REFERENCES vehicleBookingItems(vehicleItemId) ON DELETE CASCADE,
+    FOREIGN KEY (vehicleItemId) REFERENCES vehiclebookingitems(vehicleItemId) ON DELETE CASCADE,
     FOREIGN KEY (seatId) REFERENCES seats(seatId) ON DELETE CASCADE,
     UNIQUE KEY unique_vehicle_seat (vehicleItemId, seatId)
 );
@@ -248,7 +248,7 @@ CREATE TABLE bookings (
     FOREIGN KEY (tripId) REFERENCES trips(tripId) ON DELETE SET NULL
 );
 
-CREATE TABLE bookingItems (
+CREATE TABLE bookingitems (
     bookingItemId BINARY(16) PRIMARY KEY,
     bookingId BINARY(16) NOT NULL,
     itemType ENUM('vehicle', 'accommodation') NOT NULL,
@@ -256,14 +256,14 @@ CREATE TABLE bookingItems (
     accomItemId BINARY(16),
     price DECIMAL(10,2) NOT NULL,
     FOREIGN KEY (bookingId) REFERENCES bookings(bookingId) ON DELETE CASCADE,
-    FOREIGN KEY (vehicleItemId) REFERENCES vehicleBookingItems(vehicleItemId) ON DELETE SET NULL,
-    FOREIGN KEY (accomItemId) REFERENCES accommodationBookingItems(accomItemId) ON DELETE SET NULL
+    FOREIGN KEY (vehicleItemId) REFERENCES vehiclebookingitems(vehicleItemId) ON DELETE SET NULL,
+    FOREIGN KEY (accomItemId) REFERENCES accommodationbookingitems(accomItemId) ON DELETE SET NULL
 );
 
 DELIMITER //
 
 CREATE TRIGGER before_insert_bookingItems
-BEFORE INSERT ON bookingItems
+BEFORE INSERT ON bookingitems
 FOR EACH ROW
 BEGIN
     -- Ensure only one of vehicleItemId or accomItemId is set based on itemType
@@ -275,7 +275,7 @@ BEGIN
 END //
 
 CREATE TRIGGER before_update_bookingItems
-BEFORE UPDATE ON bookingItems
+BEFORE UPDATE ON bookingitems
 FOR EACH ROW
 BEGIN
     -- Ensure only one of vehicleItemId or accomItemId is set based on itemType

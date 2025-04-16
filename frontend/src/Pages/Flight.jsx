@@ -21,6 +21,7 @@ import {
 } from '@mui/icons-material';
 
 import FlightDateSelector from '../Component/DateSelector/FlightDateSelector';
+import { Link } from 'react-router-dom';
 
 const Flight = () => {
   const [ searchParams, setSearchParams ] = useState( {
@@ -218,13 +219,15 @@ const Flight = () => {
                         </Box>
 
                         <Box mt={2} display="flex" justifyContent="flex-end">
-                          <Button
-                            variant="contained"
-                            color="primary"
-                            size="medium"
-                          >
-                            Book Now
-                          </Button>
+                          <Link to={`/flights/${ flight.id }`} style={{ textDecoration: 'none' }}>
+                            <Button
+                              variant="contained"
+                              color="primary"
+                              size="medium"
+                            >
+                              Book Now
+                            </Button>
+                          </Link>
                         </Box>
                       </Grid>
                     </Grid>

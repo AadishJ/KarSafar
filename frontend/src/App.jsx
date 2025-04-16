@@ -13,6 +13,9 @@ import Cruise from './Pages/Cruise'
 import Hotel from './Pages/Hotel'
 import Airbnb from './Pages/Airbnb'
 import GoogleAuth from './Pages/GoogleAuth'
+import FlightId from './Pages/FlightId'
+import BookingFlight from './Pages/BookingFlight'
+import Bookings from './Pages/Bookings'
 
 
 const App = () => {
@@ -20,21 +23,24 @@ const App = () => {
   return (
     <>
       <div>
-          <ToastContainer position='bottom-center' autoClose='1500' />
-          <Navbar />
-          <Routes>
+        <ToastContainer position='bottom-center' autoClose='1500' />
+        <Navbar />
+        <Routes>
           <Route path='/' element={<Home />} />
           <Route path='/login' element={<Login />} />
           <Route path='/register' element={<Register />} />
-          <Route path='/flights' element={<Flight/>} />
-          <Route path='/trains' element={<Train/>} />
+          <Route path='/bookings' element={<Bookings />} />
+          <Route path='/flights' element={<Flight />} />
+          <Route path='/flights/:id' element={<FlightId />} />
+          <Route path='/booking/flight/:id' element={<BookingFlight />} />
+          <Route path='/trains' element={<Train />} />
           <Route path='/buses' element={<Bus />} />
           <Route path='/cabs' element={<Cab />} />
           <Route path='/cruises' element={<Cruise />} />
           <Route path='/hotels' element={<Hotel />} />
           <Route path='/airbnbs' element={<Airbnb />} />
-          <Route path='/api/auth/callback' element={<GoogleAuth/>} />
-          </Routes>
+          <Route path='/api/auth/callback' element={<GoogleAuth />} />
+        </Routes>
       </div>
     </>
   )

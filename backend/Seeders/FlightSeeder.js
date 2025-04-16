@@ -1,8 +1,9 @@
 import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { v4 as uuidv4 } from 'uuid';
 import mysql from 'mysql2/promise';
+import fs from 'fs';
+import { parse } from 'csv-parse/sync';
 
 // Get the directory name properly in ESM
 const __filename = fileURLToPath( import.meta.url );
@@ -16,16 +17,55 @@ dotenv.config( { path: envPath } );
 const pool = mysql.createPool( {
     host: process.env.DB_HOST || 'localhost',
     user: process.env.DB_USER || 'root',
-    password: process.env.DB_PASSWORD || 'Fire$torm@123',
-    database: process.env.DB_NAME || 'karsafar_db',
+    password: process.env.DB_PASSWORD || '',
+    database: process.env.DB_NAME || '',
     waitForConnections: true,
     connectionLimit: 10,
     queueLimit: 0
 } );
 
-// Helper function to generate UUID without dashes
-const generateUuid = () => uuidv4().replace( /-/g, '' );
+// Log connection info
+console.log( 'Database connection info:' );
+console.log( `Host: ${ process.env.DB_HOST || 'localhost' }` );
+console.log( `User: ${ process.env.DB_USER || 'root' }` );
+console.log( `Database: ${ process.env.DB_NAME || 'karsafar_db' }` );
 
+// Path to CSV files
+const csvBasePath = path.resolve( __dirname, '../../Safe' );
+
+// Read and parse CSV files
+const readCSV = ( filename ) => {
+    const filePath = path.join( csvBasePath, filename );
+    console.log( `Reading CSV file: ${ filePath }` );
+    try {
+        const fileContent = fs.readFileSync( filePath, 'utf8' );
+        // Remove any BOM and clean up the file contents
+        const cleanContent = fileContent.replace( /^\uFEFF/, '' ).trim();
+        return parse( cleanContent, {
+            columns: true,
+            skip_empty_lines: true
+        } );
+    } catch ( error ) {
+        console.error( `Error reading ${ filename }:`, error.message );
+        return [];
+    }
+};
+
+// Helper function to format UUID for MySQL UNHEX
+const formatUuidForUnhex = ( uuid ) => {
+    // Remove dashes from the UUID
+    return uuid.replace( /-/g, '' );
+};
+
+// Helper function to handle NULL values in datetime fields
+const parseDateTime = ( value ) => {
+    if ( !value || value === 'NULL' || value.toUpperCase() === 'NULL' ) {
+        return null;
+    }
+    return value;
+};
+
+// Test the database connection
 const testConnection = async () => {
     try {
         const connection = await pool.getConnection();
@@ -38,86 +78,130 @@ const testConnection = async () => {
     }
 };
 
-const addDelhiMumbaiFlight = async () => {
+// Helper function to clear existing flight data
+const clearExistingFlightData = async () => {
+    try {
+        // Only delete flight-related data
+        await pool.execute( 'DELETE FROM vehiclestations WHERE vehicleId IN (SELECT vehicleId FROM vehicles WHERE vehicleType = "flight")' );
+        await pool.execute( 'DELETE FROM vehiclecoaches WHERE vehicleId IN (SELECT vehicleId FROM vehicles WHERE vehicleType = "flight")' );
+        await pool.execute( 'DELETE FROM flights' );
+        await pool.execute( 'DELETE FROM vehicles WHERE vehicleType = "flight"' );
+
+        console.log( 'Existing flight data cleared successfully.' );
+    } catch ( error ) {
+        console.error( 'Error clearing existing flight data:', error );
+        throw error;
+    }
+};
+
+// Main seeding function for flights
+const seedFlights = async () => {
     try {
         // Test connection first
         const connected = await testConnection();
         if ( !connected ) {
-            throw new Error( 'Failed to connect to database' );
+            throw new Error( 'Failed to connect to database. Please check your credentials.' );
         }
 
-        console.log( 'Adding Delhi-Mumbai flight for 2025-04-10...' );
+        console.log( 'Starting flight data seeding with CSV data...' );
 
-        // Generate UUID for the flight
-        const flightId = generateUuid();
+        // Clear existing flight data first to avoid conflicts
+        await clearExistingFlightData();
 
-        // 1. Insert the vehicle record first
-        await pool.execute(
-            'INSERT INTO vehicles (vehicleId, vehicleType, status, availableSeats) VALUES (UNHEX(?), ?, ?, ?)',
-            [ flightId, 'flight', 'active', 180 ]
-        );
-        console.log( 'Vehicle record created with ID:', flightId );
+        // Read CSV data
+        const vehicles = readCSV( 'vehicles.csv' );
+        const flights = readCSV( 'flights.csv' );
+        const vehicleCoaches = readCSV( 'vehicleCoaches.csv' );
+        const vehicleStations = readCSV( 'vehicleStations.csv' );
 
-        // 2. Insert the flight record
-        await pool.execute(
-            'INSERT INTO flights (vehicleId, flightName) VALUES (UNHEX(?), ?)',
-            [ flightId, 'IndiJet AI-202' ]
-        );
-        console.log( 'Flight record created' );
-
-        // 3. Insert departure station (Delhi) - FIXED VERSION
-        const departureStationId = generateUuid();
-        await pool.execute(
-            'INSERT INTO vehiclestations (stationId, vehicleId, stationName, departureTime, arrivalTime, stoppage, stationOrder) VALUES (UNHEX(?), UNHEX(?), ?, ?, NULL, ?, ?)',
-            [
-                departureStationId,
-                flightId,
-                'Delhi',
-                new Date( '2025-04-10T08:30:00' ),
-                0,  // Stoppage
-                1   // Station order
-            ]
-        );
-        console.log( 'Delhi station record created' );
-
-        // 4. Insert arrival station (Mumbai) - FIXED VERSION
-        const arrivalStationId = generateUuid();
-        await pool.execute(
-            'INSERT INTO vehiclestations (stationId, vehicleId, stationName, departureTime, arrivalTime, stoppage, stationOrder) VALUES (UNHEX(?), UNHEX(?), ?, NULL, ?, ?, ?)',
-            [
-                arrivalStationId,
-                flightId,
-                'Mumbai',
-                new Date( '2025-04-10T10:45:00' ),
-                0,  // Stoppage
-                2   // Station order
-            ]
-        );
-        console.log( 'Mumbai station record created' );
-
-        // 5. Insert coach types with different prices
-        const coachTypes = [
-            { id: 'FC1', type: 'First Class', seats: 20, price: 9500.00 },
-            { id: 'BC1', type: 'Business Class', seats: 40, price: 6500.00 },
-            { id: 'EC1', type: 'Economy Class', seats: 120, price: 4200.00 }
-        ];
-
-        for ( const coach of coachTypes ) {
+        // Insert vehicles
+        console.log( 'Inserting flight vehicles...' );
+        for ( const vehicle of vehicles ) {
+            const formattedUuid = formatUuidForUnhex( vehicle.vehicleId );
             await pool.execute(
-                'INSERT INTO vehiclecoaches (vehicleId, coachId, coachType, seatsAvailable, price) VALUES (UNHEX(?), ?, ?, ?, ?)',
-                [ flightId, coach.id, coach.type, coach.seats, coach.price ]
+                'INSERT INTO vehicles (vehicleId, vehicleType, status, availableSeats) VALUES (UNHEX(?), ?, ?, ?)',
+                [
+                    formattedUuid,
+                    vehicle.vehicleType,
+                    vehicle.status,
+                    parseInt( vehicle.availableSeats, 10 )
+                ]
             );
         }
-        console.log( 'Coach records created' );
+        console.log( 'Flight vehicles inserted successfully.' );
 
-        console.log( 'Delhi-Mumbai flight has been added successfully!' );
-        console.log( `Flight ID: ${ flightId }` );
-        console.log( `Flight Name: IndiJet AI-202` );
-        console.log( `Departure: Delhi at 2025-04-10 08:30:00` );
-        console.log( `Arrival: Mumbai at 2025-04-10 10:45:00` );
+        // Insert flights
+        console.log( 'Inserting flights...' );
+        for ( const flight of flights ) {
+            const formattedUuid = formatUuidForUnhex( flight.vehicleId );
+            await pool.execute(
+                'INSERT INTO flights (vehicleId, flightName) VALUES (UNHEX(?), ?)',
+                [
+                    formattedUuid,
+                    flight.flightName
+                ]
+            );
+        }
+        console.log( 'Flights inserted successfully.' );
 
+        // Insert vehicle coaches
+        console.log( 'Inserting flight coaches...' );
+        for ( const coach of vehicleCoaches ) {
+            try {
+                const formattedUuid = formatUuidForUnhex( coach.vehicleId );
+                await pool.execute(
+                    'INSERT INTO vehiclecoaches (vehicleId, coachId, coachType, seatsAvailable, price) VALUES (UNHEX(?), ?, ?, ?, ?)',
+                    [
+                        formattedUuid,
+                        coach.coachId,
+                        coach.coachType,
+                        parseInt( coach.seatsAvailable, 10 ),
+                        parseFloat( coach.price )
+                    ]
+                );
+            } catch ( err ) {
+                console.warn( `Skipping coach insertion due to error: vehicleId=${ coach.vehicleId }, coachId=${ coach.coachId }` );
+                console.warn( `Error details: ${ err.message }` );
+            }
+        }
+        console.log( 'Flight coaches inserted successfully.' );
+
+        // Insert vehicle stations
+        console.log( 'Inserting flight stations...' );
+        for ( const station of vehicleStations ) {
+            try {
+                const formattedVehicleId = formatUuidForUnhex( station.vehicleId );
+                const formattedStationId = formatUuidForUnhex( station.stationId );
+
+                // Parse arrival and departure times
+                const arrivalTime = parseDateTime( station.arrivalTime );
+                const departureTime = parseDateTime( station.departureTime );
+
+                console.log( `Processing station: ${ station.stationName }, arrivalTime: ${ arrivalTime }, departureTime: ${ departureTime }` );
+
+                await pool.execute(
+                    'INSERT INTO vehiclestations (stationId, vehicleId, stationName, arrivalTime, departureTime, stoppage, stationOrder) VALUES (UNHEX(?), UNHEX(?), ?, ?, ?, ?, ?)',
+                    [
+                        formattedStationId,
+                        formattedVehicleId,
+                        station.stationName,
+                        arrivalTime,
+                        departureTime,
+                        parseInt( station.stoppage, 10 ),
+                        parseInt( station.stationOrder, 10 )
+                    ]
+                );
+                console.log( `Station inserted: ${ station.stationName }` );
+            } catch ( err ) {
+                console.warn( `Skipping station insertion due to error: stationId=${ station.stationId }, stationName=${ station.stationName }` );
+                console.warn( `Error details: ${ err.message }` );
+            }
+        }
+        console.log( 'Flight stations inserted successfully.' );
+
+        console.log( 'Flight data seeding completed successfully!' );
     } catch ( error ) {
-        console.error( 'Error adding flight:', error );
+        console.error( 'Error seeding flight data:', error );
         throw error;
     } finally {
         // Close the pool when done
@@ -125,16 +209,16 @@ const addDelhiMumbaiFlight = async () => {
     }
 };
 
-// Run the function
-const run = async () => {
+// Run the seeder function
+const runSeeder = async () => {
     try {
-        await addDelhiMumbaiFlight();
-        console.log( 'Flight added successfully!' );
+        await seedFlights();
+        console.log( 'All flight seeding operations completed successfully!' );
         process.exit( 0 );
     } catch ( error ) {
-        console.error( 'Failed to add flight:', error );
+        console.error( 'Failed to seed flight data:', error );
         process.exit( 1 );
     }
 };
 
-run();
+runSeeder();

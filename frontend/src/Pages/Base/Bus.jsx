@@ -10,29 +10,29 @@ import {
     CircularProgress,
     Chip
 } from '@mui/material';
-import axiosInstance from '../Config/axiosInstance';
+import axiosInstance from '../../Config/axiosInstance';
 import { format } from 'date-fns';
 import {
-    DirectionsBoat,
+    DirectionsBus,
     LocationOn,
     AccessTime,
-    People,
-    DirectionsBoat as BoatIcon
+    EventSeat,
+    AirlineSeatReclineNormal,
+    DirectionsBus as BusIcon
 } from '@mui/icons-material';
 
-import CruiseDateSelector from '../Component/DateSelector/CruiseDateSelector';
+import BusDateSelector from '../../Component/DateSelector/BusDateSelector';
 
-const Cruise = () => {
+const Bus = () => {
     const [ searchParams, setSearchParams ] = useState( {
-        departurePort: '',
-        destinationPort: '',
+        source: '',
+        destination: '',
         departureDate: null,
         returnDate: null,
-        duration: 7,
         isRoundTrip: true
     } );
 
-    const [ cruises, setCruises ] = useState( [] );
+    const [ buses, setBuses ] = useState( [] );
     const [ loading, setLoading ] = useState( false );
     const [ error, setError ] = useState( null );
     const [ searched, setSearched ] = useState( false );
@@ -49,22 +49,15 @@ const Cruise = () => {
     const handleLocationChange = ( locationInfo ) => {
         setSearchParams( prev => ( {
             ...prev,
-            departurePort: locationInfo.departurePort?.name || '',
-            destinationPort: locationInfo.destinationPort?.name || ''
+            source: locationInfo.source?.name || '',
+            destination: locationInfo.destination?.name || ''
         } ) );
     };
 
-    const handleDurationChange = ( durationInfo ) => {
-        setSearchParams( prev => ( {
-            ...prev,
-            duration: durationInfo.duration
-        } ) );
-    };
-
-    const searchCruises = async () => {
+    const searchBuses = async () => {
         // Validate search parameters
-        if ( !searchParams.departurePort || !searchParams.destinationPort || !searchParams.departureDate ) {
-            setError( 'Please select departure port, destination port, and departure date' );
+        if ( !searchParams.source || !searchParams.destination || !searchParams.departureDate ) {
+            setError( 'Please select source, destination and departure date' );
             return;
         }
 
@@ -78,23 +71,22 @@ const Cruise = () => {
 
             // Build the query parameters
             const params = {
-                departurePort: searchParams.departurePort,
-                destinationPort: searchParams.destinationPort,
-                departureDate: formattedDepartureDate,
-                duration: searchParams.duration
+                source: searchParams.source,
+                destination: searchParams.destination,
+                departureDate: formattedDepartureDate
             };
 
             // Make API call
-            const response = await axiosInstance.get( '/cruise/list', { params } );
+            const response = await axiosInstance.get( '/bus/list', { params } );
 
             if ( response.data.success ) {
-                setCruises( response.data.data );
+                setBuses( response.data.data );
             } else {
-                setError( 'Failed to fetch cruises' );
+                setError( 'Failed to fetch buses: ' + ( response.data.message || '' ) );
             }
         } catch ( err ) {
-            console.error( 'Error fetching cruises:', err );
-            setError( 'An error occurred while searching for cruises' );
+            console.error( 'Error fetching buses:', err );
+            setError( 'An error occurred while searching for buses' );
         } finally {
             setLoading( false );
         }
@@ -112,16 +104,15 @@ const Cruise = () => {
     return (
         <Container maxWidth="lg" sx={{ py: 4 }}>
             <Typography variant="h4" component="h1" gutterBottom align="center" className="mb-6 font-bold text-gray-800">
-                Cruise Search
+                Bus Search
             </Typography>
 
             {/* Search Section */}
             <Paper elevation={3} className="mb-8">
                 <Box p={3}>
-                    <CruiseDateSelector
+                    <BusDateSelector
                         onDateChange={handleDateChange}
                         onLocationChange={handleLocationChange}
-                        onDurationChange={handleDurationChange}
                     />
 
                     <Box mt={3} display="flex" justifyContent="center">
@@ -129,12 +120,12 @@ const Cruise = () => {
                             variant="contained"
                             color="primary"
                             size="large"
-                            onClick={searchCruises}
-                            startIcon={<BoatIcon />}
+                            onClick={searchBuses}
+                            startIcon={<BusIcon />}
                             disabled={loading}
                             className="px-8 py-3"
                         >
-                            {loading ? <CircularProgress size={24} color="inherit" /> : 'Search Cruises'}
+                            {loading ? <CircularProgress size={24} color="inherit" /> : 'Search Buses'}
                         </Button>
                     </Box>
 
@@ -151,55 +142,64 @@ const Cruise = () => {
                 <Box>
                     <Typography variant="h5" component="h2" gutterBottom className="mb-4">
                         {loading ? 'Searching...' :
-                            cruises.length > 0 ? `${ cruises.length } Cruises Found` : 'No Cruises Found'}
+                            buses.length > 0 ? `${ buses.length } Buses Found` : 'No Buses Found'}
                     </Typography>
 
-                    {cruises.length > 0 && (
+                    {buses.length > 0 && (
                         <Grid container spacing={3}>
-                            {cruises.map( ( cruise ) => (
-                                <Grid item xs={12} key={cruise.id}>
+                            {buses.map( ( bus ) => (
+                                <Grid item xs={12} key={bus.id}>
                                     <Paper elevation={2} className="p-4 hover:shadow-lg transition-shadow duration-300">
                                         <Grid container spacing={2}>
-                                            {/* Cruise info */}
+                                            {/* Bus info */}
                                             <Grid item xs={12} md={3}>
                                                 <Typography variant="h6" className="font-medium">
-                                                    {cruise.name}
+                                                    {bus.name || bus.operatorName}
                                                 </Typography>
                                                 <Typography variant="body2" color="textSecondary">
-                                                    Cruise #{cruise.id.substring( 0, 6 )}
+                                                    {bus.type || 'Express'} • {bus.busNumber || bus.id.substring( 0, 6 )}
                                                 </Typography>
                                                 <Chip
                                                     size="small"
-                                                    label={cruise.status}
-                                                    color={cruise.status === 'active' ? 'success' : 'default'}
-                                                    className="mt-2"
+                                                    label={bus.amenities?.ac ? 'AC' : 'Non-AC'}
+                                                    color={bus.amenities?.ac ? 'success' : 'default'}
+                                                    className="mt-2 mr-1"
                                                 />
+                                                {bus.amenities?.sleeper && (
+                                                    <Chip
+                                                        size="small"
+                                                        label="Sleeper"
+                                                        color="primary"
+                                                        variant="outlined"
+                                                        className="mt-2"
+                                                    />
+                                                )}
                                             </Grid>
 
                                             {/* Departure and arrival */}
                                             <Grid item xs={12} md={5}>
                                                 <Box display="flex" alignItems="center" className="mb-1">
-                                                    <DirectionsBoat color="primary" className="mr-2" />
+                                                    <DirectionsBus color="primary" className="mr-2" />
                                                     <div>
                                                         <Typography variant="body2" className="font-medium">
-                                                            {format( new Date( cruise.departureTime ), 'MMM dd, yyyy' )}
+                                                            {format( new Date( bus.departureTime ), 'hh:mm a' )}
                                                         </Typography>
                                                         <Typography variant="body2" color="textSecondary">
-                                                            {cruise.departurePort}
+                                                            {bus.source || bus.from}
                                                         </Typography>
                                                     </div>
                                                 </Box>
 
-                                                <Box className="border-l-2 border-dashed border-gray-300 h-6 ml-3"></Box>
+                                                <Box className="border-l-2 border-gray-300 h-6 ml-3"></Box>
 
                                                 <Box display="flex" alignItems="center">
                                                     <LocationOn color="primary" className="mr-2" />
                                                     <div>
                                                         <Typography variant="body2" className="font-medium">
-                                                            {format( new Date( cruise.arrivalTime ), 'MMM dd, yyyy' )}
+                                                            {format( new Date( bus.arrivalTime ), 'hh:mm a' )}
                                                         </Typography>
                                                         <Typography variant="body2" color="textSecondary">
-                                                            {cruise.destinationPort}
+                                                            {bus.destination || bus.to}
                                                         </Typography>
                                                     </div>
                                                 </Box>
@@ -207,7 +207,8 @@ const Cruise = () => {
                                                 <Box display="flex" alignItems="center" className="mt-2">
                                                     <AccessTime fontSize="small" className="mr-1 text-gray-500" />
                                                     <Typography variant="body2" color="textSecondary">
-                                                        {cruise.duration.display}
+                                                        {bus.duration?.display || bus.durationText || '10h 30m'}
+                                                        {bus.distance && ` • ${ bus.distance }`}
                                                     </Typography>
                                                 </Box>
                                             </Grid>
@@ -216,19 +217,32 @@ const Cruise = () => {
                                             <Grid item xs={12} md={4}>
                                                 <Box display="flex" alignItems="center" justifyContent="space-between">
                                                     <Box display="flex" alignItems="center">
-                                                        <People className="mr-1 text-gray-500" />
+                                                        <EventSeat className="mr-1 text-gray-500" />
                                                         <Typography variant="body2" color="textSecondary">
-                                                            {cruise.availableSeats} cabins available
+                                                            {bus.availableSeats || 'Limited'} seats available
                                                         </Typography>
                                                     </Box>
 
                                                     <Typography variant="h6" color="primary" className="font-bold">
-                                                        {formatPrice( cruise.basePrice )}
-                                                        <Typography variant="caption" sx={{ display: 'block', textAlign: 'right' }}>
-                                                            per person
-                                                        </Typography>
+                                                        {formatPrice( bus.basePrice || bus.fare || 899 )}
                                                     </Typography>
                                                 </Box>
+
+                                                {bus.amenities && (
+                                                    <Box mt={1} display="flex" flexWrap="wrap" gap={0.5}>
+                                                        {Object.entries( bus.amenities )
+                                                            .filter( ( [ _, value ] ) => value === true )
+                                                            .map( ( [ key ] ) => (
+                                                                <Chip
+                                                                    key={key}
+                                                                    label={key.charAt( 0 ).toUpperCase() + key.slice( 1 )}
+                                                                    size="small"
+                                                                    variant="outlined"
+                                                                    sx={{ mr: 0.5, mb: 0.5 }}
+                                                                />
+                                                            ) )}
+                                                    </Box>
+                                                )}
 
                                                 <Box mt={2} display="flex" justifyContent="flex-end">
                                                     <Button
@@ -247,13 +261,13 @@ const Cruise = () => {
                         </Grid>
                     )}
 
-                    {!loading && cruises.length === 0 && searched && (
+                    {!loading && buses.length === 0 && searched && (
                         <Paper elevation={1} className="p-8 text-center">
                             <Typography variant="body1" color="textSecondary">
-                                No cruises found matching your search criteria.
+                                No buses found matching your search criteria.
                             </Typography>
                             <Typography variant="body2" color="textSecondary" className="mt-2">
-                                Try changing your search parameters, dates, or duration.
+                                Try changing your search parameters or dates.
                             </Typography>
                         </Paper>
                     )}
@@ -263,4 +277,4 @@ const Cruise = () => {
     );
 };
 
-export default Cruise;
+export default Bus; 

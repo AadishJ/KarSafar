@@ -26,64 +26,65 @@ import {
     RadioGroup,
     FormControlLabel
 } from '@mui/material';
-import axiosInstance from '../Config/axiosInstance';
+import axiosInstance from '../../Config/axiosInstance';
 import { format, parseISO } from 'date-fns';
 import {
-    FlightTakeoff,
-    FlightLand,
+    TrainOutlined,
+    ArrowDownward,
+    ArrowUpward,
     AccessTime,
-    AirlineSeatReclineNormal,
-    Flight as FlightIcon,
+    Weekend,
     ArrowBack,
     LuggageOutlined,
     Restaurant,
     Wifi,
-    Power
+    Power,
+    DirectionsRailwayFilledOutlined
 } from '@mui/icons-material';
 
-const FlightId = () => {
+const TrainId = () => {
     const { id } = useParams();
     const navigate = useNavigate();
-    const [ flight, setFlight ] = useState( null );
+    const [ train, setTrain ] = useState( null );
     const [ loading, setLoading ] = useState( true );
     const [ error, setError ] = useState( null );
     const [ selectedCoach, setSelectedCoach ] = useState( null );
 
     useEffect( () => {
-        const fetchFlightDetails = async () => {
+        const fetchTrainDetails = async () => {
             try {
                 setLoading( true );
-                const response = await axiosInstance.get( `/flight/${ id }` );
+                const response = await axiosInstance.get( `/train/${ id }` );
 
                 if ( response.data.success ) {
-                    const flightData = response.data.data;
+                    const trainData = response.data.data;
 
                     // Adjust data to match component expectations
                     // The API returns 'route' but the component expects 'stations'
                     const processedData = {
-                        ...flightData,
-                        stations: flightData.route || []
+                        ...trainData,
+                        stations: trainData.route || []
                     };
 
-                    setFlight( processedData );
+                    setTrain( processedData );
 
                     // Auto-select the first coach type
-                    if ( flightData.coaches && flightData.coaches.length > 0 ) {
-                        setSelectedCoach( flightData.coaches[ 0 ].coachId );
+                    if ( trainData.coaches && trainData.coaches.length > 0 ) {
+                        setSelectedCoach( trainData.coaches[ 0 ].coachId );
                     }
                 } else {
-                    setError( 'Failed to fetch flight details' );
+                    setError( 'Failed to fetch train details' );
                 }
             } catch ( err ) {
-                console.error( 'Error fetching flight details:', err );
-                setError( 'An error occurred while retrieving flight information' );
+                console.error( 'Error fetching train details:', err );
+                setError( 'An error occurred while retrieving train information' );
             } finally {
                 setLoading( false );
             }
         };
 
         if ( id ) {
-            fetchFlightDetails();
+            fetchTrainDetails();
         }
     }, [ id ] );
 
@@ -133,12 +134,12 @@ const FlightId = () => {
             alert( 'Please select a coach class' );
             return;
         }
-        // Navigate to booking page with flight and coach info
-        navigate( `/booking/flight/${ id }`, {
+        // Navigate to booking page with train and coach info
+        navigate( `/booking/train/${ id }`, {
             state: {
-                flightId: id,
+                trainId: id,
                 coachId: selectedCoach,
-                selectedCoach: flight.coaches.find( coach => coach.coachId === selectedCoach )
+                selectedCoach: train.coaches.find( coach => coach.coachId === selectedCoach )
             }
         } );
     };
@@ -168,14 +169,14 @@ const FlightId = () => {
                         {error}
                     </Typography>
                     <Typography variant="body1" sx={{ mt: 2 }}>
-                        Unable to load flight details. Please try again later.
+                        Unable to load train details. Please try again later.
                     </Typography>
                 </Paper>
             </Container>
         );
     }
 
-    if ( !flight ) {
+    if ( !train ) {
         return (
             <Container>
                 <Button startIcon={<ArrowBack />} onClick={goBack} sx={{ mb: 3 }}>
@@ -183,10 +184,10 @@ const FlightId = () => {
                 </Button>
                 <Paper elevation={2} sx={{ p: 4, textAlign: 'center' }}>
                     <Typography variant="h6">
-                        Flight Not Found
+                        Train Not Found
                     </Typography>
                     <Typography variant="body1" sx={{ mt: 2 }}>
-                        The requested flight could not be found.
+                        The requested train could not be found.
                     </Typography>
                 </Paper>
             </Container>
@@ -194,7 +195,7 @@ const FlightId = () => {
     }
 
     // Get the first and last stations
-    const stations = flight.stations || [];
+    const stations = train.stations || [];
     const departureStation = stations.find( station => station.stationOrder === 1 );
     const arrivalStation = stations.length > 0
         ? stations.reduce( ( prev, current ) => ( prev.stationOrder > current.stationOrder ) ? prev : current )
@@ -207,29 +208,29 @@ const FlightId = () => {
             </Button>
 
             <Typography variant="h4" component="h1" gutterBottom sx={{ mb: 3 }}>
-                Flight Details
+                Train Details
             </Typography>
 
-            {/* Flight Summary Card */}
+            {/* Train Summary Card */}
             <Paper elevation={3} sx={{ mb: 4, p: 3, borderRadius: 2 }}>
                 <Grid container spacing={2}>
                     <Grid item xs={12} md={5}>
                         <Box display="flex" alignItems="center" sx={{ mb: 1 }}>
-                            <FlightIcon color="primary" sx={{ mr: 1, fontSize: 40 }} />
+                            <DirectionsRailwayFilledOutlined color="primary" sx={{ mr: 1, fontSize: 40 }} />
                             <Box>
                                 <Typography variant="h5" component="h2" sx={{ fontWeight: 'bold' }}>
-                                    {flight.flightName}
+                                    {train.trainName}
                                 </Typography>
                                 <Chip
                                     size="small"
-                                    label={flight.status}
-                                    color={flight.status === 'active' ? 'success' : 'default'}
+                                    label={train.status}
+                                    color={train.status === 'active' ? 'success' : 'default'}
                                     sx={{ mt: 0.5 }}
                                 />
                             </Box>
                         </Box>
                         <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                            Flight ID: {flight.flightId ? flight.flightId.substring( 0, 8 ) : id.substring( 0, 8 )}...
+                            Train ID: {train.trainId ? train.trainId.substring( 0, 8 ) : id.substring( 0, 8 )}...
                         </Typography>
                     </Grid>
 
@@ -276,9 +277,9 @@ const FlightId = () => {
                 </Grid>
             </Paper>
 
-            {/* Flight Route */}
+            {/* Train Route */}
             <Typography variant="h5" component="h2" gutterBottom sx={{ mt: 4, mb: 2 }}>
-                Flight Route
+                Train Route
             </Typography>
 
             <Paper elevation={2} sx={{ p: 3, mb: 4 }}>
@@ -294,7 +295,7 @@ const FlightId = () => {
                                 <Box sx={{ mb: 2 }}>
                                     {station.arrivalTime && (
                                         <Typography variant="body2">
-                                            <FlightLand fontSize="small" sx={{ mr: 1, verticalAlign: 'middle' }} />
+                                            <ArrowDownward fontSize="small" sx={{ mr: 1, verticalAlign: 'middle' }} />
                                             Arrival: {formatDateTime( station.arrivalTime )}
                                         </Typography>
                                     )}
@@ -308,7 +309,7 @@ const FlightId = () => {
 
                                     {station.departureTime && (
                                         <Typography variant="body2">
-                                            <FlightTakeoff fontSize="small" sx={{ mr: 1, verticalAlign: 'middle' }} />
+                                            <ArrowUpward fontSize="small" sx={{ mr: 1, verticalAlign: 'middle' }} />
                                             Departure: {formatDateTime( station.departureTime )}
                                         </Typography>
                                     )}
@@ -341,7 +342,7 @@ const FlightId = () => {
                                 </TableRow>
                             </TableHead>
                             <TableBody>
-                                {flight.coaches && flight.coaches.map( ( coach ) => (
+                                {train.coaches && train.coaches.map( ( coach ) => (
                                     <TableRow
                                         key={coach.coachId}
                                         sx={{
@@ -363,24 +364,41 @@ const FlightId = () => {
                                         </TableCell>
                                         <TableCell>
                                             <Box display="flex" gap={1}>
-                                                {coach.coachType === 'Economy' && (
+                                                {coach.coachType === 'Sleeper' && (
                                                     <>
-                                                        <Chip size="small" icon={<LuggageOutlined />} label="15kg" />
+                                                        <Chip size="small" icon={<Weekend />} label="Berth" />
+                                                        <Chip size="small" icon={<LuggageOutlined />} label="25kg" />
                                                     </>
                                                 )}
-                                                {coach.coachType === 'Business' && (
+                                                {coach.coachType.includes( 'AC 3' ) && (
                                                     <>
-                                                        <Chip size="small" icon={<LuggageOutlined />} label="30kg" />
+                                                        <Chip size="small" icon={<Weekend />} label="AC Berth" />
+                                                        <Chip size="small" icon={<LuggageOutlined />} label="35kg" />
+                                                        <Chip size="small" icon={<Power />} label="Charging Point" />
+                                                    </>
+                                                )}
+                                                {coach.coachType.includes( 'AC 2' ) && (
+                                                    <>
+                                                        <Chip size="small" icon={<Weekend />} label="AC Berth" />
+                                                        <Chip size="small" icon={<LuggageOutlined />} label="40kg" />
+                                                        <Chip size="small" icon={<Power />} label="Charging Point" />
                                                         <Chip size="small" icon={<Restaurant />} label="Meals" />
+                                                    </>
+                                                )}
+                                                {coach.coachType.includes( '1st Class' ) && (
+                                                    <>
+                                                        <Chip size="small" icon={<Weekend />} label="Premium Berth" />
+                                                        <Chip size="small" icon={<LuggageOutlined />} label="50kg" />
+                                                        <Chip size="small" icon={<Power />} label="Charging Point" />
+                                                        <Chip size="small" icon={<Restaurant />} label="Premium Meals" />
                                                         <Chip size="small" icon={<Wifi />} label="Wi-Fi" />
                                                     </>
                                                 )}
-                                                {coach.coachType === 'First Class' && (
+                                                {coach.coachType === 'Chair Car' && (
                                                     <>
-                                                        <Chip size="small" icon={<LuggageOutlined />} label="40kg" />
-                                                        <Chip size="small" icon={<Restaurant />} label="Premium Meals" />
-                                                        <Chip size="small" icon={<Wifi />} label="Hi-Speed Wi-Fi" />
-                                                        <Chip size="small" icon={<Power />} label="Power Outlets" />
+                                                        <Chip size="small" icon={<LuggageOutlined />} label="30kg" />
+                                                        <Chip size="small" icon={<Power />} label="Charging Point" />
+                                                        <Chip size="small" icon={<Wifi />} label="Wi-Fi" />
                                                     </>
                                                 )}
                                             </Box>
@@ -416,9 +434,9 @@ const FlightId = () => {
                 </Box>
             </Paper>
 
-            {/* Flight Policies */}
+            {/* Train Policies */}
             <Typography variant="h5" component="h2" gutterBottom sx={{ mt: 4, mb: 2 }}>
-                Flight Policies
+                Train Policies
             </Typography>
 
             <Grid container spacing={3} sx={{ mb: 4 }}>
@@ -429,11 +447,13 @@ const FlightId = () => {
                                 Baggage Policy
                             </Typography>
                             <Typography variant="body2">
-                                • Economy: 15kg check-in + 7kg cabin<br />
-                                • Business: 30kg check-in + 10kg cabin<br />
-                                • First Class: 40kg check-in + 15kg cabin<br />
+                                • Sleeper: 25kg per passenger<br />
+                                • AC 3 Tier: 35kg per passenger<br />
+                                • AC 2 Tier: 40kg per passenger<br />
+                                • AC 1st Class: 50kg per passenger<br />
+                                • Chair Car: 30kg per passenger<br />
                                 <br />
-                                Excess baggage charges apply beyond allowance.
+                                Excess baggage charges: ₹100 per 10kg
                             </Typography>
                         </CardContent>
                     </Card>
@@ -446,12 +466,13 @@ const FlightId = () => {
                                 Cancellation Policy
                             </Typography>
                             <Typography variant="body2">
-                                • 24+ hours before: 75% refund<br />
-                                • 12-24 hours before: 50% refund<br />
-                                • Less than 12 hours: 25% refund<br />
+                                • 48+ hours before: 75% refund<br />
+                                • 24-48 hours before: 50% refund<br />
+                                • 12-24 hours before: 25% refund<br />
+                                • Less than 12 hours: No refund<br />
                                 • No-show: No refund<br />
                                 <br />
-                                Additional airline penalties may apply.
+                                Tatkal tickets: Non-refundable
                             </Typography>
                         </CardContent>
                     </Card>
@@ -464,11 +485,12 @@ const FlightId = () => {
                                 Check-in Information
                             </Typography>
                             <Typography variant="body2">
-                                • Online check-in: 48-2 hours before departure<br />
-                                • Airport check-in: 3 hours before departure<br />
-                                • Check-in closes: 45 minutes before departure<br />
+                                • E-ticket is valid for travel with ID proof<br />
+                                • Arrive at station 30 minutes before departure<br />
+                                • Senior citizens & differently-abled: Priority boarding<br />
+                                • Children below 5 years: Free travel (no seat)<br />
                                 <br />
-                                Valid ID is required for all passengers.
+                                Valid ID is required for all passengers
                             </Typography>
                         </CardContent>
                     </Card>
@@ -478,4 +500,4 @@ const FlightId = () => {
     );
 };
 
-export default FlightId;
+export default TrainId;

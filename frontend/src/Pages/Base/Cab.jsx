@@ -11,7 +11,7 @@ import {
     Chip,
     Rating
 } from '@mui/material';
-import axiosInstance from '../Config/axiosInstance';
+import axiosInstance from '../../Config/axiosInstance';
 import { format, addMinutes } from 'date-fns';
 import {
     LocalTaxi as TaxiIcon,
@@ -24,8 +24,8 @@ import {
     CurrencyRupee
 } from '@mui/icons-material';
 
-import CabDateSelector from '../Component/DateSelector/CabDateSelector';
-import cabStops from '../assets/cabStops.json';
+import CabDateSelector from '../../Component/DateSelector/CabDateSelector';
+import cabStops from '../../assets/cabStops.json';
 
 const Cab = () => {
     const [ searchParams, setSearchParams ] = useState( {

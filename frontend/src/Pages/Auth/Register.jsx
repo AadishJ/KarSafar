@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { FcGoogle } from 'react-icons/fc';
 import { FaUser, FaLock, FaEnvelope, FaCheck, FaEye, FaEyeSlash, FaPhone } from 'react-icons/fa';
-import { useAuth } from '../Contexts/auth.context';
+import { useAuth } from '../../Contexts/auth.context';
 
 const Register = () => {
     const navigate = useNavigate();

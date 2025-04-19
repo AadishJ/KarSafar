@@ -42,8 +42,8 @@ import {
     ArrowBack
 } from '@mui/icons-material';
 import { format, parseISO } from 'date-fns';
-import axiosInstance from '../Config/axiosInstance';
-import { useAuth } from '../Contexts/auth.context';
+import axiosInstance from '../../Config/axiosInstance';
+import { useAuth } from '../../Contexts/auth.context';
 
 const BookingFlight = () => {
     const { id } = useParams();
@@ -117,11 +117,11 @@ const BookingFlight = () => {
         'Payment',
         'Confirmation'
     ];
-    useEffect( () => { 
+    useEffect( () => {
         if ( !localStorage.getItem( 'user' ) ) {
             navigate( '/login' );
         }
-    }, [user] );
+    }, [ user ] );
 
     useEffect( () => {
         // If we have coach data from the previous page, use it

@@ -4,7 +4,6 @@ import { fileURLToPath } from 'url';
 import mysql from 'mysql2/promise';
 import fs from 'fs';
 import { parse } from 'csv-parse/sync';
-import { v4 as uuidv4 } from 'uuid'; // Add this import for UUID generation
 
 // Get the directory name properly in ESM
 const __filename = fileURLToPath( import.meta.url );
@@ -29,10 +28,10 @@ const pool = mysql.createPool( {
 console.log( 'Database connection info:' );
 console.log( `Host: ${ process.env.DB_HOST || 'localhost' }` );
 console.log( `User: ${ process.env.DB_USER || 'root' }` );
-console.log( `Database: ${ process.env.DB_NAME || 'karsafar_db' }` );
+console.log( `Database: ${ process.env.DB_NAME || 'trip_db' }` );
 
 // Path to CSV files
-const csvBasePath = path.resolve( __dirname, '../../Safe/Flight' );
+const csvBasePath = path.resolve( __dirname, '../../Safe/Train' );
 
 // Read and parse CSV files
 const readCSV = ( filename ) => {
@@ -71,45 +70,45 @@ const testConnection = async () => {
     }
 };
 
-// Helper function to clear existing flight-related data
+// Helper function to clear existing train-related data
 const clearExistingData = async () => {
     try {
-        console.log( 'Checking for existing flight data to clear...' );
+        console.log( 'Checking for existing train data to clear...' );
 
         // First check for each table
-        const [ flightCount ] = await pool.execute( 'SELECT COUNT(*) as count FROM flights' );
-        const [ stationCount ] = await pool.execute( 'SELECT COUNT(*) as count FROM vehiclestations WHERE vehicleId IN (SELECT vehicleId FROM vehicles WHERE vehicleType = "flight")' );
-        const [ coachCount ] = await pool.execute( 'SELECT COUNT(*) as count FROM vehiclecoaches WHERE vehicleId IN (SELECT vehicleId FROM vehicles WHERE vehicleType = "flight")' );
-        const [ seatCount ] = await pool.execute( 'SELECT COUNT(*) as count FROM seats WHERE vehicleId IN (SELECT vehicleId FROM vehicles WHERE vehicleType = "flight")' );
+        const [ trainCount ] = await pool.execute( 'SELECT COUNT(*) as count FROM trains' );
+        const [ stationCount ] = await pool.execute( 'SELECT COUNT(*) as count FROM vehiclestations WHERE vehicleId IN (SELECT vehicleId FROM vehicles WHERE vehicleType = "train")' );
+        const [ coachCount ] = await pool.execute( 'SELECT COUNT(*) as count FROM vehiclecoaches WHERE vehicleId IN (SELECT vehicleId FROM vehicles WHERE vehicleType = "train")' );
+        const [ seatCount ] = await pool.execute( 'SELECT COUNT(*) as count FROM seats WHERE vehicleId IN (SELECT vehicleId FROM vehicles WHERE vehicleType = "train")' );
 
         // Delete in the correct order to respect foreign key constraints
         if ( seatCount[ 0 ].count > 0 ) {
             console.log( `Found ${ seatCount[ 0 ].count } existing seat records to clear.` );
-            await pool.execute( 'DELETE FROM seats WHERE vehicleId IN (SELECT vehicleId FROM vehicles WHERE vehicleType = "flight")' );
+            await pool.execute( 'DELETE FROM seats WHERE vehicleId IN (SELECT vehicleId FROM vehicles WHERE vehicleType = "train")' );
             console.log( 'Existing seat data cleared successfully.' );
         }
 
         if ( stationCount[ 0 ].count > 0 ) {
             console.log( `Found ${ stationCount[ 0 ].count } existing station records to clear.` );
-            await pool.execute( 'DELETE FROM vehiclestations WHERE vehicleId IN (SELECT vehicleId FROM vehicles WHERE vehicleType = "flight")' );
+            await pool.execute( 'DELETE FROM vehiclestations WHERE vehicleId IN (SELECT vehicleId FROM vehicles WHERE vehicleType = "train")' );
             console.log( 'Existing vehicle station data cleared successfully.' );
         }
 
         if ( coachCount[ 0 ].count > 0 ) {
             console.log( `Found ${ coachCount[ 0 ].count } existing coach records to clear.` );
-            await pool.execute( 'DELETE FROM vehiclecoaches WHERE vehicleId IN (SELECT vehicleId FROM vehicles WHERE vehicleType = "flight")' );
+            await pool.execute( 'DELETE FROM vehiclecoaches WHERE vehicleId IN (SELECT vehicleId FROM vehicles WHERE vehicleType = "train")' );
             console.log( 'Existing vehicle coach data cleared successfully.' );
         }
 
-        if ( flightCount[ 0 ].count > 0 ) {
-            console.log( `Found ${ flightCount[ 0 ].count } existing flight records to clear.` );
-            await pool.execute( 'DELETE FROM flights' );
-            console.log( 'Existing flight data cleared successfully.' );
+        if ( trainCount[ 0 ].count > 0 ) {
+            console.log( `Found ${ trainCount[ 0 ].count } existing train records to clear.` );
+            await pool.execute( 'DELETE FROM trains' );
+            console.log( 'Existing train data cleared successfully.' );
         }
 
-        // Finally, delete flight vehicles
-        await pool.execute( 'DELETE FROM vehicles WHERE vehicleType = "flight"' );
-        console.log( 'Existing flight vehicle data cleared successfully.' );
+        // Finally, delete train vehicles
+        await pool.execute( 'DELETE FROM vehicles WHERE vehicleType = "train"' );
+        console.log( 'Existing train vehicle data cleared successfully.' );
 
     } catch ( error ) {
         console.error( 'Error clearing existing data:', error );
@@ -118,12 +117,12 @@ const clearExistingData = async () => {
 };
 
 // Function to check if vehicle IDs already exist
-const checkExistingVehicleIds = async ( flights ) => {
+const checkExistingVehicleIds = async ( vehicles ) => {
     try {
         console.log( 'Checking for existing vehicle IDs...' );
 
-        // Extract all vehicle IDs from the flights data
-        const vehicleIds = flights.map( flight => flight.vehicleId );
+        // Extract all vehicle IDs from the vehicles data
+        const vehicleIds = vehicles.map( vehicle => vehicle.vehicleId );
         let existingIds = [];
 
         // Check each vehicle ID in batches to avoid overly long queries
@@ -149,7 +148,7 @@ const checkExistingVehicleIds = async ( flights ) => {
         if ( existingIds.length > 0 ) {
             console.log( `Found ${ existingIds.length } vehicle IDs that already exist in the database.` );
         } else {
-            console.log( 'No existing vehicle IDs found. All flight data will be inserted as new.' );
+            console.log( 'No existing vehicle IDs found. All train data will be inserted as new.' );
         }
 
         return existingIds;
@@ -159,44 +158,90 @@ const checkExistingVehicleIds = async ( flights ) => {
     }
 };
 
-// Insert flights data
-const seedFlights = async ( flights, existingVehicleIds ) => {
+// Check if station IDs already exist
+const checkExistingStationIds = async ( stations ) => {
     try {
-        console.log( 'Inserting flights...' );
+        console.log( 'Checking for existing station IDs...' );
+
+        // Extract all station IDs from the stations data
+        const stationIds = stations.map( station => station.stationId );
+        let existingIds = [];
+
+        // Check each station ID in batches to avoid overly long queries
+        const batchSize = 20;
+        for ( let i = 0; i < stationIds.length; i += batchSize ) {
+            const batchIds = stationIds.slice( i, i + batchSize );
+            const placeholders = batchIds.map( () => 'UNHEX(?)' ).join( ',' );
+
+            const [ results ] = await pool.execute(
+                `SELECT HEX(stationId) as hexId FROM stations WHERE stationId IN (${ placeholders })`,
+                batchIds.map( id => formatUuidForUnhex( id ) )
+            );
+
+            // Convert HEX results back to dashed format for comparison
+            const hexIds = results.map( row => {
+                const hex = row.hexId.toLowerCase();
+                return `${ hex.slice( 0, 8 ) }-${ hex.slice( 8, 12 ) }-${ hex.slice( 12, 16 ) }-${ hex.slice( 16, 20 ) }-${ hex.slice( 20 ) }`;
+            } );
+
+            existingIds = [ ...existingIds, ...hexIds ];
+        }
+
+        if ( existingIds.length > 0 ) {
+            console.log( `Found ${ existingIds.length } station IDs that already exist in the database.` );
+        } else {
+            console.log( 'No existing station IDs found. All stations will be inserted as new.' );
+        }
+
+        return existingIds;
+    } catch ( error ) {
+        console.error( 'Error checking existing station IDs:', error );
+        return [];
+    }
+};
+
+// Insert vehicles and trains data
+const seedTrains = async ( vehicles, trains, existingVehicleIds ) => {
+    try {
+        console.log( 'Inserting vehicles and trains...' );
 
         // Define batch size
         const batchSize = 10;
         let successCount = 0;
         let errorCount = 0;
 
-        for ( let i = 0; i < flights.length; i += batchSize ) {
-            const batch = flights.slice( i, i + batchSize );
+        for ( let i = 0; i < vehicles.length; i += batchSize ) {
+            const vehicleBatch = vehicles.slice( i, i + batchSize );
+            const trainBatch = trains.slice( i, Math.min( i + batchSize, trains.length ) );
 
-            // Process each flight in the current batch
-            for ( const flight of batch ) {
+            // Process each vehicle in the current batch
+            for ( let j = 0; j < vehicleBatch.length; j++ ) {
+                const vehicle = vehicleBatch[ j ];
+                const train = trainBatch[ j ];
+
                 try {
-                    const formattedVehicleId = formatUuidForUnhex( flight.vehicleId );
+                    const formattedVehicleId = formatUuidForUnhex( vehicle.vehicleId );
 
                     // Check if vehicle already exists
-                    if ( !existingVehicleIds.includes( flight.vehicleId ) ) {
+                    if ( !existingVehicleIds.includes( vehicle.vehicleId ) ) {
                         // Insert into vehicles table only if it doesn't exist
                         await pool.execute(
                             'INSERT INTO vehicles (vehicleId, vehicleType, status, availableSeats) VALUES (UNHEX(?), ?, ?, ?)',
                             [
                                 formattedVehicleId,
-                                'flight',
-                                'active',
-                                100 // Default available seats, adjust as needed
+                                'train',
+                                vehicle.status || 'active',
+                                parseInt( vehicle.availableSeats ) || 0
                             ]
                         );
                     }
 
-                    // Then insert into flights table
+                    // Then insert into trains table
                     await pool.execute(
-                        'INSERT INTO flights (vehicleId, flightName) VALUES (UNHEX(?), ?)',
+                        'INSERT INTO trains (vehicleId, trainName) VALUES (UNHEX(?), ?)',
                         [
                             formattedVehicleId,
-                            flight.flightName
+                            train.trainName
                         ]
                     );
 
@@ -204,7 +249,7 @@ const seedFlights = async ( flights, existingVehicleIds ) => {
                 } catch ( err ) {
                     errorCount++;
                     if ( errorCount <= 5 ) {
-                        console.warn( `Error inserting flight: vehicleId=${ flight.vehicleId }, flightName=${ flight.flightName }` );
+                        console.warn( `Error inserting train: vehicleId=${ vehicle.vehicleId }, trainName=${ train.trainName }` );
                         console.warn( `Error details: ${ err.message }` );
                     } else if ( errorCount === 6 ) {
                         console.warn( 'Additional errors are occurring but will not be logged individually...' );
@@ -213,29 +258,26 @@ const seedFlights = async ( flights, existingVehicleIds ) => {
             }
 
             // Log progress
-            console.log( `Processed ${ Math.min( i + batchSize, flights.length ) } of ${ flights.length } flights.` );
+            console.log( `Processed ${ Math.min( i + batchSize, vehicles.length ) } of ${ vehicles.length } vehicles/trains.` );
         }
 
-        console.log( `Flight insertion complete: ${ successCount } successful, ${ errorCount } failed.` );
+        console.log( `Train insertion complete: ${ successCount } successful, ${ errorCount } failed.` );
 
         // Verify insertion
-        const [ countResult ] = await pool.execute( 'SELECT COUNT(*) as total FROM flights' );
-        console.log( `Total flights in database after seeding: ${ countResult[ 0 ].total }` );
+        const [ countResult ] = await pool.execute( 'SELECT COUNT(*) as total FROM trains' );
+        console.log( `Total trains in database after seeding: ${ countResult[ 0 ].total }` );
 
         return successCount > 0;
     } catch ( error ) {
-        console.error( 'Error seeding flight data:', error );
+        console.error( 'Error seeding train data:', error );
         throw error;
     }
 };
 
-// Seed stations data
-const seedStations = async () => {
+// Insert stations data
+const seedStations = async ( stations, existingStationIds ) => {
     try {
         console.log( 'Inserting stations...' );
-
-        // Read CSV data
-        const stations = readCSV( 'stations.csv' );
 
         if ( stations.length === 0 ) {
             console.log( 'No station data found in the CSV file.' );
@@ -255,33 +297,29 @@ const seedStations = async () => {
             // Process each station in the current batch
             for ( const station of batch ) {
                 try {
+                    // Skip if station already exists
+                    if ( existingStationIds.includes( station.stationId ) ) {
+                        continue;
+                    }
+
                     const formattedStationId = formatUuidForUnhex( station.stationId );
 
-                    // Check if station already exists
-                    const [ existingStation ] = await pool.execute(
-                        'SELECT COUNT(*) as count FROM stations WHERE stationId = UNHEX(?)',
-                        [ formattedStationId ]
+                    // Insert into stations table
+                    await pool.execute(
+                        'INSERT INTO stations (stationId, stationName, stationType, city, state, country, latitude, longitude) VALUES (UNHEX(?), ?, ?, ?, ?, ?, ?, ?)',
+                        [
+                            formattedStationId,
+                            station.stationName,
+                            station.stationType,
+                            station.city,
+                            station.state,
+                            station.country,
+                            parseFloat( station.latitude ) || null,
+                            parseFloat( station.longitude ) || null
+                        ]
                     );
 
-                    if ( existingStation[ 0 ].count === 0 ) {
-                        // Insert into stations table
-                        await pool.execute(
-                            'INSERT INTO stations (stationId, stationName, stationType, city, state, country, latitude, longitude) VALUES (UNHEX(?), ?, ?, ?, ?, ?, ?, ?)',
-                            [
-                                formattedStationId,
-                                station.stationName,
-                                station.stationType,
-                                station.city,
-                                station.state,
-                                station.country,
-                                parseFloat( station.latitude ) || null,
-                                parseFloat( station.longitude ) || null
-                            ]
-                        );
-                        successCount++;
-                    } else {
-                        console.log( `Station ${ station.stationName } already exists, skipping.` );
-                    }
+                    successCount++;
                 } catch ( err ) {
                     errorCount++;
                     if ( errorCount <= 5 ) {
@@ -300,8 +338,8 @@ const seedStations = async () => {
         console.log( `Station insertion complete: ${ successCount } successful, ${ errorCount } failed.` );
 
         // Verify insertion
-        const [ countResult ] = await pool.execute( 'SELECT COUNT(*) as total FROM stations WHERE stationType = "airport"' );
-        console.log( `Total airport stations in database after seeding: ${ countResult[ 0 ].total }` );
+        const [ countResult ] = await pool.execute( 'SELECT COUNT(*) as total FROM stations WHERE stationType = "railway"' );
+        console.log( `Total railway stations in database after seeding: ${ countResult[ 0 ].total }` );
 
         return successCount > 0;
     } catch ( error ) {
@@ -310,13 +348,10 @@ const seedStations = async () => {
     }
 };
 
-// Insert vehicle stations
-const seedVehicleStations = async () => {
+// Insert vehicle stations (join table between vehicles and stations)
+const seedVehicleStations = async ( vehicleStations ) => {
     try {
-        console.log( 'Inserting vehicle stations...' );
-
-        // Read CSV data
-        const vehicleStations = readCSV( 'vehiclestations.csv' );
+        console.log( 'Inserting vehicle stations join records...' );
 
         if ( vehicleStations.length === 0 ) {
             console.log( 'No vehicle station data found in the CSV file.' );
@@ -333,23 +368,23 @@ const seedVehicleStations = async () => {
         for ( let i = 0; i < vehicleStations.length; i += batchSize ) {
             const batch = vehicleStations.slice( i, i + batchSize );
 
-            // Process each vehicle station in the current batch
-            for ( const vs of batch ) {
+            // Process each station in the current batch
+            for ( const station of batch ) {
                 try {
-                    const formattedVehicleStationId = formatUuidForUnhex( vs.vehicleStationId );
-                    const formattedVehicleId = formatUuidForUnhex( vs.vehicleId );
-                    const formattedStationId = formatUuidForUnhex( vs.stationId );
+                    const formattedVehicleStationId = formatUuidForUnhex( station.vehicleStationId );
+                    const formattedStationId = formatUuidForUnhex( station.stationId );
+                    const formattedVehicleId = formatUuidForUnhex( station.vehicleId );
 
                     // Parse arrival and departure times, handling NULL values
-                    const arrivalTime = vs.arrivalTime && vs.arrivalTime !== 'NULL'
-                        ? vs.arrivalTime
+                    const arrivalTime = station.arrivalTime && station.arrivalTime !== 'NULL'
+                        ? station.arrivalTime
                         : null;
 
-                    const departureTime = vs.departureTime && vs.departureTime !== 'NULL'
-                        ? vs.departureTime
+                    const departureTime = station.departureTime && station.departureTime !== 'NULL'
+                        ? station.departureTime
                         : null;
 
-                    // Insert into vehiclestations table with the new schema
+                    // Insert into vehiclestations table
                     await pool.execute(
                         'INSERT INTO vehiclestations (vehicleStationId, vehicleId, stationId, arrivalTime, departureTime, stoppage, stationOrder) VALUES (UNHEX(?), UNHEX(?), UNHEX(?), ?, ?, ?, ?)',
                         [
@@ -358,8 +393,8 @@ const seedVehicleStations = async () => {
                             formattedStationId,
                             arrivalTime,
                             departureTime,
-                            parseInt( vs.stoppage ) || 0,
-                            parseInt( vs.stationOrder ) || 0
+                            parseInt( station.stoppage ) || 0,
+                            parseInt( station.stationOrder ) || 0
                         ]
                     );
 
@@ -367,10 +402,10 @@ const seedVehicleStations = async () => {
                 } catch ( err ) {
                     errorCount++;
                     if ( errorCount <= 5 ) {
-                        console.warn( `Error inserting vehicle station: vehicleStationId=${ vs.vehicleStationId }, vehicleId=${ vs.vehicleId }, stationId=${ vs.stationId }` );
+                        console.warn( `Error inserting vehicle station: vehicleStationId=${ station.vehicleStationId }, vehicleId=${ station.vehicleId }, stationId=${ station.stationId }` );
                         console.warn( `Error details: ${ err.message }` );
                     } else if ( errorCount === 6 ) {
-                        console.warn( 'Additional vehicle station insertion errors are occurring but will not be logged individually...' );
+                        console.warn( 'Additional station insertion errors are occurring but will not be logged individually...' );
                     }
                 }
             }
@@ -382,8 +417,8 @@ const seedVehicleStations = async () => {
         console.log( `Vehicle station insertion complete: ${ successCount } successful, ${ errorCount } failed.` );
 
         // Verify insertion
-        const [ countResult ] = await pool.execute( 'SELECT COUNT(*) as total FROM vehiclestations WHERE vehicleId IN (SELECT vehicleId FROM flights)' );
-        console.log( `Total flight vehicle stations in database after seeding: ${ countResult[ 0 ].total }` );
+        const [ countResult ] = await pool.execute( 'SELECT COUNT(*) as total FROM vehiclestations WHERE vehicleId IN (SELECT vehicleId FROM trains)' );
+        console.log( `Total train vehicle stations in database after seeding: ${ countResult[ 0 ].total }` );
 
         return successCount > 0;
     } catch ( error ) {
@@ -393,27 +428,24 @@ const seedVehicleStations = async () => {
 };
 
 // Insert vehicle coaches
-const seedVehicleCoaches = async () => {
+const seedVehicleCoaches = async ( vehicleCoaches ) => {
     try {
         console.log( 'Inserting vehicle coaches...' );
 
-        // Read CSV data
-        const coaches = readCSV( 'vehiclecoaches.csv' );
-
-        if ( coaches.length === 0 ) {
+        if ( vehicleCoaches.length === 0 ) {
             console.log( 'No vehicle coach data found in the CSV file.' );
             return false;
         }
 
-        console.log( `Found ${ coaches.length } vehicle coach records to import.` );
+        console.log( `Found ${ vehicleCoaches.length } vehicle coach records to import.` );
 
         // Define batch size
         const batchSize = 20;
         let successCount = 0;
         let errorCount = 0;
 
-        for ( let i = 0; i < coaches.length; i += batchSize ) {
-            const batch = coaches.slice( i, i + batchSize );
+        for ( let i = 0; i < vehicleCoaches.length; i += batchSize ) {
+            const batch = vehicleCoaches.slice( i, i + batchSize );
 
             // Process each coach in the current batch
             for ( const coach of batch ) {
@@ -445,14 +477,14 @@ const seedVehicleCoaches = async () => {
             }
 
             // Log progress
-            console.log( `Processed ${ Math.min( i + batchSize, coaches.length ) } of ${ coaches.length } coaches.` );
+            console.log( `Processed ${ Math.min( i + batchSize, vehicleCoaches.length ) } of ${ vehicleCoaches.length } coaches.` );
         }
 
         console.log( `Coach insertion complete: ${ successCount } successful, ${ errorCount } failed.` );
 
         // Verify insertion
-        const [ countResult ] = await pool.execute( 'SELECT COUNT(*) as total FROM vehiclecoaches WHERE vehicleId IN (SELECT vehicleId FROM flights)' );
-        console.log( `Total flight coaches in database after seeding: ${ countResult[ 0 ].total }` );
+        const [ countResult ] = await pool.execute( 'SELECT COUNT(*) as total FROM vehiclecoaches WHERE vehicleId IN (SELECT vehicleId FROM trains)' );
+        console.log( `Total train coaches in database after seeding: ${ countResult[ 0 ].total }` );
 
         return successCount > 0;
     } catch ( error ) {
@@ -462,12 +494,9 @@ const seedVehicleCoaches = async () => {
 };
 
 // Insert seats
-const seedSeats = async () => {
+const seedSeats = async ( seats ) => {
     try {
         console.log( 'Inserting seats...' );
-
-        // Read CSV data
-        const seats = readCSV( 'seats.csv' );
 
         if ( seats.length === 0 ) {
             console.log( 'No seat data found in the CSV file.' );
@@ -477,10 +506,10 @@ const seedSeats = async () => {
         console.log( `Found ${ seats.length } seat records to import.` );
 
         // First get all valid coach IDs from the database
-        const [ validCoaches ] = await pool.execute( 'SELECT coachId FROM vehiclecoaches WHERE vehicleId IN (SELECT vehicleId FROM flights)' );
+        const [ validCoaches ] = await pool.execute( 'SELECT coachId FROM vehiclecoaches' );
         const validCoachIds = validCoaches.map( coach => coach.coachId );
 
-        console.log( `Found ${ validCoachIds.length } valid flight coach IDs in the database.` );
+        console.log( `Found ${ validCoachIds.length } valid coach IDs in the database.` );
 
         // Define batch size
         const batchSize = 50;
@@ -538,8 +567,8 @@ const seedSeats = async () => {
         console.log( `Seat insertion complete: ${ successCount } successful, ${ errorCount } failed, ${ skippedCount } skipped due to invalid coach IDs.` );
 
         // Verify insertion
-        const [ countResult ] = await pool.execute( 'SELECT COUNT(*) as total FROM seats WHERE vehicleId IN (SELECT vehicleId FROM flights)' );
-        console.log( `Total flight seats in database after seeding: ${ countResult[ 0 ].total }` );
+        const [ countResult ] = await pool.execute( 'SELECT COUNT(*) as total FROM seats WHERE vehicleId IN (SELECT vehicleId FROM trains)' );
+        console.log( `Total train seats in database after seeding: ${ countResult[ 0 ].total }` );
 
         return successCount > 0;
     } catch ( error ) {
@@ -557,52 +586,58 @@ const runAllSeeders = async () => {
             throw new Error( 'Failed to connect to database. Please check your credentials.' );
         }
 
-        console.log( '\n=== STARTING FLIGHT DATA SEEDING PROCESS ===\n' );
+        console.log( '\n=== STARTING TRAIN DATA SEEDING PROCESS ===\n' );
 
         // Clear existing data first
         await clearExistingData();
 
-        // Read flight data
-        const flights = readCSV( 'flights.csv' );
+        // Read data from CSV files
+        const vehicles = readCSV( 'vehicles.csv' );
+        const trains = readCSV( 'trains.csv' );
+        const stations = readCSV( 'stations.csv' );
+        const vehicleStations = readCSV( 'vehiclestations.csv' );
+        const vehicleCoaches = readCSV( 'vehiclecoaches.csv' );
+        const seats = readCSV( 'seats.csv' );
 
-        if ( flights.length === 0 ) {
-            console.error( 'No flight data found in the CSV file. Aborting seeding process.' );
+        if ( vehicles.length === 0 || trains.length === 0 ) {
+            console.error( 'No vehicle or train data found in the CSV files. Aborting seeding process.' );
             process.exit( 1 );
         }
 
-        // Check for existing vehicle IDs
-        const existingVehicleIds = await checkExistingVehicleIds( flights );
+        // Check for existing IDs
+        const existingVehicleIds = await checkExistingVehicleIds( vehicles );
+        const existingStationIds = await checkExistingStationIds( stations );
 
-        // First seed the stations
-        console.log( '\n--- SEEDING STATIONS ---\n' );
-        await seedStations();
+        // Seed vehicles and trains first
+        console.log( '\n--- SEEDING VEHICLES AND TRAINS ---\n' );
+        const trainsSuccess = await seedTrains( vehicles, trains, existingVehicleIds );
 
-        // Seed flights next (with vehicles)
-        console.log( '\n--- SEEDING FLIGHTS ---\n' );
-        const flightsSuccess = await seedFlights( flights, existingVehicleIds );
-
-        if ( !flightsSuccess ) {
-            console.warn( 'Warning: No flights were successfully inserted.' );
+        if ( !trainsSuccess ) {
+            console.warn( 'Warning: No trains were successfully inserted.' );
         }
 
-        // Seed vehicle stations
+        // Seed stations first (before the join table)
+        console.log( '\n--- SEEDING STATIONS ---\n' );
+        await seedStations( stations, existingStationIds );
+
+        // Seed vehicle stations (the join table)
         console.log( '\n--- SEEDING VEHICLE STATIONS ---\n' );
-        await seedVehicleStations();
+        await seedVehicleStations( vehicleStations );
 
         // Seed vehicle coaches
         console.log( '\n--- SEEDING VEHICLE COACHES ---\n' );
-        await seedVehicleCoaches();
+        await seedVehicleCoaches( vehicleCoaches );
 
         // Seed seats
         console.log( '\n--- SEEDING SEATS ---\n' );
-        await seedSeats();
+        await seedSeats( seats );
 
-        console.log( '\n=== FLIGHT DATA SEEDING COMPLETED ===\n' );
-        console.log( 'All flight-related data has been imported successfully.' );
+        console.log( '\n=== TRAIN DATA SEEDING COMPLETED ===\n' );
+        console.log( 'All train-related data has been imported successfully.' );
 
         process.exit( 0 );
     } catch ( error ) {
-        console.error( 'Failed to seed flight data:', error );
+        console.error( 'Failed to seed train data:', error );
         process.exit( 1 );
     } finally {
         // Close the pool when done

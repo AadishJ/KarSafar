@@ -10,7 +10,7 @@ import {
     CircularProgress,
     Chip
 } from '@mui/material';
-import axiosInstance from '../Config/axiosInstance';
+import axiosInstance from '../../Config/axiosInstance';
 import { format } from 'date-fns';
 import {
     DirectionsRailway,
@@ -20,7 +20,7 @@ import {
     Train as TrainIcon
 } from '@mui/icons-material';
 
-import TrainDateSelector from '../Component/DateSelector/TrainDateSelector';
+import TrainDateSelector from '../../Component/DateSelector/TrainDateSelector';
 import { Link } from 'react-router-dom';
 
 const Train = () => {
@@ -253,7 +253,7 @@ const Train = () => {
                                                         color="primary"
                                                         size="medium"
                                                         component={Link}
-                                                        to={`/train/details/${ train.id }`}
+                                                        to={`/trains/${ train.id }`}
                                                     >
                                                         Book Now
                                                     </Button>

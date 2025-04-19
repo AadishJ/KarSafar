@@ -8,7 +8,7 @@ CREATE TABLE users (
     profilePicture VARCHAR(255)
 );
 
-CREATE TABLE userAddresses (
+CREATE TABLE useraddresses (
     addressId BINARY(16) PRIMARY KEY,
     userId BINARY(16) NOT NULL,
     street VARCHAR(100),
@@ -80,15 +80,29 @@ CREATE TABLE vehiclecoaches (
     UNIQUE KEY unique_vehicle_coach (vehicleId, coachType)
 );
 
-CREATE TABLE vehicleStations (
+CREATE TABLE stations (
     stationId BINARY(16) PRIMARY KEY,
-    vehicleId BINARY(16) NOT NULL,
     stationName VARCHAR(100) NOT NULL,
+    stationType ENUM('railway', 'airport', 'bus', 'seaport') NOT NULL,
+    city VARCHAR(50) NOT NULL,
+    state VARCHAR(50),
+    country VARCHAR(50) NOT NULL,
+    latitude DECIMAL(10,8),
+    longitude DECIMAL(11,8),
+    UNIQUE KEY unique_station_name_type (stationName, stationType, city)
+);
+
+CREATE TABLE vehiclestations (
+    vehicleStationId BINARY(16) PRIMARY KEY,
+    vehicleId BINARY(16) NOT NULL,
+    stationId BINARY(16) NOT NULL,
     arrivalTime DATETIME,
     departureTime DATETIME,
-    stoppage INT, -- Duration in minutes
+    stoppage INT,
     stationOrder INT NOT NULL,
     FOREIGN KEY (vehicleId) REFERENCES vehicles(vehicleId) ON DELETE CASCADE,
+    FOREIGN KEY (stationId) REFERENCES stations(stationId) ON DELETE CASCADE,
+    UNIQUE KEY unique_vehicle_station (vehicleId, stationId),
     UNIQUE KEY unique_vehicle_station_order (vehicleId, stationOrder)
 );
 
@@ -98,7 +112,7 @@ CREATE TABLE seats (
     coachId VARCHAR(5) NOT NULL,
     seatNumber VARCHAR(5) NOT NULL,
     FOREIGN KEY (vehicleId) REFERENCES vehicles(vehicleId) ON DELETE CASCADE,
-    FOREIGN KEY (coachId) REFERENCES vehicleCoaches(coachId) ON DELETE CASCADE,
+    FOREIGN KEY (coachId) REFERENCES vehiclecoaches(coachId) ON DELETE CASCADE,
     UNIQUE KEY unique_seat (vehicleId, coachId, seatNumber)
 );
 
@@ -146,7 +160,7 @@ CREATE TABLE accomamenitymap (
     amenityId BINARY(16) NOT NULL,
     PRIMARY KEY (accomId, amenityId),
     FOREIGN KEY (accomId) REFERENCES accommodations(accomId) ON DELETE CASCADE,
-    FOREIGN KEY (amenityId) REFERENCES accommodationAmenities(amenityId) ON DELETE CASCADE
+    FOREIGN KEY (amenityId) REFERENCES accommodationamenities(amenityId) ON DELETE CASCADE
 );
 
 CREATE TABLE hotels (

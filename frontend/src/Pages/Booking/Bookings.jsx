@@ -24,8 +24,8 @@ import {
     ExpandMore, Flight, DirectionsBus, DirectionsBoat, Hotel,
     Train, DirectionsCar, Receipt, Download, CancelOutlined
 } from '@mui/icons-material';
-import axiosInstance from '../Config/axiosInstance';
-import { useAuth } from '../Contexts/auth.context';
+import axiosInstance from '../../Config/axiosInstance';
+import { useAuth } from '../../Contexts/auth.context';
 
 // Function to format date and time
 const formatDateTime = ( dateTimeStr ) => {
@@ -100,7 +100,7 @@ const Bookings = () => {
 
     // Authentication check
     useEffect( () => {
-        if ( !localStorage.getItem('user') ) {
+        if ( !localStorage.getItem( 'user' ) ) {
             navigate( '/login', { state: { from: '/bookings' } } );
         }
     }, [ isAuthenticated, navigate ] );

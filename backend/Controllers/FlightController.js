@@ -13,23 +13,27 @@ async function handleFlightListGet( req, res ) {
                 f.flightName,
                 v.availableSeats,
                 v.status,
-                origin.stationName as originStation, 
-                origin.departureTime as departureTime,
-                destination.stationName as destinationStation,
-                destination.arrivalTime as arrivalTime,
+                origin_station.stationName as originStation, 
+                origin_vs.departureTime as departureTime,
+                dest_station.stationName as destinationStation,
+                dest_vs.arrivalTime as arrivalTime,
                 MIN(vc.price) as basePrice
             FROM 
                 flights f
             JOIN 
                 vehicles v ON f.vehicleId = v.vehicleId
             JOIN 
-                vehiclestations origin ON f.vehicleId = origin.vehicleId
+                vehiclestations origin_vs ON f.vehicleId = origin_vs.vehicleId
             JOIN 
-                vehiclestations destination ON f.vehicleId = destination.vehicleId
+                stations origin_station ON origin_vs.stationId = origin_station.stationId
+            JOIN 
+                vehiclestations dest_vs ON f.vehicleId = dest_vs.vehicleId
+            JOIN 
+                stations dest_station ON dest_vs.stationId = dest_station.stationId
             LEFT JOIN
                 vehiclecoaches vc ON f.vehicleId = vc.vehicleId
             WHERE 
-                origin.stationOrder < destination.stationOrder
+                origin_vs.stationOrder < dest_vs.stationOrder
                 AND v.status = 'active'
         `;
 
@@ -37,23 +41,31 @@ async function handleFlightListGet( req, res ) {
         const params = [];
 
         if ( origin ) {
-            query += " AND origin.stationName LIKE ?";
+            query += " AND origin_station.stationName LIKE ?";
             params.push( `%${ origin }%` );
         }
 
         if ( destination ) {
-            query += " AND destination.stationName LIKE ?";
+            query += " AND dest_station.stationName LIKE ?";
             params.push( `%${ destination }%` );
         }
 
         if ( departureDate ) {
             // Convert to date format and filter by date part
-            query += " AND DATE(origin.departureTime) = DATE(?)";
+            query += " AND DATE(origin_vs.departureTime) = DATE(?)";
             params.push( departureDate );
         }
 
-        // Group by to avoid duplicates and for price aggregation - UPDATED GROUP BY
-        query += " GROUP BY f.vehicleId, origin.stationName, destination.stationName, origin.departureTime, destination.arrivalTime, f.flightName, v.availableSeats, v.status";
+        // Group by to avoid duplicates and for price aggregation
+        query += ` GROUP BY 
+            f.vehicleId, 
+            origin_station.stationName, 
+            dest_station.stationName, 
+            origin_vs.departureTime, 
+            dest_vs.arrivalTime, 
+            f.flightName, 
+            v.availableSeats, 
+            v.status`;
 
         // Execute the query
         const [ flights ] = await pool.execute( query, params );
@@ -141,20 +153,22 @@ async function handleFlightDetailGet( req, res ) {
             } );
         }
 
-        // Query to get all stations (route)
+        // Query to get all stations (route) - joining with stations table
         const [ stations ] = await pool.execute(
             `SELECT 
-                stationName,
-                arrivalTime,
-                departureTime,
-                stoppage,
-                stationOrder
+                s.stationName,
+                vs.arrivalTime,
+                vs.departureTime,
+                vs.stoppage,
+                vs.stationOrder
             FROM 
-                vehiclestations
+                vehiclestations vs
+            JOIN
+                stations s ON vs.stationId = s.stationId
             WHERE 
-                vehicleId = UNHEX(?)
+                vs.vehicleId = UNHEX(?)
             ORDER BY 
-                stationOrder`,
+                vs.stationOrder`,
             [ flightId ]
         );
 
@@ -310,4 +324,5 @@ async function handleFlightsSeatGet( req, res ) {
         } );
     }
 }
-export { handleFlightListGet, handleFlightDetailGet , handleFlightsSeatGet };
+
+export { handleFlightListGet, handleFlightDetailGet, handleFlightsSeatGet };

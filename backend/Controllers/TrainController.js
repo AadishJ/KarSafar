@@ -4,115 +4,77 @@ import { v4 as uuidv4 } from 'uuid';
 async function handleTrainListGet( req, res ) {
     try {
         // Extract query parameters (for filtering)
-        const { source, destination, departureDate, travelClass } = req.query;
+        const { origin, destination, departureDate, returnDate } = req.query;
 
-        // Base query to get trains with their details
+        // Base query to get trains with their details - updated for normalized stations table
         let query = `
             SELECT 
                 HEX(t.vehicleId) as trainId, 
-                t.trainName as name,
+                t.trainName,
                 v.availableSeats,
                 v.status,
-                source.stationName as source, 
-                source.departureTime as departureTime,
-                destination.stationName as destination,
-                destination.arrivalTime as arrivalTime,
-                MIN(vc.price) as basePrice,
-                (
-                    SELECT 
-                        JSON_OBJECTAGG(vc2.coachType, vc2.seatsAvailable) 
-                    FROM 
-                        vehiclecoaches vc2 
-                    WHERE 
-                        vc2.vehicleId = t.vehicleId
-                ) as availableSeats,
-                (
-                    SELECT 
-                        JSON_OBJECTAGG(vc3.coachType, vc3.price) 
-                    FROM 
-                        vehiclecoaches vc3 
-                    WHERE 
-                        vc3.vehicleId = t.vehicleId
-                ) as price
+                origin_station.stationName as originStation, 
+                origin_vs.departureTime as departureTime,
+                dest_station.stationName as destinationStation,
+                dest_vs.arrivalTime as arrivalTime,
+                MIN(vc.price) as basePrice
             FROM 
                 trains t
             JOIN 
                 vehicles v ON t.vehicleId = v.vehicleId
             JOIN 
-                vehiclestations source ON t.vehicleId = source.vehicleId
+                vehiclestations origin_vs ON t.vehicleId = origin_vs.vehicleId
             JOIN 
-                vehiclestations destination ON t.vehicleId = destination.vehicleId
+                stations origin_station ON origin_vs.stationId = origin_station.stationId
+            JOIN 
+                vehiclestations dest_vs ON t.vehicleId = dest_vs.vehicleId
+            JOIN 
+                stations dest_station ON dest_vs.stationId = dest_station.stationId
             LEFT JOIN
                 vehiclecoaches vc ON t.vehicleId = vc.vehicleId
             WHERE 
-                source.stationOrder < destination.stationOrder
+                origin_vs.stationOrder < dest_vs.stationOrder
                 AND v.status = 'active'
         `;
 
         // Add parameters for filtering
         const params = [];
 
-        if ( source ) {
-            query += " AND source.stationName LIKE ?";
-            params.push( `%${ source }%` );
+        if ( origin ) {
+            query += " AND origin_station.stationName LIKE ?";
+            params.push( `%${ origin }%` );
         }
 
         if ( destination ) {
-            query += " AND destination.stationName LIKE ?";
+            query += " AND dest_station.stationName LIKE ?";
             params.push( `%${ destination }%` );
         }
 
         if ( departureDate ) {
             // Convert to date format and filter by date part
-            query += " AND DATE(source.departureTime) = DATE(?)";
+            query += " AND DATE(origin_vs.departureTime) = DATE(?)";
             params.push( departureDate );
         }
 
-        if ( travelClass ) {
-            query += " AND EXISTS (SELECT 1 FROM vehiclecoaches vc4 WHERE vc4.vehicleId = t.vehicleId AND vc4.coachType = ?)";
-            params.push( travelClass );
-        }
-
         // Group by to avoid duplicates and for price aggregation
-        query += " GROUP BY t.vehicleId, source.stationName, destination.stationName, source.departureTime, destination.arrivalTime, t.trainName, v.availableSeats, v.status";
+        query += " GROUP BY t.vehicleId, origin_station.stationName, dest_station.stationName, origin_vs.departureTime, dest_vs.arrivalTime, t.trainName, v.availableSeats, v.status";
 
         // Execute the query
         const [ trains ] = await pool.execute( query, params );
 
         // Process train data
-        const processedTrains = trains.map( train => {
-            // Parse JSON strings to objects if they're returned as strings
-            let availableSeatsObj = train.availableSeats;
-            let priceObj = train.price;
-
-            if ( typeof availableSeatsObj === 'string' ) {
-                availableSeatsObj = JSON.parse( availableSeatsObj );
-            }
-
-            if ( typeof priceObj === 'string' ) {
-                priceObj = JSON.parse( priceObj );
-            }
-
-            // Calculate distance based on journey duration (assuming 60 km/h average speed)
-            const duration = calculateDuration( train.departureTime, train.arrivalTime );
-            const distanceKm = Math.round( duration.hours * 60 + duration.minutes );
-
-            return {
-                id: train.trainId,
-                name: train.name,
-                number: generateTrainNumber( train.trainId ), // Generate a train number for display
-                status: train.status,
-                source: train.source,
-                destination: train.destination,
-                departureTime: train.departureTime,
-                arrivalTime: train.arrivalTime,
-                duration: duration,
-                distance: `${ distanceKm } km`,
-                availableSeats: availableSeatsObj || {},
-                price: priceObj || {},
-                basePrice: train.basePrice
-            };
-        } );
+        const processedTrains = trains.map( train => ( {
+            id: train.trainId,
+            name: train.trainName,
+            availableSeats: train.availableSeats,
+            status: train.status,
+            origin: train.originStation,
+            destination: train.destinationStation,
+            departureTime: train.departureTime,
+            arrivalTime: train.arrivalTime,
+            duration: calculateDuration( train.departureTime, train.arrivalTime ),
+            basePrice: train.basePrice
+        } ) );
 
         res.status( 200 ).json( {
             success: true,
@@ -129,7 +91,7 @@ async function handleTrainListGet( req, res ) {
     }
 }
 
-// Helper function to calculate journey duration
+// Helper function to calculate train journey duration
 function calculateDuration( departure, arrival ) {
     const departureTime = new Date( departure );
     const arrivalTime = new Date( arrival );
@@ -148,13 +110,6 @@ function calculateDuration( departure, arrival ) {
     };
 }
 
-// Helper function to generate a consistent train number using the first 5 characters of the ID
-function generateTrainNumber( trainId ) {
-    if ( !trainId ) return '';
-    // Take the first 5 characters of the ID and format as a train number
-    return trainId.toString().substring( 0, 5 ).toUpperCase();
-}
-
 // Function to get detailed information about a specific train
 async function handleTrainDetailGet( req, res ) {
     try {
@@ -171,7 +126,7 @@ async function handleTrainDetailGet( req, res ) {
         const [ trainDetails ] = await pool.execute(
             `SELECT 
                 HEX(t.vehicleId) as trainId, 
-                t.trainName as name,
+                t.trainName,
                 v.availableSeats,
                 v.status
             FROM 
@@ -190,20 +145,27 @@ async function handleTrainDetailGet( req, res ) {
             } );
         }
 
-        // Query to get all stations (route)
+        // Query to get all stations (route) - updated for normalized schema
         const [ stations ] = await pool.execute(
             `SELECT 
-                stationName,
-                arrivalTime,
-                departureTime,
-                stoppage,
-                stationOrder
+                s.stationName,
+                vs.arrivalTime,
+                vs.departureTime,
+                vs.stoppage,
+                vs.stationOrder,
+                s.city,
+                s.state,
+                s.country,
+                s.latitude,
+                s.longitude
             FROM 
-                vehiclestations
+                vehiclestations vs
+            JOIN
+                stations s ON vs.stationId = s.stationId
             WHERE 
-                vehicleId = UNHEX(?)
+                vs.vehicleId = UNHEX(?)
             ORDER BY 
-                stationOrder`,
+                vs.stationOrder`,
             [ trainId ]
         );
 
@@ -221,59 +183,11 @@ async function handleTrainDetailGet( req, res ) {
             [ trainId ]
         );
 
-        // Query to get available seats for each coach
-        const [ seats ] = await pool.execute(
-            `SELECT 
-                HEX(s.seatId) as seatId,
-                s.coachId,
-                s.seatNumber
-            FROM 
-                seats s
-            WHERE 
-                s.vehicleId = UNHEX(?)
-            ORDER BY
-                s.coachId, s.seatNumber`,
-            [ trainId ]
-        );
-
-        // Group seats by coach for easier frontend processing
-        const seatsByCoach = seats.reduce( ( acc, seat ) => {
-            if ( !acc[ seat.coachId ] ) {
-                acc[ seat.coachId ] = [];
-            }
-            acc[ seat.coachId ].push( {
-                id: seat.seatId,
-                number: seat.seatNumber
-            } );
-            return acc;
-        }, {} );
-
-        // Process route to include journey segments with duration and distance
-        const processedRoute = [];
-        for ( let i = 0; i < stations.length - 1; i++ ) {
-            const source = stations[ i ];
-            const destination = stations[ i + 1 ];
-            const duration = calculateDuration( source.departureTime, destination.arrivalTime );
-            const distanceKm = Math.round( duration.hours * 60 + duration.minutes );
-
-            processedRoute.push( {
-                from: source.stationName,
-                to: destination.stationName,
-                departureTime: source.departureTime,
-                arrivalTime: destination.arrivalTime,
-                duration,
-                distance: `${ distanceKm } km`
-            } );
-        }
-
         // Combine all data
         const trainData = {
             ...trainDetails[ 0 ],
-            number: generateTrainNumber( trainDetails[ 0 ].trainId ),
             route: stations,
-            journeySegments: processedRoute,
             coaches: coaches,
-            seats: seatsByCoach
         };
 
         res.status( 200 ).json( {
@@ -291,120 +205,116 @@ async function handleTrainDetailGet( req, res ) {
     }
 }
 
-// Function to create a new train (for admin use)
-async function handleTrainCreate( req, res ) {
+async function handleTrainSeatGet( req, res ) {
     try {
-        // Start a transaction
-        const connection = await pool.getConnection();
-        await connection.beginTransaction();
+        const { trainId } = req.params;
+        const { coachId } = req.query;
 
-        try {
-            const {
-                trainName,
-                totalSeats,
-                coaches,
-                stations
-            } = req.body;
-
-            // Validate required fields
-            if ( !trainName || !totalSeats || !coaches || !coaches.length || !stations || !stations.length ) {
-                await connection.rollback();
-                connection.release();
-                return res.status( 400 ).json( {
-                    success: false,
-                    message: 'Missing required train information'
-                } );
-            }
-
-            // Create a new vehicle ID
-            const vehicleId = uuidv4().replace( /-/g, '' );
-
-            // Insert the vehicle record
-            await connection.execute(
-                `INSERT INTO vehicles (vehicleId, vehicleType, status, availableSeats) 
-                 VALUES (UNHEX(?), 'train', 'active', ?)`,
-                [ vehicleId, totalSeats ]
-            );
-
-            // Insert the train record
-            await connection.execute(
-                `INSERT INTO trains (vehicleId, trainName) 
-                 VALUES (UNHEX(?), ?)`,
-                [ vehicleId, trainName ]
-            );
-
-            // Insert coach types
-            for ( const coach of coaches ) {
-                // Validate coach data
-                if ( !coach.coachId || !coach.coachType || !coach.seatsAvailable || !coach.price ) {
-                    throw new Error( 'Invalid coach data' );
-                }
-
-                await connection.execute(
-                    `INSERT INTO vehiclecoaches (coachId, vehicleId, coachType, seatsAvailable, price) 
-                     VALUES (?, UNHEX(?), ?, ?, ?)`,
-                    [ coach.coachId, vehicleId, coach.coachType, coach.seatsAvailable, coach.price ]
-                );
-
-                // Insert seats for this coach if provided
-                if ( coach.seats && coach.seats.length > 0 ) {
-                    for ( const seatNumber of coach.seats ) {
-                        const seatId = uuidv4().replace( /-/g, '' );
-                        await connection.execute(
-                            `INSERT INTO seats (seatId, vehicleId, coachId, seatNumber) 
-                             VALUES (UNHEX(?), UNHEX(?), ?, ?)`,
-                            [ seatId, vehicleId, coach.coachId, seatNumber ]
-                        );
-                    }
-                }
-            }
-
-            // Insert stations (route)
-            for ( const [ index, station ] of stations.entries() ) {
-                // Validate station data
-                if ( !station.stationName || !station.departureTime ) {
-                    throw new Error( 'Invalid station data' );
-                }
-
-                const stationId = uuidv4().replace( /-/g, '' );
-                await connection.execute(
-                    `INSERT INTO vehiclestations 
-                     (stationId, vehicleId, stationName, arrivalTime, departureTime, stoppage, stationOrder) 
-                     VALUES (UNHEX(?), UNHEX(?), ?, ?, ?, ?, ?)`,
-                    [
-                        stationId,
-                        vehicleId,
-                        station.stationName,
-                        station.arrivalTime || station.departureTime, // First station might not have arrival
-                        station.departureTime,
-                        station.stoppage || 0,
-                        index + 1
-                    ]
-                );
-            }
-
-            // Commit the transaction
-            await connection.commit();
-            connection.release();
-
-            res.status( 201 ).json( {
-                success: true,
-                message: 'Train created successfully',
-                data: {
-                    trainId: vehicleId,
-                    name: trainName
-                }
+        if ( !trainId ) {
+            return res.status( 400 ).json( {
+                success: false,
+                message: 'Train ID is required'
             } );
-
-        } catch ( error ) {
-            // Rollback in case of error
-            await connection.rollback();
-            connection.release();
-            throw error;
         }
+
+        if ( !coachId ) {
+            return res.status( 400 ).json( {
+                success: false,
+                message: 'Coach ID is required'
+            } );
+        }
+
+        // First verify the train exists and is active
+        const [ trainRows ] = await pool.execute(
+            `SELECT 
+                v.vehicleId, 
+                v.status
+            FROM 
+                vehicles v
+            JOIN 
+                trains t ON v.vehicleId = t.vehicleId
+            WHERE 
+                v.vehicleId = UNHEX(?) 
+                AND v.vehicleType = 'train'`,
+            [ trainId ]
+        );
+
+        if ( trainRows.length === 0 ) {
+            return res.status( 404 ).json( {
+                success: false,
+                message: 'Train not found'
+            } );
+        }
+
+        if ( trainRows[ 0 ].status !== 'active' ) {
+            return res.status( 400 ).json( {
+                success: false,
+                message: 'This train is not active'
+            } );
+        }
+
+        // Verify the coach exists for this train
+        const [ coachRows ] = await pool.execute(
+            `SELECT 
+                vc.coachId, 
+                vc.coachType, 
+                vc.seatsAvailable
+            FROM 
+                vehiclecoaches vc
+            WHERE 
+                vc.vehicleId = UNHEX(?) AND vc.coachId = ?`,
+            [ trainId, coachId ]
+        );
+
+        if ( coachRows.length === 0 ) {
+            return res.status( 404 ).json( {
+                success: false,
+                message: 'Coach not found for this train'
+            } );
+        }
+
+        // Get all seats that are available for this train and coach
+        const [ seatsRows ] = await pool.execute(
+            `SELECT 
+                HEX(s.seatId) as seatId,
+                s.seatNumber,
+                'available' as status
+            FROM 
+                seats s
+            WHERE 
+                s.vehicleId = UNHEX(?)
+                AND s.coachId = ?
+                AND s.seatId NOT IN (
+                    -- Exclude seats that are already booked
+                    SELECT 
+                        ps.seatId
+                    FROM 
+                        passengerseats ps
+                    JOIN 
+                        vehiclebookingitems vbi ON ps.vehicleItemId = vbi.vehicleItemId
+                    WHERE 
+                        vbi.vehicleId = UNHEX(?)
+                        AND vbi.status != 'cancelled'
+                )`,
+            [ trainId, coachId, trainId ]
+        );
+
+        // Format the response
+        const formattedSeats = seatsRows.map( seat => ( {
+            seatId: seat.seatId,
+            seatNumber: seat.seatNumber,
+            status: seat.status
+        } ) );
+
+        return res.status( 200 ).json( {
+            success: true,
+            message: 'Seats retrieved successfully',
+            data: formattedSeats
+        } );
+
     } catch ( error ) {
-        console.error( 'Error creating train:', error );
-        res.status( 500 ).json( {
+        console.error( 'Error fetching train seats:', error );
+        return res.status( 500 ).json( {
             success: false,
             message: 'Internal Server Error',
             error: process.env.NODE_ENV === 'production' ? null : error.message
@@ -412,4 +322,4 @@ async function handleTrainCreate( req, res ) {
     }
 }
 
-export { handleTrainListGet, handleTrainDetailGet, handleTrainCreate };
+export { handleTrainListGet, handleTrainDetailGet, handleTrainSeatGet };

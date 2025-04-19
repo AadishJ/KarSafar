@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import axiosInstance from '../Config/axiosInstance';
-import { useAuth } from '../Contexts/auth.context';
+import axiosInstance from '../../Config/axiosInstance';
+import { useAuth } from '../../Contexts/auth.context';
 
 const GoogleAuth = () => {
     const location = useLocation();

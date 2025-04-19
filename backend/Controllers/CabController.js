@@ -3,137 +3,94 @@ import { v4 as uuidv4 } from 'uuid';
 
 async function handleCabListGet( req, res ) {
     try {
-        // Extract query parameters for filtering
-        const { source, destination, departureDate, cabType } = req.query;
+        // Extract query parameters (for filtering)
+        const { origin, destination, departureDate, returnDate } = req.query;
 
         // Base query to get cabs with their details
         let query = `
             SELECT 
                 HEX(c.vehicleId) as cabId, 
-                c.carModel as name,
-                c.photo,
+                c.carModel,
+                c.photo as cabPhoto,
                 v.availableSeats,
                 v.status,
-                source.stationName as source, 
-                source.departureTime as departureTime,
-                destination.stationName as destination,
-                destination.arrivalTime as arrivalTime,
+                origin_station.stationName as originStation, 
+                origin_vs.departureTime as departureTime,
+                dest_station.stationName as destinationStation,
+                dest_vs.arrivalTime as arrivalTime,
                 MIN(vc.price) as basePrice,
-                (
-                    SELECT 
-                        JSON_OBJECTAGG(vc2.coachType, vc2.seatsAvailable) 
-                    FROM 
-                        vehiclecoaches vc2 
-                    WHERE 
-                        vc2.vehicleId = c.vehicleId
-                ) as availableSeats,
-                (
-                    SELECT 
-                        JSON_OBJECTAGG(vc3.coachType, vc3.price) 
-                    FROM 
-                        vehiclecoaches vc3 
-                    WHERE 
-                        vc3.vehicleId = c.vehicleId
-                ) as price,
-                (
-                    SELECT 
-                        GROUP_CONCAT(DISTINCT vc4.coachType) 
-                    FROM 
-                        vehiclecoaches vc4 
-                    WHERE 
-                        vc4.vehicleId = c.vehicleId
-                ) as cabTypes
+                vd.driverName
             FROM 
                 cabs c
             JOIN 
                 vehicles v ON c.vehicleId = v.vehicleId
             JOIN 
-                vehiclestations source ON c.vehicleId = source.vehicleId
+                vehiclestations origin_vs ON c.vehicleId = origin_vs.vehicleId
             JOIN 
-                vehiclestations destination ON c.vehicleId = destination.vehicleId
+                stations origin_station ON origin_vs.stationId = origin_station.stationId
+            JOIN 
+                vehiclestations dest_vs ON c.vehicleId = dest_vs.vehicleId
+            JOIN 
+                stations dest_station ON dest_vs.stationId = dest_station.stationId
             LEFT JOIN
                 vehiclecoaches vc ON c.vehicleId = vc.vehicleId
+            LEFT JOIN
+                vehicledrivers vd ON c.vehicleId = vd.vehicleId
             WHERE 
-                source.stationOrder < destination.stationOrder
+                origin_vs.stationOrder < dest_vs.stationOrder
                 AND v.status = 'active'
         `;
 
         // Add parameters for filtering
         const params = [];
 
-        if ( source ) {
-            query += " AND source.stationName LIKE ?";
-            params.push( `%${ source }%` );
+        if ( origin ) {
+            query += " AND origin_station.stationName LIKE ?";
+            params.push( `%${ origin }%` );
         }
 
         if ( destination ) {
-            query += " AND destination.stationName LIKE ?";
+            query += " AND dest_station.stationName LIKE ?";
             params.push( `%${ destination }%` );
         }
 
         if ( departureDate ) {
             // Convert to date format and filter by date part
-            query += " AND DATE(source.departureTime) = DATE(?)";
+            query += " AND DATE(origin_vs.departureTime) = DATE(?)";
             params.push( departureDate );
         }
 
-        if ( cabType ) {
-            query += " AND EXISTS (SELECT 1 FROM vehiclecoaches vc5 WHERE vc5.vehicleId = c.vehicleId AND vc5.coachType = ?)";
-            params.push( cabType );
-        }
-
         // Group by to avoid duplicates and for price aggregation
-        query += " GROUP BY c.vehicleId, source.stationName, destination.stationName, source.departureTime, destination.arrivalTime, c.carModel, c.photo, v.availableSeats, v.status";
+        query += ` GROUP BY 
+            c.vehicleId, 
+            origin_station.stationName, 
+            dest_station.stationName, 
+            origin_vs.departureTime, 
+            dest_vs.arrivalTime, 
+            c.carModel,
+            c.photo,
+            v.availableSeats, 
+            v.status,
+            vd.driverName`;
 
         // Execute the query
         const [ cabs ] = await pool.execute( query, params );
 
         // Process cab data
-        const processedCabs = cabs.map( cab => {
-            // Parse JSON strings to objects if they're returned as strings
-            let availableSeatsObj = cab.availableSeats;
-            let priceObj = cab.price;
-
-            if ( typeof availableSeatsObj === 'string' ) {
-                availableSeatsObj = JSON.parse( availableSeatsObj );
-            }
-
-            if ( typeof priceObj === 'string' ) {
-                priceObj = JSON.parse( priceObj );
-            }
-
-            // Calculate duration and determine estimated arrival
-            const duration = calculateDuration( cab.departureTime, cab.arrivalTime );
-
-            // Calculate distance based on journey duration (assuming 60 km/h average speed for cabs in city)
-            const distanceKm = Math.round( duration.hours * 60 + duration.minutes / 60 * 60 );
-
-            // Determine cab type names
-            const cabTypes = cab.cabTypes ? cab.cabTypes.split( ',' ) : [];
-            const typeName = getCabTypeName( cabTypes[ 0 ] || '' );
-
-            // Define amenities based on cab type
-            const amenities = determineAmenities( cabTypes[ 0 ] || '' );
-
-            return {
-                id: cab.cabId,
-                name: cab.carModel,
-                photo: cab.photo,
-                type: cabTypes[ 0 ] || '',
-                typeName: typeName,
-                origin: cab.source,
-                destination: cab.destination,
-                departureTime: cab.departureTime,
-                arrivalTime: cab.arrivalTime,
-                duration: duration,
-                distance: `${ distanceKm } km`,
-                availableSeats: cab.availableSeats,
-                totalSeats: cab.availableSeats,
-                price: cab.basePrice,
-                amenities: amenities,
-                status: cab.status
-            };
-        } );
+        const processedCabs = cabs.map( cab => ( {
+            id: cab.cabId,
+            model: cab.carModel,
+            photo: cab.cabPhoto,
+            availableSeats: cab.availableSeats,
+            status: cab.status,
+            origin: cab.originStation,
+            destination: cab.destinationStation,
+            departureTime: cab.departureTime,
+            arrivalTime: cab.arrivalTime,
+            duration: calculateDuration( cab.departureTime, cab.arrivalTime ),
+            basePrice: cab.basePrice,
+            driverName: cab.driverName
+        } ) );
 
         res.status( 200 ).json( {
             success: true,
@@ -169,60 +126,6 @@ function calculateDuration( departure, arrival ) {
     };
 }
 
-// Helper function to get friendly cab type name
-function getCabTypeName( cabType ) {
-    const typeMap = {
-        'ECONOMY': 'Economy',
-        'PREMIUM': 'Premium',
-        'LUXURY': 'Luxury',
-        'SUV': 'SUV',
-        'MINI': 'Mini',
-        'SEDAN': 'Sedan',
-        'OUTSTATION': 'Outstation',
-        'SHARED': 'Shared'
-    };
-    return typeMap[ cabType ] || cabType;
-}
-
-// Helper function to determine amenities based on cab type
-function determineAmenities( cabType ) {
-    const baseAmenities = {
-        "ac": true,
-        "waterBottle": true,
-        "chargingPoint": true
-    };
-
-    switch ( cabType ) {
-        case 'ECONOMY':
-            return {
-                ...baseAmenities
-            };
-        case 'PREMIUM':
-            return {
-                ...baseAmenities,
-                "wifi": true,
-                "musicSystem": true
-            };
-        case 'LUXURY':
-            return {
-                ...baseAmenities,
-                "wifi": true,
-                "musicSystem": true,
-                "leatherSeats": true,
-                "refreshments": true
-            };
-        case 'SUV':
-            return {
-                ...baseAmenities,
-                "wifi": true,
-                "musicSystem": true,
-                "extraLegroom": true
-            };
-        default:
-            return baseAmenities;
-    }
-}
-
 // Function to get detailed information about a specific cab
 async function handleCabDetailGet( req, res ) {
     try {
@@ -239,9 +142,9 @@ async function handleCabDetailGet( req, res ) {
         const [ cabDetails ] = await pool.execute(
             `SELECT 
                 HEX(c.vehicleId) as cabId, 
-                c.carModel as name,
-                c.photo,
-                v.availableSeats as totalSeats,
+                c.carModel,
+                c.photo as cabPhoto,
+                v.availableSeats,
                 v.status
             FROM 
                 cabs c
@@ -259,25 +162,30 @@ async function handleCabDetailGet( req, res ) {
             } );
         }
 
-        // Query to get route information (pickup and drop points)
+        // Query to get all stations (route) - joining with stations table
         const [ stations ] = await pool.execute(
             `SELECT 
-                stationName,
-                arrivalTime,
-                departureTime,
-                stoppage,
-                stationOrder
+                s.stationName,
+                s.city,
+                s.state,
+                s.country,
+                vs.arrivalTime,
+                vs.departureTime,
+                vs.stoppage,
+                vs.stationOrder
             FROM 
-                vehiclestations
+                vehiclestations vs
+            JOIN
+                stations s ON vs.stationId = s.stationId
             WHERE 
-                vehicleId = UNHEX(?)
+                vs.vehicleId = UNHEX(?)
             ORDER BY 
-                stationOrder`,
+                vs.stationOrder`,
             [ cabId ]
         );
 
-        // Query to get available cab types and prices
-        const [ cabTypes ] = await pool.execute(
+        // Query to get available coach types and prices
+        const [ coaches ] = await pool.execute(
             `SELECT 
                 coachId,
                 coachType,
@@ -297,58 +205,18 @@ async function handleCabDetailGet( req, res ) {
                 driverName,
                 driverPhoneNo
             FROM 
-                vehicleDrivers
+                vehicledrivers
             WHERE 
                 vehicleId = UNHEX(?)`,
             [ cabId ]
         );
 
-        // Process route to include journey segments with duration and distance
-        const processedRoute = [];
-        for ( let i = 0; i < stations.length - 1; i++ ) {
-            const source = stations[ i ];
-            const destination = stations[ i + 1 ];
-            const duration = calculateDuration( source.departureTime, destination.arrivalTime );
-            const distanceKm = Math.round( duration.hours * 60 + duration.minutes / 60 * 60 ); // Assuming 60km/h
-
-            processedRoute.push( {
-                from: source.stationName,
-                to: destination.stationName,
-                departureTime: source.departureTime,
-                arrivalTime: destination.arrivalTime,
-                duration,
-                distance: `${ distanceKm } km`
-            } );
-        }
-
-        // Calculate full journey duration
-        if ( stations.length >= 2 ) {
-            const firstStation = stations[ 0 ];
-            const lastStation = stations[ stations.length - 1 ];
-            const duration = calculateDuration( firstStation.departureTime, lastStation.arrivalTime );
-            cabDetails[ 0 ].duration = duration;
-        }
-
-        // Get cab type and amenities
-        if ( cabTypes.length > 0 ) {
-            cabDetails[ 0 ].type = cabTypes[ 0 ].coachType;
-            cabDetails[ 0 ].typeName = getCabTypeName( cabTypes[ 0 ].coachType );
-            cabDetails[ 0 ].amenities = determineAmenities( cabTypes[ 0 ].coachType );
-        }
-
-        // Calculate estimated fare for the journey
-        const estimatedFare = cabTypes.length > 0
-            ? cabTypes[ 0 ].price
-            : 0;
-
         // Combine all data
         const cabData = {
             ...cabDetails[ 0 ],
             route: stations,
-            journeySegments: processedRoute,
-            cabTypes: cabTypes,
-            drivers: drivers,
-            estimatedFare: estimatedFare
+            coaches: coaches,
+            driver: drivers.length > 0 ? drivers[ 0 ] : null
         };
 
         res.status( 200 ).json( {
@@ -366,112 +234,116 @@ async function handleCabDetailGet( req, res ) {
     }
 }
 
-// Function to create a new cab (for admin/partner use)
-async function handleCabCreate( req, res ) {
+async function handleCabSeatGet( req, res ) {
     try {
-        // Start a transaction
-        const connection = await pool.getConnection();
-        await connection.beginTransaction();
+        const { cabId } = req.params;
+        const { coachId } = req.query;
 
-        try {
-            const {
-                carModel,
-                photo,
-                totalSeats,
-                cabType,
-                price,
-                driver,
-                stations
-            } = req.body;
-
-            // Validate required fields
-            if ( !carModel || !totalSeats || !cabType || !price || !driver || !stations || !stations.length ) {
-                await connection.rollback();
-                connection.release();
-                return res.status( 400 ).json( {
-                    success: false,
-                    message: 'Missing required cab information'
-                } );
-            }
-
-            // Create a new vehicle ID
-            const vehicleId = uuidv4().replace( /-/g, '' );
-
-            // Insert the vehicle record
-            await connection.execute(
-                `INSERT INTO vehicles (vehicleId, vehicleType, status, availableSeats) 
-                 VALUES (UNHEX(?), 'cab', 'active', ?)`,
-                [ vehicleId, totalSeats ]
-            );
-
-            // Insert the cab record
-            await connection.execute(
-                `INSERT INTO cabs (vehicleId, carModel, photo) 
-                 VALUES (UNHEX(?), ?, ?)`,
-                [ vehicleId, carModel, photo || null ]
-            );
-
-            // Insert cab type
-            const coachId = `${ cabType.substring( 0, 2 ) }01`;
-            await connection.execute(
-                `INSERT INTO vehiclecoaches (coachId, vehicleId, coachType, seatsAvailable, price) 
-                 VALUES (?, UNHEX(?), ?, ?, ?)`,
-                [ coachId, vehicleId, cabType, totalSeats, price ]
-            );
-
-            // Insert driver information
-            const driverId = uuidv4().replace( /-/g, '' );
-            await connection.execute(
-                `INSERT INTO vehicleDrivers (driverId, vehicleId, driverName, driverPhoneNo) 
-                 VALUES (UNHEX(?), UNHEX(?), ?, ?)`,
-                [ driverId, vehicleId, driver.name, driver.phoneNo ]
-            );
-
-            // Insert stations (pickup and drop points)
-            for ( const [ index, station ] of stations.entries() ) {
-                if ( !station.stationName || !station.departureTime ) {
-                    throw new Error( 'Invalid station data' );
-                }
-
-                const stationId = uuidv4().replace( /-/g, '' );
-                await connection.execute(
-                    `INSERT INTO vehiclestations 
-                     (stationId, vehicleId, stationName, arrivalTime, departureTime, stoppage, stationOrder) 
-                     VALUES (UNHEX(?), UNHEX(?), ?, ?, ?, ?, ?)`,
-                    [
-                        stationId,
-                        vehicleId,
-                        station.stationName,
-                        station.arrivalTime || station.departureTime, // First station might not have arrival
-                        station.departureTime,
-                        station.stoppage || 0,
-                        index + 1
-                    ]
-                );
-            }
-
-            // Commit the transaction
-            await connection.commit();
-            connection.release();
-
-            res.status( 201 ).json( {
-                success: true,
-                message: 'Cab created successfully',
-                data: {
-                    cabId: vehicleId,
-                    name: carModel
-                }
+        if ( !cabId ) {
+            return res.status( 400 ).json( {
+                success: false,
+                message: 'Cab ID is required'
             } );
-
-        } catch ( error ) {
-            // Rollback in case of error
-            await connection.rollback();
-            connection.release();
-            throw error;
         }
+
+        if ( !coachId ) {
+            return res.status( 400 ).json( {
+                success: false,
+                message: 'Coach ID is required'
+            } );
+        }
+
+        // First verify the cab exists and is active
+        const [ cabRows ] = await pool.execute(
+            `SELECT 
+                v.vehicleId, 
+                v.status
+            FROM 
+                vehicles v
+            JOIN 
+                cabs c ON v.vehicleId = c.vehicleId
+            WHERE 
+                v.vehicleId = UNHEX(?) 
+                AND v.vehicleType = 'cab'`,
+            [ cabId ]
+        );
+
+        if ( cabRows.length === 0 ) {
+            return res.status( 404 ).json( {
+                success: false,
+                message: 'Cab not found'
+            } );
+        }
+
+        if ( cabRows[ 0 ].status !== 'active' ) {
+            return res.status( 400 ).json( {
+                success: false,
+                message: 'This cab is not active'
+            } );
+        }
+
+        // Verify the coach exists for this cab
+        const [ coachRows ] = await pool.execute(
+            `SELECT 
+                vc.coachId, 
+                vc.coachType, 
+                vc.seatsAvailable
+            FROM 
+                vehiclecoaches vc
+            WHERE 
+                vc.vehicleId = UNHEX(?) AND vc.coachId = ?`,
+            [ cabId, coachId ]
+        );
+
+        if ( coachRows.length === 0 ) {
+            return res.status( 404 ).json( {
+                success: false,
+                message: 'Coach not found for this cab'
+            } );
+        }
+
+        // Get all seats that are available for this cab and coach
+        const [ seatsRows ] = await pool.execute(
+            `SELECT 
+                HEX(s.seatId) as seatId,
+                s.seatNumber,
+                'available' as status
+            FROM 
+                seats s
+            WHERE 
+                s.vehicleId = UNHEX(?)
+                AND s.coachId = ?
+                AND s.seatId NOT IN (
+                    -- Exclude seats that are already booked
+                    SELECT 
+                        ps.seatId
+                    FROM 
+                        passengerseats ps
+                    JOIN 
+                        vehiclebookingitems vbi ON ps.vehicleItemId = vbi.vehicleItemId
+                    WHERE 
+                        vbi.vehicleId = UNHEX(?)
+                        AND vbi.status != 'cancelled'
+                )`,
+            [ cabId, coachId, cabId ]
+        );
+
+        // Format the response
+        const formattedSeats = seatsRows.map( seat => ( {
+            seatId: seat.seatId,
+            seatNumber: seat.seatNumber,
+            status: seat.status
+        } ) );
+
+        return res.status( 200 ).json( {
+            success: true,
+            message: 'Seats retrieved successfully',
+            data: formattedSeats
+        } );
+
     } catch ( error ) {
-        console.error( 'Error creating cab:', error );
-        res.status( 500 ).json( {
+        console.error( 'Error fetching cab seats:', error );
+        return res.status( 500 ).json( {
             success: false,
             message: 'Internal Server Error',
             error: process.env.NODE_ENV === 'production' ? null : error.message
@@ -479,101 +351,329 @@ async function handleCabCreate( req, res ) {
     }
 }
 
-// Function to handle booking a cab
-async function handleCabBooking( req, res ) {
-    try {
-        const { cabId, userId, source, destination, departureTime, passengers } = req.body;
+// Function to handle cab booking
+async function handleCabBookPost( req, res ) {
+    const conn = await pool.getConnection();
 
-        // Validate required fields
-        if ( !cabId || !userId || !source || !destination || !departureTime ) {
+    try {
+        await conn.beginTransaction();
+
+        const { id: cabId } = req.params;
+        const {
+            coachId,
+            passengers,
+            contactInfo,
+            paymentMethod,
+            tripDetails,
+            bookingDetails
+        } = req.body;
+
+        const userId = req.body.userId; // From auth middleware
+
+        // Validate input
+        if ( !cabId || !coachId || !passengers || passengers.length === 0 || !bookingDetails ) {
             return res.status( 400 ).json( {
                 success: false,
                 message: 'Missing required booking information'
             } );
         }
 
-        // Start a transaction
-        const connection = await pool.getConnection();
-        await connection.beginTransaction();
+        const formattedOnboardingTime = formatDateTimeForMySQL( bookingDetails.onboardingTime );
+        const formattedDeboardingTime = formatDateTimeForMySQL( bookingDetails.deboardingTime );
 
-        try {
-            // Check cab availability
-            const [ cabAvailability ] = await connection.execute(
-                `SELECT 
-                    v.status, 
-                    vc.price,
-                    vc.seatsAvailable
-                FROM 
-                    vehicles v
-                JOIN 
-                    vehiclecoaches vc ON v.vehicleId = vc.vehicleId
-                WHERE 
-                    v.vehicleId = UNHEX(?) AND v.status = 'active'`,
-                [ cabId ]
+        if ( !formattedOnboardingTime || !formattedDeboardingTime ) {
+            return res.status( 400 ).json( {
+                success: false,
+                message: 'Invalid date/time format for boarding times'
+            } );
+        }
+
+        // 1. Check if the cab exists and is active
+        const [ cabRows ] = await conn.execute(
+            `SELECT 
+                v.vehicleId, 
+                v.status,
+                c.carModel
+            FROM 
+                vehicles v
+            JOIN 
+                cabs c ON v.vehicleId = c.vehicleId
+            WHERE 
+                v.vehicleId = UNHEX(?) 
+                AND v.vehicleType = 'cab'`,
+            [ cabId ]
+        );
+
+        if ( cabRows.length === 0 ) {
+            return res.status( 404 ).json( {
+                success: false,
+                message: 'Cab not found'
+            } );
+        }
+
+        if ( cabRows[ 0 ].status !== 'active' ) {
+            return res.status( 400 ).json( {
+                success: false,
+                message: 'This cab is not available for booking'
+            } );
+        }
+
+        // 2. Check if the coach exists and has enough available seats
+        const [ coachRows ] = await conn.execute(
+            `SELECT 
+                coachId, 
+                coachType, 
+                seatsAvailable,
+                price
+            FROM 
+                vehiclecoaches
+            WHERE 
+                vehicleId = UNHEX(?) AND coachId = ?`,
+            [ cabId, coachId ]
+        );
+
+        if ( coachRows.length === 0 ) {
+            return res.status( 404 ).json( {
+                success: false,
+                message: 'Coach not found'
+            } );
+        }
+
+        if ( coachRows[ 0 ].seatsAvailable < passengers.length ) {
+            return res.status( 400 ).json( {
+                success: false,
+                message: `Not enough seats available. Only ${ coachRows[ 0 ].seatsAvailable } seat(s) left.`
+            } );
+        }
+
+        // 3. Verify all selected seats exist and are available
+        const seatIds = passengers.map( p => p.seatId ).filter( Boolean );
+
+        if ( seatIds.length > 0 ) {
+            // First, check if all seats exist
+            const formattedSeatIds = seatIds.map( id => id.replace( /-/g, '' ) );
+            const placeholders = formattedSeatIds.map( () => 'UNHEX(?)' ).join( ',' );
+
+            const [ existingSeats ] = await conn.execute(
+                `SELECT HEX(seatId) as seatId, seatNumber, coachId
+                FROM seats
+                WHERE seatId IN (${ placeholders })
+                AND coachId = ?`,
+                [ ...formattedSeatIds, coachId ]
             );
 
-            if ( cabAvailability.length === 0 || cabAvailability[ 0 ].status !== 'active' ) {
-                await connection.rollback();
-                connection.release();
+            if ( existingSeats.length !== seatIds.length ) {
                 return res.status( 400 ).json( {
                     success: false,
-                    message: 'Cab is not available for booking'
+                    message: 'One or more selected seats do not exist'
                 } );
             }
 
-            // Calculate estimated fare
-            const baseFare = cabAvailability[ 0 ].price;
+            // Now check if any seats are already booked
+            const [ bookedSeats ] = await conn.execute(
+                `SELECT HEX(ps.seatId) as seatId
+                FROM passengerseats ps
+                JOIN vehiclebookingitems vbi ON ps.vehicleItemId = vbi.vehicleItemId
+                WHERE ps.seatId IN (${ placeholders })
+                AND vbi.status != 'cancelled'`,
+                [ ...formattedSeatIds ]
+            );
 
-            // Create booking ID
-            const bookingId = uuidv4().replace( /-/g, '' );
+            if ( bookedSeats.length > 0 ) {
+                return res.status( 400 ).json( {
+                    success: false,
+                    message: 'One or more selected seats are already booked'
+                } );
+            }
+        }
 
-            // Create booking record (hypothetical booking table)
-            // This would be replaced with your actual booking logic
-            await connection.execute(
-                `INSERT INTO bookings 
-                    (bookingId, userId, vehicleId, bookingType, source, destination, 
-                    departureTime, passengers, totalFare, status) 
-                VALUES 
-                    (UNHEX(?), UNHEX(?), UNHEX(?), 'cab', ?, ?, ?, ?, ?, 'confirmed')`,
+        // 4. Handle trip creation or selection if specified
+        let tripId = null;
+
+        if ( tripDetails && tripDetails.createNewTrip && tripDetails.newTripName ) {
+            // Create a new trip
+            const newTripId = uuidv4();
+            const departureDate = new Date( bookingDetails.onboardingTime );
+            const arrivalDate = new Date( bookingDetails.deboardingTime );
+
+            await conn.execute(
+                `INSERT INTO trips (tripId, userId, name, startDate, endDate, status)
+                VALUES (UNHEX(?), UNHEX(?), ?, ?, ?, 'planning')`,
                 [
-                    bookingId,
-                    userId,
-                    cabId,
-                    source,
-                    destination,
-                    departureTime,
-                    passengers || 1,
-                    baseFare,
+                    newTripId.replace( /-/g, '' ),
+                    userId.replace( /-/g, '' ),
+                    tripDetails.newTripName,
+                    departureDate.toISOString().split( 'T' )[ 0 ],
+                    arrivalDate.toISOString().split( 'T' )[ 0 ]
                 ]
             );
 
-            // Commit the transaction
-            await connection.commit();
-            connection.release();
+            tripId = newTripId;
+        } else if ( tripDetails && tripDetails.tripId ) {
+            // Verify the trip exists and belongs to the user
+            const [ tripRows ] = await conn.execute(
+                `SELECT tripId FROM trips WHERE tripId = UNHEX(?) AND userId = UNHEX(?)`,
+                [ tripDetails.tripId.replace( /-/g, '' ), userId.replace( /-/g, '' ) ]
+            );
 
-            res.status( 201 ).json( {
-                success: true,
-                message: 'Cab booked successfully',
-                data: {
-                    bookingId,
-                    fare: baseFare
-                }
-            } );
+            if ( tripRows.length === 0 ) {
+                return res.status( 404 ).json( {
+                    success: false,
+                    message: 'Trip not found or does not belong to the user'
+                } );
+            }
 
-        } catch ( error ) {
-            // Rollback in case of error
-            await connection.rollback();
-            connection.release();
-            throw error;
+            tripId = tripDetails.tripId;
         }
+
+        // 5. Create the main booking record
+        const bookingId = uuidv4();
+        const totalPrice = bookingDetails.price * passengers.length;
+
+        await conn.execute(
+            `INSERT INTO bookings (bookingId, userId, tripId, totalPrice, status, createDate)
+            VALUES (UNHEX(?), UNHEX(?), ${ tripId ? 'UNHEX(?)' : 'NULL' }, ?, 'pending', NOW())`,
+            tripId
+                ? [ bookingId.replace( /-/g, '' ), userId.replace( /-/g, '' ), tripId.replace( /-/g, '' ), totalPrice ]
+                : [ bookingId.replace( /-/g, '' ), userId.replace( /-/g, '' ), totalPrice ]
+        );
+
+        // 6. Create the vehicle booking item
+        const vehicleItemId = uuidv4();
+
+        await conn.execute(
+            `INSERT INTO vehiclebookingitems 
+            (vehicleItemId, vehicleId, onboardingLocation, deboardingLocation, onboardingTime, deboardingTime, coachType, price, status)
+            VALUES (UNHEX(?), UNHEX(?), ?, ?, ?, ?, ?, ?, 'pending')`,
+            [
+                vehicleItemId.replace( /-/g, '' ),
+                cabId.replace( /-/g, '' ),
+                bookingDetails.onboardingLocation,
+                bookingDetails.deboardingLocation,
+                formattedOnboardingTime,
+                formattedDeboardingTime,
+                bookingDetails.coachType,
+                bookingDetails.price
+            ]
+        );
+
+        // 7. Create the booking item linking booking and vehicle item
+        const bookingItemId = uuidv4();
+
+        await conn.execute(
+            `INSERT INTO bookingitems (bookingItemId, bookingId, itemType, vehicleItemId, accomItemId, price)
+            VALUES (UNHEX(?), UNHEX(?), 'vehicle', UNHEX(?), NULL, ?)`,
+            [
+                bookingItemId.replace( /-/g, '' ),
+                bookingId.replace( /-/g, '' ),
+                vehicleItemId.replace( /-/g, '' ),
+                totalPrice
+            ]
+        );
+
+        // 8. Create passenger records
+        for ( const passenger of passengers ) {
+            const passengerId = uuidv4();
+
+            // Format the passenger's seatId properly
+            const formattedSeatId = passenger.seatId.replace( /-/g, '' );
+
+            await conn.execute(
+                `INSERT INTO passengerseats 
+                (passengerId, vehicleItemId, seatId, name, age, gender, foodPreference)
+                VALUES (UNHEX(?), UNHEX(?), UNHEX(?), ?, ?, ?, ?)`,
+                [
+                    passengerId.replace( /-/g, '' ),
+                    vehicleItemId.replace( /-/g, '' ),
+                    formattedSeatId,
+                    passenger.name,
+                    passenger.age,
+                    passenger.gender,
+                    passenger.foodPreference
+                ]
+            );
+        }
+
+        // 9. Update available seats in the vehicle coach
+        await conn.execute(
+            `UPDATE vehiclecoaches 
+            SET seatsAvailable = seatsAvailable - ? 
+            WHERE vehicleId = UNHEX(?) AND coachId = ?`,
+            [ passengers.length, cabId, coachId ]
+        );
+
+        // 10. Create payment record
+        const paymentId = uuidv4();
+
+        await conn.execute(
+            `INSERT INTO payments 
+            (paymentId, bookingId, amount, paid, paymentMethod, status)
+            VALUES (UNHEX(?), UNHEX(?), ?, FALSE, ?, 'pending')`,
+            [
+                paymentId.replace( /-/g, '' ),
+                bookingId.replace( /-/g, '' ),
+                totalPrice,
+                paymentMethod
+            ]
+        );
+
+        // Commit transaction
+        await conn.commit();
+
+        // Generate booking reference
+        const bookingReference = generateBookingReference();
+
+        return res.status( 201 ).json( {
+            success: true,
+            message: 'Cab booking created successfully',
+            data: {
+                bookingId,
+                bookingReference,
+                totalPrice,
+                status: 'pending',
+                tripId
+            }
+        } );
+
     } catch ( error ) {
-        console.error( 'Error booking cab:', error );
-        res.status( 500 ).json( {
+        await conn.rollback();
+        console.error( 'Error creating cab booking:', error );
+
+        return res.status( 500 ).json( {
             success: false,
-            message: 'Internal Server Error',
+            message: 'Failed to create cab booking',
             error: process.env.NODE_ENV === 'production' ? null : error.message
         } );
+    } finally {
+        conn.release();
     }
 }
 
-export { handleCabListGet, handleCabDetailGet, handleCabCreate, handleCabBooking };
+// Helper function for date formatting
+const formatDateTimeForMySQL = ( dateTimeStr ) => {
+    if ( !dateTimeStr ) return null;
+    try {
+        const date = new Date( dateTimeStr );
+        return date.toISOString().slice( 0, 19 ).replace( 'T', ' ' );
+    } catch ( err ) {
+        console.error( 'Error formatting datetime:', err );
+        return null;
+    }
+};
+
+// Helper function to generate booking reference
+const generateBookingReference = () => {
+    const chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    let reference = '';
+    for ( let i = 0; i < 8; i++ ) {
+        reference += chars[ Math.floor( Math.random() * chars.length ) ];
+    }
+    return reference;
+};
+
+export {
+    handleCabListGet,
+    handleCabDetailGet,
+    handleCabSeatGet,
+    handleCabBookPost
+};

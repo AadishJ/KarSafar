@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { FcGoogle } from 'react-icons/fc';
 import { FaUser, FaLock } from 'react-icons/fa';
-import { useAuth } from '../Contexts/auth.context';
+import { useAuth } from '../../Contexts/auth.context';
 
 const Login = () => {
     const navigate = useNavigate();
@@ -54,7 +54,7 @@ const Login = () => {
             navigate( '/' );
         }
     }
-    , [ navigate ] );
+        , [ navigate ] );
 
     return (
         <section className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-neutral-100 p-4">

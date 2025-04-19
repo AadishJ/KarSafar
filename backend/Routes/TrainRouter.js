@@ -1,10 +1,19 @@
 import express from "express";
-import { handleTrainListGet } from "../Controllers/TrainController.js";
+import { handleTrainDetailGet, handleTrainListGet, handleTrainSeatGet } from "../Controllers/TrainController.js";
 const trainRouter = express.Router();
 
 trainRouter
     .route( "/list" )
-    .get( handleTrainListGet )
+    .get( handleTrainListGet );
+
+trainRouter
+    .route( "/:trainId" )
+    .get( handleTrainDetailGet );
+
+trainRouter
+    .route( "/:trainId/seats" )
+    .get( handleTrainSeatGet );
+
 
 
 export default trainRouter;

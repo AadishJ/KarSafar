@@ -1,10 +1,18 @@
 import express from "express";
-import { handleBusListGet } from "../Controllers/BusController.js";
+import { handleBusDetailGet, handleBusListGet, handleBusSeatGet } from "../Controllers/BusController.js";
 const busRouter = express.Router();
 
 busRouter
     .route( "/list" )
-    .get( handleBusListGet )
+    .get( handleBusListGet );
+
+busRouter
+    .route( "/:busId" )
+    .get( handleBusDetailGet );
+
+busRouter
+    .route( "/:busId/seats" )
+    .get( handleBusSeatGet );
 
 
 export default busRouter;

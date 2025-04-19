@@ -421,5 +421,14 @@
         "state": "West Bengal",
         "zone": "South Eastern Railway",
         "major": false
+    },
+    {
+        "stationCode": "WL",
+        "stationName": "Warangal",
+        "fullName": "Warangal Railway Station",
+        "city": "Warangal",
+        "state": "Telangana",
+        "zone": "South Central Railway",
+        "major": false
     }
 ]

@@ -486,14 +486,310 @@ const handleBookingsListGet = async ( req, res ) => {
     }
 };
 
+// ...existing code...
+
+const handleTrainBookPost = async ( req, res ) => {
+    const conn = await pool.getConnection();
+
+    try {
+        await conn.beginTransaction();
+
+        const { id: trainId } = req.params;
+        const {
+            coachId,
+            passengers,
+            contactInfo,
+            paymentMethod,
+            tripDetails,
+            bookingDetails
+        } = req.body;
+
+        const userId = req.body.userId; // From auth middleware
+
+        // Validate input
+        if ( !trainId || !coachId || !passengers || passengers.length === 0 || !bookingDetails ) {
+            return res.status( 400 ).json( {
+                success: false,
+                message: 'Missing required booking information'
+            } );
+        }
+
+        const formattedOnboardingTime = formatDateTimeForMySQL( bookingDetails.onboardingTime );
+        const formattedDeboardingTime = formatDateTimeForMySQL( bookingDetails.deboardingTime );
+
+        if ( !formattedOnboardingTime || !formattedDeboardingTime ) {
+            return res.status( 400 ).json( {
+                success: false,
+                message: 'Invalid date/time format for boarding times'
+            } );
+        }
+
+        // 1. Check if the train exists and is active
+        const [ trainRows ] = await conn.execute(
+            `SELECT 
+                v.vehicleId, 
+                v.status,
+                t.trainName
+            FROM 
+                vehicles v
+            JOIN 
+                trains t ON v.vehicleId = t.vehicleId
+            WHERE 
+                v.vehicleId = UNHEX(?) 
+                AND v.vehicleType = 'train'`,
+            [ trainId ]
+        );
+
+        if ( trainRows.length === 0 ) {
+            return res.status( 404 ).json( {
+                success: false,
+                message: 'Train not found'
+            } );
+        }
+
+        if ( trainRows[ 0 ].status !== 'active' ) {
+            return res.status( 400 ).json( {
+                success: false,
+                message: 'This train is not available for booking'
+            } );
+        }
+
+        // 2. Check if the coach exists and has enough available seats
+        const [ coachRows ] = await conn.execute(
+            `SELECT 
+                coachId, 
+                coachType, 
+                seatsAvailable,
+                price
+            FROM 
+                vehiclecoaches
+            WHERE 
+                vehicleId = UNHEX(?) AND coachId = ?`,
+            [ trainId, coachId ]
+        );
+
+        if ( coachRows.length === 0 ) {
+            return res.status( 404 ).json( {
+                success: false,
+                message: 'Coach not found'
+            } );
+        }
+
+        if ( coachRows[ 0 ].seatsAvailable < passengers.length ) {
+            return res.status( 400 ).json( {
+                success: false,
+                message: `Not enough seats available. Only ${ coachRows[ 0 ].seatsAvailable } seat(s) left.`
+            } );
+        }
+
+        // 3. Verify all selected seats exist and are available
+        const seatIds = passengers.map( p => p.seatId ).filter( Boolean );
+
+        if ( seatIds.length > 0 ) {
+            // First, check if all seats exist
+            const formattedSeatIds = seatIds.map( id => id.replace( /-/g, '' ) );
+            const placeholders = formattedSeatIds.map( () => 'UNHEX(?)' ).join( ',' );
+
+            const [ existingSeats ] = await conn.execute(
+                `SELECT HEX(seatId) as seatId, seatNumber, coachId
+                FROM seats
+                WHERE seatId IN (${ placeholders })
+                AND coachId = ?`,
+                [ ...formattedSeatIds, coachId ]
+            );
+
+            if ( existingSeats.length !== seatIds.length ) {
+                return res.status( 400 ).json( {
+                    success: false,
+                    message: 'One or more selected seats do not exist'
+                } );
+            }
+
+            // Now check if any seats are already booked
+            const [ bookedSeats ] = await conn.execute(
+                `SELECT HEX(ps.seatId) as seatId
+                FROM passengerseats ps
+                JOIN vehiclebookingitems vbi ON ps.vehicleItemId = vbi.vehicleItemId
+                WHERE ps.seatId IN (${ placeholders })
+                AND vbi.status != 'cancelled'`,
+                [ ...formattedSeatIds ]
+            );
+
+            if ( bookedSeats.length > 0 ) {
+                return res.status( 400 ).json( {
+                    success: false,
+                    message: 'One or more selected seats are already booked'
+                } );
+            }
+        }
+
+        // 4. Handle trip creation or selection if specified
+        let tripId = null;
+
+        if ( tripDetails && tripDetails.createNewTrip && tripDetails.newTripName ) {
+            // Create a new trip
+            const newTripId = uuidv4();
+            const departureDate = new Date( bookingDetails.onboardingTime );
+            const arrivalDate = new Date( bookingDetails.deboardingTime );
+
+            await conn.execute(
+                `INSERT INTO trips (tripId, userId, name, startDate, endDate, status)
+                VALUES (UNHEX(?), UNHEX(?), ?, ?, ?, 'planning')`,
+                [
+                    newTripId.replace( /-/g, '' ),
+                    userId.replace( /-/g, '' ),
+                    tripDetails.newTripName,
+                    departureDate.toISOString().split( 'T' )[ 0 ],
+                    arrivalDate.toISOString().split( 'T' )[ 0 ]
+                ]
+            );
+
+            tripId = newTripId;
+        } else if ( tripDetails && tripDetails.tripId ) {
+            // Verify the trip exists and belongs to the user
+            const [ tripRows ] = await conn.execute(
+                `SELECT tripId FROM trips WHERE tripId = UNHEX(?) AND userId = UNHEX(?)`,
+                [ tripDetails.tripId.replace( /-/g, '' ), userId.replace( /-/g, '' ) ]
+            );
+
+            if ( tripRows.length === 0 ) {
+                return res.status( 404 ).json( {
+                    success: false,
+                    message: 'Trip not found or does not belong to the user'
+                } );
+            }
+
+            tripId = tripDetails.tripId;
+        }
+
+        // 5. Create the main booking record
+        const bookingId = uuidv4();
+        const totalPrice = bookingDetails.price * passengers.length;
+
+        await conn.execute(
+            `INSERT INTO bookings (bookingId, userId, tripId, totalPrice, status, createDate)
+            VALUES (UNHEX(?), UNHEX(?), ${ tripId ? 'UNHEX(?)' : 'NULL' }, ?, 'pending', NOW())`,
+            tripId
+                ? [ bookingId.replace( /-/g, '' ), userId.replace( /-/g, '' ), tripId.replace( /-/g, '' ), totalPrice ]
+                : [ bookingId.replace( /-/g, '' ), userId.replace( /-/g, '' ), totalPrice ]
+        );
+
+        // 6. Create the vehicle booking item
+        const vehicleItemId = uuidv4();
+
+        await conn.execute(
+            `INSERT INTO vehiclebookingitems 
+            (vehicleItemId, vehicleId, onboardingLocation, deboardingLocation, onboardingTime, deboardingTime, coachType, price, status)
+            VALUES (UNHEX(?), UNHEX(?), ?, ?, ?, ?, ?, ?, 'pending')`,
+            [
+                vehicleItemId.replace( /-/g, '' ),
+                trainId.replace( /-/g, '' ),
+                bookingDetails.onboardingLocation,
+                bookingDetails.deboardingLocation,
+                formattedOnboardingTime,  // Use formatted datetime
+                formattedDeboardingTime,  // Use formatted datetime
+                bookingDetails.coachType,
+                bookingDetails.price
+            ]
+        );
+
+        // 7. Create the booking item linking booking and vehicle item
+        const bookingItemId = uuidv4();
+
+        await conn.execute(
+            `INSERT INTO bookingitems (bookingItemId, bookingId, itemType, vehicleItemId, accomItemId, price)
+            VALUES (UNHEX(?), UNHEX(?), 'vehicle', UNHEX(?), NULL, ?)`,
+            [
+                bookingItemId.replace( /-/g, '' ),
+                bookingId.replace( /-/g, '' ),
+                vehicleItemId.replace( /-/g, '' ),
+                totalPrice
+            ]
+        );
+
+        // 8. Create passenger records
+        for ( const passenger of passengers ) {
+            const passengerId = uuidv4();
+
+            // Format the passenger's seatId properly
+            const formattedSeatId = passenger.seatId.replace( /-/g, '' );
+
+            await conn.execute(
+                `INSERT INTO passengerseats 
+                (passengerId, vehicleItemId, seatId, name, age, gender, foodPreference)
+                VALUES (UNHEX(?), UNHEX(?), UNHEX(?), ?, ?, ?, ?)`,
+                [
+                    passengerId.replace( /-/g, '' ),
+                    vehicleItemId.replace( /-/g, '' ),
+                    formattedSeatId,
+                    passenger.name,
+                    passenger.age,
+                    passenger.gender,
+                    passenger.foodPreference
+                ]
+            );
+        }
+
+        // 9. Update available seats in the vehicle coach
+        await conn.execute(
+            `UPDATE vehiclecoaches 
+            SET seatsAvailable = seatsAvailable - ? 
+            WHERE vehicleId = UNHEX(?) AND coachId = ?`,
+            [ passengers.length, trainId, coachId ]
+        );
+
+        // 10. Create payment record
+        const paymentId = uuidv4();
+
+        await conn.execute(
+            `INSERT INTO payments 
+            (paymentId, bookingId, amount, paid, paymentMethod, status)
+            VALUES (UNHEX(?), UNHEX(?), ?, FALSE, ?, 'pending')`,
+            [
+                paymentId.replace( /-/g, '' ),
+                bookingId.replace( /-/g, '' ),
+                totalPrice,
+                paymentMethod
+            ]
+        );
+
+        // Commit transaction
+        await conn.commit();
+
+        // Generate booking reference
+        const bookingReference = generateBookingReference();
+
+        return res.status( 201 ).json( {
+            success: true,
+            message: 'Train booking created successfully',
+            data: {
+                bookingId,
+                bookingReference,
+                totalPrice,
+                status: 'pending',
+                tripId
+            }
+        } );
+
+    } catch ( error ) {
+        await conn.rollback();
+        console.error( 'Error creating train booking:', error );
+
+        return res.status( 500 ).json( {
+            success: false,
+            message: 'Failed to create train booking',
+            error: process.env.NODE_ENV === 'production' ? null : error.message
+        } );
+    } finally {
+        conn.release();
+    }
+};
+
 
 const handleCarBookPost = async ( req, res ) => {
 
 }
 
-const handleTrainBookPost = async ( req, res ) => {
-
-}
 
 const handleBusBookPost = async ( req, res ) => {
 

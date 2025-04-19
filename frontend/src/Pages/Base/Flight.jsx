@@ -10,7 +10,7 @@ import {
   CircularProgress,
   Chip
 } from '@mui/material';
-import axiosInstance from '../Config/axiosInstance';
+import axiosInstance from '../../Config/axiosInstance';
 import { format } from 'date-fns';
 import {
   FlightTakeoff,
@@ -20,7 +20,7 @@ import {
   Flight as FlightIcon
 } from '@mui/icons-material';
 
-import FlightDateSelector from '../Component/DateSelector/FlightDateSelector';
+import FlightDateSelector from '../../Component/DateSelector/FlightDateSelector';
 import { Link } from 'react-router-dom';
 
 const Flight = () => {

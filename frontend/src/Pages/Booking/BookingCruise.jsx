@@ -30,39 +30,39 @@ import {
     DialogActions,
     DialogContent,
     DialogTitle,
-    DialogContentText,
-    Avatar
+    DialogContentText
 } from '@mui/material';
 import {
-    DirectionsBus,
+    DirectionsBoat,
     Person,
     Restaurant,
-    EventSeat,
+    MeetingRoom,
     CreditCard,
     CheckCircle,
     ArrowBack,
-    AcUnit,
-    Wifi,
-    ChargingStation,
-    Wc
+    Pool,
+    Spa,
+    TheaterComedy,
+    Deck,
+    AirlineSeatReclineExtra
 } from '@mui/icons-material';
-import { format, parseISO } from 'date-fns';
+import { format, parseISO, addDays } from 'date-fns';
 import axiosInstance from '../../Config/axiosInstance';
 import { useAuth } from '../../Contexts/auth.context';
 
-const BookingBus = () => {
+const BookingCruise = () => {
     const { id } = useParams();
     const location = useLocation();
     const navigate = useNavigate();
     const { user } = useAuth();
     const [ activeStep, setActiveStep ] = useState( 0 );
-    const [ bus, setBus ] = useState( null );
+    const [ cruise, setCruise ] = useState( null );
     const [ loading, setLoading ] = useState( true );
     const [ error, setError ] = useState( null );
     const [ bookingConfirmed, setBookingConfirmed ] = useState( false );
     const [ bookingId, setBookingId ] = useState( null );
 
-    // Selected coach from previous page
+    // Selected cabin from previous page
     const [ selectedCoach, setSelectedCoach ] = useState(
         location.state?.selectedCoach || null
     );
@@ -73,19 +73,28 @@ const BookingBus = () => {
             name: user?.name || '',
             age: '',
             gender: 'male',
-            foodPreference: 'none',
-            seatId: ''
+            diningPreference: 'standard',
+            cabinId: ''
         }
     ] );
 
-    // Available seats
-    const [ availableSeats, setAvailableSeats ] = useState( [] );
+    // Available cabins
+    const [ availableCabins, setAvailableCabins ] = useState( [] );
 
     // Contact information
     const [ contactInfo, setContactInfo ] = useState( {
         name: user?.name || '',
         email: user?.email || '',
         phone: user?.phone || ''
+    } );
+
+    // Cruise add-ons
+    const [ addons, setAddons ] = useState( {
+        wifiPackage: false,
+        specialDining: false,
+        excursions: false,
+        spaPackage: false,
+        premiumBeverage: false
     } );
 
     // Payment information
@@ -116,9 +125,9 @@ const BookingBus = () => {
 
     // Steps for the booking process
     const steps = [
-        'Bus Details',
+        'Cruise Details',
         'Passenger Information',
-        'Seat Selection',
+        'Cabin Selection',
         'Payment',
         'Confirmation'
     ];
@@ -135,38 +144,31 @@ const BookingBus = () => {
             setSelectedCoach( location.state.selectedCoach );
         }
 
-        // Fetch bus details
-        const fetchBusDetails = async () => {
+        // Fetch cruise details
+        const fetchCruiseDetails = async () => {
             try {
                 setLoading( true );
-                const response = await axiosInstance.get( `/bus/${ id }` );
+                const response = await axiosInstance.get( `/cruise/${ id }` );
 
                 if ( response.data.success ) {
-                    const busData = response.data.data;
-
-                    // Process data - convert route to stations if needed
-                    const processedData = {
-                        ...busData,
-                        stations: busData.route || []
-                    };
-
-                    setBus( processedData );
+                    const cruiseData = response.data.data;
+                    setCruise( cruiseData );
 
                     // If we don't have coach data from the previous page, use the first coach
-                    if ( !selectedCoach && busData.coaches && busData.coaches.length > 0 ) {
-                        setSelectedCoach( busData.coaches[ 0 ] );
+                    if ( !selectedCoach && cruiseData.coaches && cruiseData.coaches.length > 0 ) {
+                        setSelectedCoach( cruiseData.coaches[ 0 ] );
                     }
 
-                    // Fetch available seats for the selected coach
+                    // Fetch available cabins for the selected coach
                     if ( location.state?.coachId ) {
-                        fetchAvailableSeats( id, location.state.coachId );
+                        fetchAvailableCabins( id, location.state.coachId );
                     }
                 } else {
-                    setError( 'Failed to fetch bus details' );
+                    setError( 'Failed to fetch cruise details' );
                 }
             } catch ( err ) {
-                console.error( 'Error fetching bus details:', err );
-                setError( 'An error occurred while retrieving bus information' );
+                console.error( 'Error fetching cruise details:', err );
+                setError( 'An error occurred while retrieving cruise information' );
             } finally {
                 setLoading( false );
             }
@@ -185,27 +187,27 @@ const BookingBus = () => {
         };
 
         if ( id ) {
-            fetchBusDetails();
+            fetchCruiseDetails();
             if ( user ) {
                 fetchUserTrips();
             }
         }
-    }, [ id, user, location.state, selectedCoach ] );
+    }, [ id, user, location.state, selectedCoach, navigate ] );
 
-    // Fetch available seats for the selected coach
-    const fetchAvailableSeats = async ( busId, coachId ) => {
+    // Fetch available cabins for the selected coach
+    const fetchAvailableCabins = async ( cruiseId, coachId ) => {
         try {
-            const response = await axiosInstance.get( `/bus/${ busId }/seats`, {
+            const response = await axiosInstance.get( `/cruise/${ cruiseId }/cabins`, {
                 params: { coachId }
             } );
 
             if ( response.data.success ) {
-                setAvailableSeats( response.data.data );
+                setAvailableCabins( response.data.data );
             } else {
-                console.error( 'Failed to fetch available seats' );
+                console.error( 'Failed to fetch available cabins' );
             }
         } catch ( error ) {
-            console.error( 'Error fetching seats:', error );
+            console.error( 'Error fetching cabins:', error );
         }
     };
 
@@ -215,6 +217,18 @@ const BookingBus = () => {
         try {
             const date = parseISO( dateTimeStr );
             return format( date, 'MMM dd, yyyy h:mm a' );
+        } catch ( e ) {
+            console.error( 'Date parsing error:', e );
+            return dateTimeStr;
+        }
+    };
+
+    // Format date only
+    const formatDate = ( dateTimeStr ) => {
+        if ( !dateTimeStr ) return '';
+        try {
+            const date = parseISO( dateTimeStr );
+            return format( date, 'MMM dd, yyyy' );
         } catch ( e ) {
             console.error( 'Date parsing error:', e );
             return dateTimeStr;
@@ -242,15 +256,15 @@ const BookingBus = () => {
 
     // Add a new passenger
     const addPassenger = () => {
-        if ( passengers.length < 5 ) {
+        if ( passengers.length < 4 ) { // Limit for a cabin
             setPassengers( [
                 ...passengers,
                 {
                     name: '',
                     age: '',
                     gender: 'male',
-                    foodPreference: 'none',
-                    seatId: ''
+                    diningPreference: 'standard',
+                    cabinId: ''
                 }
             ] );
         }
@@ -265,11 +279,11 @@ const BookingBus = () => {
         }
     };
 
-    // Handle seat selection for a passenger
-    const handleSeatSelection = ( passengerId, seatId ) => {
-        // Check if the seat is already selected by another passenger
+    // Handle cabin selection for a passenger
+    const handleCabinSelection = ( passengerId, cabinId ) => {
+        // Check if the cabin is already selected by another passenger
         const isAlreadySelected = passengers.some(
-            ( p, idx ) => idx !== passengerId && p.seatId === seatId
+            ( p, idx ) => idx !== passengerId && p.cabinId === cabinId
         );
 
         if ( isAlreadySelected ) {
@@ -279,7 +293,7 @@ const BookingBus = () => {
         const updatedPassengers = [ ...passengers ];
         updatedPassengers[ passengerId ] = {
             ...updatedPassengers[ passengerId ],
-            seatId
+            cabinId
         };
         setPassengers( updatedPassengers );
     };
@@ -308,26 +322,44 @@ const BookingBus = () => {
         } );
     };
 
+    // Handle add-ons change
+    const handleAddonChange = ( addon, value ) => {
+        setAddons( {
+            ...addons,
+            [ addon ]: value
+        } );
+    };
+
+    // Calculate additional costs from add-ons
+    const calculateAddonsCost = () => {
+        let total = 0;
+        if ( addons.wifiPackage ) total += 1500;
+        if ( addons.specialDining ) total += 3000;
+        if ( addons.excursions ) total += 5000;
+        if ( addons.spaPackage ) total += 4000;
+        if ( addons.premiumBeverage ) total += 2500;
+        return total;
+    };
+
     // Calculate total price
     const calculateTotalPrice = () => {
         if ( !selectedCoach ) return 0;
-        return selectedCoach.price * passengers.length;
+        const basePrice = selectedCoach.price * passengers.length;
+        const addonsPrice = calculateAddonsCost();
+        return basePrice + addonsPrice;
     };
 
-    // Get the first and last stations
-    const getStations = () => {
-        if ( !bus || !bus.stations || bus.stations.length === 0 ) {
-            return { departureStation: null, arrivalStation: null };
+    // Get the cruise itinerary start and end points
+    const getItineraryPoints = () => {
+        if ( !cruise || !cruise.itinerary || cruise.itinerary.length === 0 ) {
+            return { departurePort: null, arrivalPort: null };
         }
 
-        const stations = bus.stations;
-        const departureStation = stations.find( station => station.stationOrder === 1 );
-        const arrivalStation = stations.reduce(
-            ( prev, current ) => ( prev.stationOrder > current.stationOrder ) ? prev : current,
-            stations[ 0 ]
-        );
+        const itinerary = cruise.itinerary;
+        const departurePort = itinerary[ 0 ];
+        const arrivalPort = itinerary[ itinerary.length - 1 ];
 
-        return { departureStation, arrivalStation };
+        return { departurePort, arrivalPort };
     };
 
     // Move to the next step
@@ -335,7 +367,7 @@ const BookingBus = () => {
         // Validate current step
         if ( activeStep === 0 ) {
             if ( !selectedCoach ) {
-                setError( 'Please select a coach class' );
+                setError( 'Please select a cabin type' );
                 return;
             }
         } else if ( activeStep === 1 ) {
@@ -351,11 +383,11 @@ const BookingBus = () => {
                 return;
             }
         } else if ( activeStep === 2 ) {
-            // Validate seat selection
-            const isValid = passengers.every( passenger => passenger.seatId !== '' );
+            // Validate cabin selection
+            const isValid = passengers.every( passenger => passenger.cabinId !== '' );
 
             if ( !isValid ) {
-                setError( 'Please select seats for all passengers' );
+                setError( 'Please select cabins for all passengers' );
                 return;
             }
         } else if ( activeStep === 3 ) {
@@ -399,19 +431,19 @@ const BookingBus = () => {
         try {
             setLoading( true );
 
-            // Get station information
-            const { departureStation, arrivalStation } = getStations();
+            // Get port information
+            const { departurePort, arrivalPort } = getItineraryPoints();
 
             // Prepare booking data
             const bookingData = {
-                busId: id,
+                cruiseId: id,
                 coachId: selectedCoach.coachId,
                 passengers: passengers.map( passenger => ( {
                     name: passenger.name,
                     age: parseInt( passenger.age, 10 ),
                     gender: passenger.gender,
-                    foodPreference: passenger.foodPreference,
-                    seatId: passenger.seatId
+                    diningPreference: passenger.diningPreference,
+                    cabinId: passenger.cabinId
                 } ) ),
                 contactInfo: {
                     name: contactInfo.name,
@@ -419,24 +451,26 @@ const BookingBus = () => {
                     phone: contactInfo.phone
                 },
                 paymentMethod,
+                addons: Object.keys( addons ).filter( key => addons[ key ] ),
                 tripDetails: tripDetails.addToTrip ? {
                     tripId: tripDetails.selectedTripId || null,
                     createNewTrip: tripDetails.createNewTrip,
                     newTripName: tripDetails.newTripName
                 } : null,
                 bookingDetails: {
-                    onboardingLocation: departureStation?.stationName || '',
-                    deboardingLocation: arrivalStation?.stationName || '',
-                    onboardingTime: departureStation?.departureTime || '',
-                    deboardingTime: arrivalStation?.arrivalTime || '',
-                    coachType: selectedCoach.coachType,
-                    price: selectedCoach.price,
+                    departurePort: departurePort?.port || '',
+                    arrivalPort: arrivalPort?.port || '',
+                    departureDate: cruise?.departureDate || '',
+                    arrivalDate: cruise?.arrivalDate || '',
+                    cabinType: selectedCoach.coachType,
+                    basePrice: selectedCoach.price,
+                    addonsPrice: calculateAddonsCost(),
                     totalPrice: calculateTotalPrice()
                 }
             };
 
             // Submit booking
-            const response = await axiosInstance.post( `/booking/bus/${ id }`, bookingData );
+            const response = await axiosInstance.post( `/booking/cruise/${ id }`, bookingData );
 
             if ( response.data.success ) {
                 setBookingConfirmed( true );
@@ -453,9 +487,9 @@ const BookingBus = () => {
         }
     };
 
-    // Go back to bus details
+    // Go back to cruise details
     const goBack = () => {
-        navigate( `/buses/${ id }` );
+        navigate( `/cruises/${ id }` );
     };
 
     // Navigate to all bookings
@@ -468,7 +502,7 @@ const BookingBus = () => {
         navigate( `/booking/${ bookingId }` );
     };
 
-    if ( loading && !bus ) {
+    if ( loading && !cruise ) {
         return (
             <Container>
                 <Box display="flex" justifyContent="center" alignItems="center" minHeight="60vh">
@@ -478,11 +512,11 @@ const BookingBus = () => {
         );
     }
 
-    if ( error && !bus ) {
+    if ( error && !cruise ) {
         return (
             <Container>
                 <Button startIcon={<ArrowBack />} onClick={goBack} sx={{ mt: 3, mb: 2 }}>
-                    Back to Bus Details
+                    Back to Cruise Details
                 </Button>
                 <Paper elevation={2} sx={{ p: 4, textAlign: 'center' }}>
                     <Typography color="error" variant="h6">
@@ -496,51 +530,32 @@ const BookingBus = () => {
         );
     }
 
-    const { departureStation, arrivalStation } = getStations();
+    const { departurePort, arrivalPort } = getItineraryPoints();
 
     // Render the current step content
     const getStepContent = ( step ) => {
         switch ( step ) {
-            case 0: // Bus Details
+            case 0: // Cruise Details
                 return (
                     <Box>
                         <Paper elevation={3} sx={{ p: 3, mb: 4 }}>
                             <Typography variant="h6" gutterBottom>
-                                Bus Summary
+                                Cruise Summary
                             </Typography>
                             <Grid container spacing={2}>
                                 <Grid item xs={12} md={6}>
-                                    <Box display="flex" alignItems="center">
-                                        {bus.photo ? (
-                                            <Avatar
-                                                src={bus.photo}
-                                                variant="rounded"
-                                                sx={{ width: 60, height: 45, mr: 2 }}
-                                                alt={bus.busName}
-                                            />
-                                        ) : (
-                                            <DirectionsBus color="primary" sx={{ mr: 2, fontSize: 40 }} />
-                                        )}
-                                        <Box>
-                                            <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>
-                                                {bus.busName}
-                                            </Typography>
-                                            <Typography variant="body2" color="text.secondary">
-                                                Bus ID: {bus.busId ? bus.busId.substring( 0, 8 ) : id.substring( 0, 8 )}...
-                                            </Typography>
-                                            <Chip
-                                                size="small"
-                                                label={bus.status}
-                                                color={bus.status === 'active' ? 'success' : 'default'}
-                                                sx={{ mt: 1 }}
-                                            />
-                                        </Box>
-                                    </Box>
-                                    {bus.drivers && bus.drivers.length > 0 && (
-                                        <Typography variant="body2" sx={{ mt: 2 }}>
-                                            Driver: {bus.drivers[ 0 ].driverName}
-                                        </Typography>
-                                    )}
+                                    <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>
+                                        {cruise.cruiseName || 'Luxury Cruise'}
+                                    </Typography>
+                                    <Typography variant="body2" color="text.secondary">
+                                        Cruise ID: {cruise.cruiseId ? cruise.cruiseId.substring( 0, 8 ) : id.substring( 0, 8 )}...
+                                    </Typography>
+                                    <Chip
+                                        size="small"
+                                        label={cruise.status || 'Active'}
+                                        color={( cruise.status || 'active' ) === 'active' ? 'success' : 'default'}
+                                        sx={{ mt: 1 }}
+                                    />
                                 </Grid>
                                 <Grid item xs={12} md={6}>
                                     <Box display="flex" flexDirection="column">
@@ -557,16 +572,11 @@ const BookingBus = () => {
                                                     Departure
                                                 </Typography>
                                                 <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
-                                                    {departureStation ? formatDateTime( departureStation.departureTime ) : ''}
+                                                    {formatDate( cruise.departureDate )}
                                                 </Typography>
                                                 <Typography variant="body2" noWrap>
-                                                    {departureStation ? departureStation.stationName : ''}
+                                                    {departurePort ? departurePort.port : 'N/A'}
                                                 </Typography>
-                                                {departureStation && departureStation.city && (
-                                                    <Typography variant="body2" color="text.secondary" noWrap>
-                                                        {departureStation.city}, {departureStation.state}
-                                                    </Typography>
-                                                )}
                                             </Box>
 
                                             {/* Visual separator */}
@@ -584,16 +594,11 @@ const BookingBus = () => {
                                                     Arrival
                                                 </Typography>
                                                 <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
-                                                    {arrivalStation ? formatDateTime( arrivalStation.arrivalTime ) : ''}
+                                                    {formatDate( cruise.arrivalDate )}
                                                 </Typography>
                                                 <Typography variant="body2" noWrap>
-                                                    {arrivalStation ? arrivalStation.stationName : ''}
+                                                    {arrivalPort ? arrivalPort.port : 'N/A'}
                                                 </Typography>
-                                                {arrivalStation && arrivalStation.city && (
-                                                    <Typography variant="body2" color="text.secondary" noWrap>
-                                                        {arrivalStation.city}, {arrivalStation.state}
-                                                    </Typography>
-                                                )}
                                             </Box>
                                         </Box>
                                     </Box>
@@ -603,52 +608,89 @@ const BookingBus = () => {
                             <Divider sx={{ my: 2 }} />
 
                             <Typography variant="h6" gutterBottom>
-                                Selected Class: {selectedCoach ? selectedCoach.coachType : 'Not Selected'}
+                                Selected Cabin: {selectedCoach ? selectedCoach.coachType : 'Not Selected'}
                             </Typography>
                             <Typography variant="body1" color="primary" sx={{ fontWeight: 'bold' }}>
                                 Price per passenger: {selectedCoach ? formatPrice( selectedCoach.price ) : 'N/A'}
                             </Typography>
                             <Typography variant="body2" color="text.secondary">
-                                Available seats: {selectedCoach ? selectedCoach.seatsAvailable : 0}
+                                Available cabins: {selectedCoach ? selectedCoach.seatsAvailable : 0}
                             </Typography>
 
                             <Box sx={{ mt: 2 }}>
                                 <Typography variant="body2">
                                     Includes:
                                 </Typography>
-                                <Box display="flex" gap={1} sx={{ mt: 1, flexWrap: 'wrap' }}>
-                                    {selectedCoach && selectedCoach.coachType === 'Seater' && (
+                                <Box display="flex" gap={1} sx={{ mt: 1 }}>
+                                    {selectedCoach && selectedCoach.coachType === 'Interior' && (
                                         <>
-                                            <Chip size="small" icon={<EventSeat />} label="Standard Seats" />
-                                            <Chip size="small" icon={<Wc />} label="Restroom" />
+                                            <Chip size="small" label="Basic amenities" />
+                                            <Chip size="small" label="Standard dining" />
                                         </>
                                     )}
-                                    {selectedCoach && selectedCoach.coachType === 'Sleeper' && (
+                                    {selectedCoach && selectedCoach.coachType === 'Ocean View' && (
                                         <>
-                                            <Chip size="small" icon={<EventSeat />} label="Berth Seats" />
-                                            <Chip size="small" icon={<Wc />} label="Restroom" />
-                                            <Chip size="small" icon={<AcUnit />} label="AC" />
+                                            <Chip size="small" label="Ocean view window" />
+                                            <Chip size="small" label="Enhanced amenities" />
+                                            <Chip size="small" label="Standard dining" />
                                         </>
                                     )}
-                                    {selectedCoach && selectedCoach.coachType === 'AC Sleeper' && (
+                                    {selectedCoach && selectedCoach.coachType === 'Balcony' && (
                                         <>
-                                            <Chip size="small" icon={<EventSeat />} label="Premium Berth" />
-                                            <Chip size="small" icon={<Wc />} label="Clean Restroom" />
-                                            <Chip size="small" icon={<AcUnit />} label="AC" />
-                                            <Chip size="small" icon={<ChargingStation />} label="Charging Points" />
+                                            <Chip size="small" label="Private balcony" />
+                                            <Chip size="small" label="Premium amenities" />
+                                            <Chip size="small" label="Priority dining" />
+                                            <Chip size="small" label="Complimentary Wi-Fi" />
                                         </>
                                     )}
-                                    {selectedCoach && selectedCoach.coachType === 'Volvo' && (
+                                    {selectedCoach && selectedCoach.coachType === 'Suite' && (
                                         <>
-                                            <Chip size="small" icon={<EventSeat />} label="Recliner Seats" />
-                                            <Chip size="small" icon={<Wc />} label="Clean Restroom" />
-                                            <Chip size="small" icon={<AcUnit />} label="AC" />
-                                            <Chip size="small" icon={<Wifi />} label="Wi-Fi" />
-                                            <Chip size="small" icon={<ChargingStation />} label="Charging Points" />
-                                            <Chip size="small" icon={<Restaurant />} label="Snacks" />
+                                            <Chip size="small" label="Luxury suite" />
+                                            <Chip size="small" label="Private balcony" />
+                                            <Chip size="small" label="Butler service" />
+                                            <Chip size="small" label="Premium dining" />
+                                            <Chip size="small" label="Unlimited Wi-Fi" />
+                                            <Chip size="small" label="Complimentary mini-bar" />
                                         </>
                                     )}
                                 </Box>
+                            </Box>
+                        </Paper>
+
+                        <Paper elevation={3} sx={{ p: 3, mb: 4 }}>
+                            <Typography variant="h6" gutterBottom>
+                                Cruise Itinerary
+                            </Typography>
+                            <Box sx={{ mb: 2 }}>
+                                {cruise.itinerary && cruise.itinerary.map( ( stop, index ) => (
+                                    <Box key={index} sx={{ display: 'flex', mb: 2, alignItems: 'flex-start' }}>
+                                        <Box sx={{
+                                            width: 24,
+                                            height: 24,
+                                            borderRadius: '50%',
+                                            bgcolor: 'primary.main',
+                                            color: 'white',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            mr: 2,
+                                            mt: 0.5
+                                        }}>
+                                            {index + 1}
+                                        </Box>
+                                        <Box>
+                                            <Typography variant="subtitle1">{stop.port}</Typography>
+                                            <Typography variant="body2">
+                                                {stop.date ? formatDate( stop.date ) : 'Date not specified'}
+                                            </Typography>
+                                            {stop.description && (
+                                                <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                                                    {stop.description}
+                                                </Typography>
+                                            )}
+                                        </Box>
+                                    </Box>
+                                ) )}
                             </Box>
                         </Paper>
                     </Box>
@@ -721,16 +763,18 @@ const BookingBus = () => {
                                         </Grid>
                                         <Grid item xs={12} md={6}>
                                             <FormControl fullWidth margin="normal">
-                                                <InputLabel>Food Preference</InputLabel>
+                                                <InputLabel>Dining Preference</InputLabel>
                                                 <Select
-                                                    value={passenger.foodPreference}
-                                                    onChange={( e ) => handlePassengerChange( index, 'foodPreference', e.target.value )}
-                                                    label="Food Preference"
+                                                    value={passenger.diningPreference}
+                                                    onChange={( e ) => handlePassengerChange( index, 'diningPreference', e.target.value )}
+                                                    label="Dining Preference"
                                                 >
-                                                    <MenuItem value="none">No Preference</MenuItem>
-                                                    <MenuItem value="veg">Vegetarian</MenuItem>
-                                                    <MenuItem value="non-veg">Non-Vegetarian</MenuItem>
+                                                    <MenuItem value="standard">Standard Dining</MenuItem>
+                                                    <MenuItem value="vegetarian">Vegetarian</MenuItem>
                                                     <MenuItem value="vegan">Vegan</MenuItem>
+                                                    <MenuItem value="gluten-free">Gluten Free</MenuItem>
+                                                    <MenuItem value="early">Early Seating</MenuItem>
+                                                    <MenuItem value="late">Late Seating</MenuItem>
                                                 </Select>
                                             </FormControl>
                                         </Grid>
@@ -738,7 +782,7 @@ const BookingBus = () => {
                                 </Box>
                             ) )}
 
-                            {passengers.length < 5 && (
+                            {passengers.length < 4 && (
                                 <Button
                                     variant="outlined"
                                     startIcon={<Person />}
@@ -795,41 +839,41 @@ const BookingBus = () => {
                     </Box>
                 );
 
-            case 2: // Seat Selection
+            case 2: // Cabin Selection
                 return (
                     <Box>
                         <Paper elevation={3} sx={{ p: 3, mb: 4 }}>
                             <Typography variant="h6" gutterBottom>
-                                Select Seats
+                                Select Cabins
                             </Typography>
                             <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-                                Please select seats for each passenger. Seats shown in blue are available.
+                                Please select cabins for each passenger. Cabins shown in green are available.
                             </Typography>
 
-                            {availableSeats.length === 0 ? (
+                            {availableCabins.length === 0 ? (
                                 <Box display="flex" justifyContent="center" alignItems="center" sx={{ py: 4 }}>
                                     <CircularProgress size={30} sx={{ mr: 2 }} />
-                                    <Typography>Loading available seats...</Typography>
+                                    <Typography>Loading available cabins...</Typography>
                                 </Box>
                             ) : (
                                 <Box>
-                                    {/* Simple seat map visualization */}
+                                    {/* Simple cabin map visualization */}
                                     <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 3 }}>
-                                        {availableSeats.map( ( seat ) => {
-                                            // Check if seat is already selected by any passenger
-                                            const selectedByPassenger = passengers.findIndex( p => p.seatId === seat.seatId );
+                                        {availableCabins.map( ( cabin ) => {
+                                            // Check if cabin is already selected by any passenger
+                                            const selectedByPassenger = passengers.findIndex( p => p.cabinId === cabin.cabinId );
                                             const isSelected = selectedByPassenger !== -1;
 
                                             return (
                                                 <Chip
-                                                    key={seat.seatId}
-                                                    label={`${ seat.seatNumber }`}
+                                                    key={cabin.cabinId}
+                                                    label={`Cabin ${ cabin.cabinNumber } (${ cabin.deck })`}
                                                     onClick={() => {
                                                         if ( !isSelected ) {
-                                                            // Find first passenger without a seat
-                                                            const passengerIndex = passengers.findIndex( p => !p.seatId );
+                                                            // Find first passenger without a cabin
+                                                            const passengerIndex = passengers.findIndex( p => !p.cabinId );
                                                             if ( passengerIndex !== -1 ) {
-                                                                handleSeatSelection( passengerIndex, seat.seatId );
+                                                                handleCabinSelection( passengerIndex, cabin.cabinId );
                                                             }
                                                         }
                                                     }}
@@ -849,39 +893,39 @@ const BookingBus = () => {
 
                                     <Divider sx={{ my: 2 }} />
 
-                                    {/* Passenger seat assignment */}
+                                    {/* Passenger cabin assignment */}
                                     <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mt: 2, mb: 2 }}>
-                                        Passenger Seat Assignments
+                                        Passenger Cabin Assignments
                                     </Typography>
 
                                     {passengers.map( ( passenger, index ) => {
-                                        const selectedSeat = availableSeats.find( seat => seat.seatId === passenger.seatId );
+                                        const selectedCabin = availableCabins.find( cabin => cabin.cabinId === passenger.cabinId );
 
                                         return (
                                             <Box key={index} sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
                                                 <Typography sx={{ flex: 1 }}>
                                                     {index + 1}. {passenger.name}
                                                 </Typography>
-                                                <FormControl sx={{ minWidth: 120 }}>
-                                                    <InputLabel>Seat</InputLabel>
+                                                <FormControl sx={{ minWidth: 180 }}>
+                                                    <InputLabel>Cabin</InputLabel>
                                                     <Select
-                                                        value={passenger.seatId}
-                                                        onChange={( e ) => handleSeatSelection( index, e.target.value )}
-                                                        label="Seat"
+                                                        value={passenger.cabinId}
+                                                        onChange={( e ) => handleCabinSelection( index, e.target.value )}
+                                                        label="Cabin"
                                                     >
                                                         <MenuItem value="">
-                                                            <em>Select a seat</em>
+                                                            <em>Select a cabin</em>
                                                         </MenuItem>
-                                                        {availableSeats.map( ( seat ) => {
-                                                            // Only show seats not selected by other passengers
+                                                        {availableCabins.map( ( cabin ) => {
+                                                            // Only show cabins not selected by other passengers
                                                             const isTakenByOther = passengers.some(
-                                                                ( p, i ) => i !== index && p.seatId === seat.seatId
+                                                                ( p, i ) => i !== index && p.cabinId === cabin.cabinId
                                                             );
 
                                                             if ( !isTakenByOther ) {
                                                                 return (
-                                                                    <MenuItem key={seat.seatId} value={seat.seatId}>
-                                                                        Seat {seat.seatNumber}
+                                                                    <MenuItem key={cabin.cabinId} value={cabin.cabinId}>
+                                                                        Cabin {cabin.cabinNumber} ({cabin.deck})
                                                                     </MenuItem>
                                                                 );
                                                             }
@@ -894,6 +938,127 @@ const BookingBus = () => {
                                     } )}
                                 </Box>
                             )}
+                        </Paper>
+
+                        <Paper elevation={3} sx={{ p: 3, mb: 4 }}>
+                            <Typography variant="h6" gutterBottom>
+                                Cruise Add-ons
+                            </Typography>
+                            <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                                Enhance your cruise experience with these additional services.
+                            </Typography>
+
+                            <Grid container spacing={2}>
+                                <Grid item xs={12} md={4}>
+                                    <FormControlLabel
+                                        control={
+                                            <Checkbox
+                                                checked={addons.wifiPackage}
+                                                onChange={( e ) => handleAddonChange( 'wifiPackage', e.target.checked )}
+                                            />
+                                        }
+                                        label={
+                                            <Box>
+                                                <Typography variant="subtitle2">Wi-Fi Package</Typography>
+                                                <Typography variant="body2" color="text.secondary">
+                                                    Stay connected throughout your cruise
+                                                </Typography>
+                                                <Typography variant="body2" color="primary">
+                                                    + ₹1,500
+                                                </Typography>
+                                            </Box>
+                                        }
+                                    />
+                                </Grid>
+
+                                <Grid item xs={12} md={4}>
+                                    <FormControlLabel
+                                        control={
+                                            <Checkbox
+                                                checked={addons.specialDining}
+                                                onChange={( e ) => handleAddonChange( 'specialDining', e.target.checked )}
+                                            />
+                                        }
+                                        label={
+                                            <Box>
+                                                <Typography variant="subtitle2">Specialty Dining Package</Typography>
+                                                <Typography variant="body2" color="text.secondary">
+                                                    Access to premium restaurants
+                                                </Typography>
+                                                <Typography variant="body2" color="primary">
+                                                    + ₹3,000
+                                                </Typography>
+                                            </Box>
+                                        }
+                                    />
+                                </Grid>
+
+                                <Grid item xs={12} md={4}>
+                                    <FormControlLabel
+                                        control={
+                                            <Checkbox
+                                                checked={addons.excursions}
+                                                onChange={( e ) => handleAddonChange( 'excursions', e.target.checked )}
+                                            />
+                                        }
+                                        label={
+                                            <Box>
+                                                <Typography variant="subtitle2">Shore Excursions Package</Typography>
+                                                <Typography variant="body2" color="text.secondary">
+                                                    Guided tours at port destinations
+                                                </Typography>
+                                                <Typography variant="body2" color="primary">
+                                                    + ₹5,000
+                                                </Typography>
+                                            </Box>
+                                        }
+                                    />
+                                </Grid>
+
+                                <Grid item xs={12} md={4}>
+                                    <FormControlLabel
+                                        control={
+                                            <Checkbox
+                                                checked={addons.spaPackage}
+                                                onChange={( e ) => handleAddonChange( 'spaPackage', e.target.checked )}
+                                            />
+                                        }
+                                        label={
+                                            <Box>
+                                                <Typography variant="subtitle2">Spa & Wellness Package</Typography>
+                                                <Typography variant="body2" color="text.secondary">
+                                                    Daily spa treatments and fitness classes
+                                                </Typography>
+                                                <Typography variant="body2" color="primary">
+                                                    + ₹4,000
+                                                </Typography>
+                                            </Box>
+                                        }
+                                    />
+                                </Grid>
+
+                                <Grid item xs={12} md={4}>
+                                    <FormControlLabel
+                                        control={
+                                            <Checkbox
+                                                checked={addons.premiumBeverage}
+                                                onChange={( e ) => handleAddonChange( 'premiumBeverage', e.target.checked )}
+                                            />
+                                        }
+                                        label={
+                                            <Box>
+                                                <Typography variant="subtitle2">Premium Beverage Package</Typography>
+                                                <Typography variant="body2" color="text.secondary">
+                                                    Unlimited premium drinks including alcohol
+                                                </Typography>
+                                                <Typography variant="body2" color="primary">
+                                                    + ₹2,500
+                                                </Typography>
+                                            </Box>
+                                        }
+                                    />
+                                </Grid>
+                            </Grid>
                         </Paper>
                     </Box>
                 );
@@ -1059,9 +1224,46 @@ const BookingBus = () => {
                             </Typography>
 
                             <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                                <Typography>{selectedCoach.coachType} x {passengers.length} passenger(s)</Typography>
+                                <Typography>{selectedCoach.coachType} cabin x {passengers.length} passenger(s)</Typography>
                                 <Typography>{formatPrice( selectedCoach.price )} x {passengers.length}</Typography>
                             </Box>
+
+                            {Object.keys( addons ).some( key => addons[ key ] ) && (
+                                <>
+                                    {addons.wifiPackage && (
+                                        <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                                            <Typography>Wi-Fi Package</Typography>
+                                            <Typography>+ ₹1,500</Typography>
+                                        </Box>
+                                    )}
+                                    {addons.specialDining && (
+                                        <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                                            <Typography>Specialty Dining Package</Typography>
+                                            <Typography>+ ₹3,000</Typography>
+                                        </Box>
+                                    )}
+                                    {addons.excursions && (
+                                        <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                                            <Typography>Shore Excursions Package</Typography>
+                                            <Typography>+ ₹5,000</Typography>
+                                        </Box>
+                                    )}
+                                    {addons.spaPackage && (
+                                        <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                                            <Typography>Spa & Wellness Package</Typography>
+                                            <Typography>+ ₹4,000</Typography>
+                                        </Box>
+                                    )}
+                                    {addons.premiumBeverage && (
+                                        <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                                            <Typography>Premium Beverage Package</Typography>
+                                            <Typography>+ ₹2,500</Typography>
+                                        </Box>
+                                    )}
+                                </>
+                            )}
+
+                            <Divider sx={{ my: 1 }} />
 
                             <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 2 }}>
                                 <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>Total Amount</Typography>
@@ -1095,7 +1297,7 @@ const BookingBus = () => {
                                 Booking Confirmed!
                             </Typography>
                             <Typography variant="body1" sx={{ mb: 3 }}>
-                                Your booking has been successfully confirmed. A confirmation email has been sent to {contactInfo.email}.
+                                Your cruise booking has been successfully confirmed. A confirmation email has been sent to {contactInfo.email}.
                             </Typography>
 
                             <Box sx={{ mb: 3, p: 2, bgcolor: 'primary.light', color: 'white', borderRadius: 1 }}>
@@ -1130,12 +1332,12 @@ const BookingBus = () => {
         <Container maxWidth="lg" sx={{ py: 4 }}>
             {activeStep !== 4 && (
                 <Button startIcon={<ArrowBack />} onClick={goBack} sx={{ mb: 3 }}>
-                    Back to Bus Details
+                    Back to Cruise Details
                 </Button>
             )}
 
             <Typography variant="h4" component="h1" gutterBottom>
-                {activeStep === 4 ? 'Booking Confirmation' : 'Book Your Bus Ticket'}
+                {activeStep === 4 ? 'Booking Confirmation' : 'Book Your Cruise'}
             </Typography>
 
             <Stepper activeStep={activeStep} sx={{ mb: 4 }}>
@@ -1181,7 +1383,7 @@ const BookingBus = () => {
                 <DialogTitle>Confirm Your Booking</DialogTitle>
                 <DialogContent>
                     <DialogContentText>
-                        You are about to book {passengers.length} ticket(s) for {bus?.busName} from {departureStation?.stationName} to {arrivalStation?.stationName} for a total of {formatPrice( calculateTotalPrice() )}.
+                        You are about to book a cruise for {passengers.length} passenger(s) on {cruise?.cruiseName || 'Luxury Cruise'} from {departurePort?.port || 'Port of Departure'} to {arrivalPort?.port || 'Port of Arrival'} for a total of {formatPrice( calculateTotalPrice() )}.
                     </DialogContentText>
                     <DialogContentText sx={{ mt: 2 }}>
                         Do you want to proceed with this booking?
@@ -1198,4 +1400,4 @@ const BookingBus = () => {
     );
 };
 
-export default BookingBus;
+export default BookingCruise;

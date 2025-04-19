@@ -18,6 +18,11 @@ import BookingFlight from './Pages/Booking/BookingFlight'
 import Bookings from './Pages/Booking/Bookings'
 import TrainId from './Pages/ID/TrainId'
 import BookingTrain from './Pages/Booking/BookingTrain'
+import BusId from './Pages/ID/BusId'
+import CabId from './Pages/ID/CabId'
+import BookingCab from './Pages/Booking/BookingCab'
+import BookingCruise from './Pages/Booking/BookingCruise'
+import CruiseId from './Pages/ID/CruiseId'
 
 
 const App = () => {
@@ -39,8 +44,14 @@ const App = () => {
           <Route path='/trains/:id' element={<TrainId />} />
           <Route path='/booking/train/:id' element={<BookingTrain />} />
           <Route path='/buses' element={<Bus />} />
+          <Route path='/buses/:id' element={<BusId />} />
+          <Route path='/booking/bus/:id' element={<BookingTrain />} />
           <Route path='/cabs' element={<Cab />} />
+          <Route path='/cabs/:id' element={<CabId />} />
+          <Route path='/booking/cab/:id' element={<BookingCab />} />
           <Route path='/cruises' element={<Cruise />} />
+          <Route path='/cruises/:id' element={<CruiseId />} />
+          <Route path='/booking/cruise/:id' element={<BookingCruise />} />
           <Route path='/hotels' element={<Hotel />} />
           <Route path='/airbnbs' element={<Airbnb />} />
           <Route path='/api/auth/callback' element={<GoogleAuth />} />

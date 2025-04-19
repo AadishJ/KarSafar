@@ -1,10 +1,22 @@
 import express from "express";
-import { handleAirbnbListGet } from "../Controllers/AirbnbController.js";
+import {
+    handleAirbnbListGet,
+    handleAirbnbDetailGet,
+    handleAirbnbAvailabilityCheck,
+} from "../Controllers/AirbnbController.js";
 const airbnbRouter = express.Router();
 
 airbnbRouter
     .route( "/list" )
-    .get( handleAirbnbListGet )
+    .get( handleAirbnbListGet );
+
+airbnbRouter
+    .route( "/:airbnbId" )
+    .get( handleAirbnbDetailGet );
+
+airbnbRouter
+    .route( "/:airbnbId/availability" )
+    .get( handleAirbnbAvailabilityCheck );
 
 
 export default airbnbRouter;

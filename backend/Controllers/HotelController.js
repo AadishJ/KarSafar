@@ -1,47 +1,31 @@
 import { pool } from '../Config/ConnectDB.js';
 import { v4 as uuidv4 } from 'uuid';
 
-/**
- * Handles GET request for listing hotels based on search criteria
- */
 async function handleHotelListGet( req, res ) {
     try {
         // Extract query parameters (for filtering)
-        const { location, checkInDate, checkOutDate, guests, rooms } = req.query;
+        const { city, state, country, checkInDate, checkOutDate, guests, amenities } = req.query;
 
         // Base query to get hotels with their details
-        // Modified to match your exact schema
         let query = `
             SELECT 
                 HEX(a.accomId) as hotelId, 
-                a.name,
-                a.accomType,
+                a.name as hotelName,
                 a.description,
-                addr.city,
-                addr.country,
-                addr.street,
+                aa.city,
+                aa.state,
+                aa.country,
                 h.breakfastIncluded,
                 h.acType,
                 MIN(r.price) as basePrice,
-                COUNT(DISTINCT r.roomId) as roomTypes,
-                SUM(r.roomsAvailable) as roomsAvailable,
-                (
-                    SELECT AVG(rating)
-                    FROM reviews
-                    WHERE reviews.itemType = 'accommodation' AND reviews.itemId = a.accomId
-                ) as rating,
-                (
-                    SELECT MIN(photoUrl)
-                    FROM accommodationphotos ap
-                    WHERE ap.accomId = a.accomId
-                    LIMIT 1
-                ) as mainPhoto
+                MAX(r.pplAccommodated) as maxCapacity,
+                SUM(r.roomsAvailable) as totalRoomsAvailable
             FROM 
                 accommodations a
             JOIN 
                 hotels h ON a.accomId = h.accomId
             JOIN 
-                accommodationaddresses addr ON a.accomId = addr.accomId
+                accommodationaddresses aa ON a.accomId = aa.accomId
             LEFT JOIN
                 rooms r ON a.accomId = r.accomId
             WHERE 
@@ -51,71 +35,103 @@ async function handleHotelListGet( req, res ) {
         // Add parameters for filtering
         const params = [];
 
-        // Filter by location (city or country)
-        if ( location ) {
-            query += " AND (addr.city LIKE ? OR addr.country LIKE ?)";
-            params.push( `%${ location }%`, `%${ location }%` );
+        if ( city ) {
+            query += " AND aa.city LIKE ?";
+            params.push( `%${ city }%` );
         }
 
-        // Filter by available rooms and guests capacity
-        if ( guests && rooms ) {
-            // Ensure there are enough rooms available of any type
-            query += " AND (SELECT SUM(roomsAvailable) FROM rooms WHERE rooms.accomId = a.accomId) >= ?";
-            params.push( parseInt( rooms ) );
+        if ( state ) {
+            query += " AND aa.state LIKE ?";
+            params.push( `%${ state }%` );
+        }
 
-            // Ensure rooms can accommodate the number of guests
-            query += " AND (SELECT SUM(roomsAvailable * pplAccommodated) FROM rooms WHERE rooms.accomId = a.accomId) >= ?";
+        if ( country ) {
+            query += " AND aa.country LIKE ?";
+            params.push( `%${ country }%` );
+        }
+
+        if ( guests && !isNaN( parseInt( guests ) ) ) {
+            query += " AND r.pplAccommodated >= ?";
             params.push( parseInt( guests ) );
         }
 
+        // Add amenities filter if provided
+        if ( amenities ) {
+            const amenityList = amenities.split( ',' );
+            if ( amenityList.length > 0 ) {
+                query += ` AND a.accomId IN (
+                    SELECT accomId 
+                    FROM accomamenitymap am
+                    JOIN accommodationamenities aa ON am.amenityId = aa.amenityId
+                    WHERE aa.amenityType IN (${ amenityList.map( () => '?' ).join( ',' ) })
+                    GROUP BY accomId
+                    HAVING COUNT(DISTINCT aa.amenityType) = ?
+                )`;
+                params.push( ...amenityList, amenityList.length );
+            }
+        }
+
         // Group by to avoid duplicates and for price aggregation
-        query += " GROUP BY a.accomId, a.name, a.accomType, a.description, addr.city, addr.country, addr.street, h.breakfastIncluded, h.acType";
+        query += ` GROUP BY 
+            a.accomId, 
+            a.name, 
+            a.description, 
+            aa.city, 
+            aa.state, 
+            aa.country,
+            h.breakfastIncluded,
+            h.acType`;
 
         // Execute the query
         const [ hotels ] = await pool.execute( query, params );
 
-        // Get amenities for each hotel
-        const processedHotels = await Promise.all( hotels.map( async hotel => {
-            // Get amenities - using correct table names with aliases
-            const [ amenities ] = await pool.execute( `
-                SELECT 
-                    am.amenityType
-                FROM 
-                    accomAmenityMap map
-                JOIN 
-                    accommodationAmenities am ON map.amenityId = am.amenityId
-                WHERE 
-                    map.accomId = UNHEX(?)
-            `, [ hotel.hotelId ] );
+        // Get photos for each hotel
+        const hotelIds = hotels.map( hotel => hotel.hotelId );
 
-            // Convert amenities to object with boolean values
-            const amenitiesObj = {};
-            amenities.forEach( amenity => {
-                amenitiesObj[ amenity.amenityType.toLowerCase() ] = true;
-            } );
+        let photosQuery = `
+            SELECT 
+                HEX(ap.accomId) as hotelId,
+                ap.photoUrl
+            FROM 
+                accommodationphotos ap
+            WHERE 
+                ap.accomId IN (${ hotelIds.map( () => 'UNHEX(?)' ).join( ',' ) })
+        `;
 
-            // Return processed hotel with amenities
-            return {
-                id: hotel.hotelId,
-                name: hotel.name,
-                description: hotel.description,
-                accomType: hotel.accomType,
+        const [ photos ] = await pool.execute(
+            photosQuery,
+            hotelIds
+        );
+
+        // Group photos by hotelId
+        const photosByHotel = photos.reduce( ( acc, photo ) => {
+            if ( !acc[ photo.hotelId ] ) {
+                acc[ photo.hotelId ] = [];
+            }
+            acc[ photo.hotelId ].push( photo.photoUrl );
+            return acc;
+        }, {} );
+
+        // Process hotel data with photos
+        const processedHotels = hotels.map( hotel => ( {
+            id: hotel.hotelId,
+            name: hotel.hotelName,
+            description: hotel.description,
+            location: {
                 city: hotel.city,
-                country: hotel.country,
-                address: {
-                    street: hotel.street,
-                    city: hotel.city,
-                    country: hotel.country
-                },
-                mainPhoto: hotel.mainPhoto,
-                roomsAvailable: hotel.roomsAvailable || 0,
-                roomTypes: hotel.roomTypes || 0,
-                basePrice: hotel.basePrice || 0,
-                rating: hotel.rating || 4.0, // Default rating if none available
-                breakfastIncluded: hotel.breakfastIncluded === 1,
-                acType: hotel.acType,
-                amenities: amenitiesObj
-            };
+                state: hotel.state,
+                country: hotel.country
+            },
+            amenities: {
+                breakfast: hotel.breakfastIncluded ? 'Included' : 'Not included',
+                acType: hotel.acType
+            },
+            rooms: {
+                available: hotel.totalRoomsAvailable,
+                maxCapacity: hotel.maxCapacity
+            },
+            basePrice: hotel.basePrice,
+            photos: photosByHotel[ hotel.hotelId ] || []
         } ) );
 
         res.status( 200 ).json( {
@@ -133,9 +149,7 @@ async function handleHotelListGet( req, res ) {
     }
 }
 
-/**
- * Handles GET request for detailed information about a specific hotel
- */
+// Function to get detailed information about a specific hotel
 async function handleHotelDetailGet( req, res ) {
     try {
         const { hotelId } = req.params;
@@ -151,11 +165,10 @@ async function handleHotelDetailGet( req, res ) {
         const [ hotelDetails ] = await pool.execute(
             `SELECT 
                 HEX(a.accomId) as hotelId, 
-                a.name,
-                a.accomType,
+                a.name as hotelName,
+                a.description,
                 a.phoneNo,
                 a.email,
-                a.description,
                 h.breakfastIncluded,
                 h.acType
             FROM 
@@ -174,8 +187,8 @@ async function handleHotelDetailGet( req, res ) {
             } );
         }
 
-        // Query to get address
-        const [ address ] = await pool.execute(
+        // Query to get hotel address
+        const [ addressDetails ] = await pool.execute(
             `SELECT 
                 street,
                 landmark,
@@ -190,7 +203,7 @@ async function handleHotelDetailGet( req, res ) {
             [ hotelId ]
         );
 
-        // Query to get photos
+        // Query to get hotel photos
         const [ photos ] = await pool.execute(
             `SELECT 
                 photoUrl
@@ -201,16 +214,16 @@ async function handleHotelDetailGet( req, res ) {
             [ hotelId ]
         );
 
-        // Query to get amenities
+        // Query to get hotel amenities
         const [ amenities ] = await pool.execute(
             `SELECT 
-                am.amenityType
+                aa.amenityType
             FROM 
-                accomAmenityMap map
-            JOIN 
-                accommodationAmenities am ON map.amenityId = am.amenityId
+                accomamenitymap am
+            JOIN
+                accommodationamenities aa ON am.amenityId = aa.amenityId
             WHERE 
-                map.accomId = UNHEX(?)`,
+                am.accomId = UNHEX(?)`,
             [ hotelId ]
         );
 
@@ -230,46 +243,13 @@ async function handleHotelDetailGet( req, res ) {
             [ hotelId ]
         );
 
-        // Convert amenities to object with boolean values
-        const amenitiesObj = {};
-        amenities.forEach( amenity => {
-            amenitiesObj[ amenity.amenityType.toLowerCase() ] = true;
-        } );
-
-        // Get reviews if you have that table
-        let reviews = [];
-        try {
-            const [ reviewsResult ] = await pool.execute(
-                `SELECT 
-                    HEX(reviewId) as reviewId,
-                    HEX(userId) as userId,
-                    rating,
-                    comment,
-                    reviewDate,
-                    userName
-                FROM 
-                    reviews
-                WHERE 
-                    accomId = UNHEX(?)
-                ORDER BY 
-                    reviewDate DESC`,
-                [ hotelId ]
-            );
-            reviews = reviewsResult;
-        } catch ( error ) {
-            // Reviews table might not exist yet, just continue
-            console.log( "Reviews not available:", error.message );
-        }
-
         // Combine all data
         const hotelData = {
             ...hotelDetails[ 0 ],
-            address: address[ 0 ] || {},
+            address: addressDetails[ 0 ] || {},
             photos: photos.map( p => p.photoUrl ),
-            amenities: amenitiesObj,
-            rooms: rooms,
-            reviews: reviews,
-            breakfastIncluded: hotelDetails[ 0 ].breakfastIncluded === 1
+            amenities: amenities.map( a => a.amenityType ),
+            rooms: rooms
         };
 
         res.status( 200 ).json( {
@@ -287,10 +267,118 @@ async function handleHotelDetailGet( req, res ) {
     }
 }
 
-/**
- * Handles POST request to create a new hotel
- */
-async function handleCreateHotel( req, res ) {
+async function handleHotelRoomAvailabilityGet( req, res ) {
+    try {
+        const { hotelId } = req.params;
+        const { roomId, checkInDate, checkOutDate, guests } = req.query;
+
+        if ( !hotelId ) {
+            return res.status( 400 ).json( {
+                success: false,
+                message: 'Hotel ID is required'
+            } );
+        }
+
+        if ( !checkInDate || !checkOutDate ) {
+            return res.status( 400 ).json( {
+                success: false,
+                message: 'Check-in and check-out dates are required'
+            } );
+        }
+
+        // First verify the hotel exists
+        const [ hotelRows ] = await pool.execute(
+            `SELECT 
+                a.accomId,
+                a.name
+            FROM 
+                accommodations a
+            WHERE 
+                a.accomId = UNHEX(?) 
+                AND a.accomType = 'hotel'`,
+            [ hotelId ]
+        );
+
+        if ( hotelRows.length === 0 ) {
+            return res.status( 404 ).json( {
+                success: false,
+                message: 'Hotel not found'
+            } );
+        }
+
+        // Base query for rooms
+        let query = `
+            SELECT 
+                HEX(r.roomId) as roomId,
+                r.roomType,
+                r.roomDescription,
+                r.price,
+                r.pplAccommodated,
+                r.roomsAvailable - COALESCE(
+                    (SELECT COUNT(*) 
+                     FROM roombookings rb 
+                     WHERE rb.roomId = r.roomId
+                     AND ((rb.checkInDate <= ? AND rb.checkOutDate >= ?) OR 
+                          (rb.checkInDate <= ? AND rb.checkOutDate >= ?) OR
+                          (rb.checkInDate >= ? AND rb.checkOutDate <= ?))
+                     AND rb.status NOT IN ('cancelled', 'rejected')
+                    ), 0
+                ) as availableRooms
+            FROM 
+                rooms r
+            WHERE 
+                r.accomId = UNHEX(?)
+        `;
+
+        const params = [
+            checkOutDate, checkOutDate, // First condition
+            checkInDate, checkInDate,   // Second condition
+            checkInDate, checkOutDate,  // Third condition
+            hotelId
+        ];
+
+        // Add room-specific filter if provided
+        if ( roomId ) {
+            query += " AND r.roomId = UNHEX(?)";
+            params.push( roomId );
+        }
+
+        // Add guests filter if provided
+        if ( guests && !isNaN( parseInt( guests ) ) ) {
+            query += " AND r.pplAccommodated >= ?";
+            params.push( parseInt( guests ) );
+        }
+
+        // Execute the query
+        const [ rooms ] = await pool.execute( query, params );
+
+        // Format the response
+        const formattedRooms = rooms.map( room => ( {
+            roomId: room.roomId,
+            roomType: room.roomType,
+            description: room.roomDescription,
+            price: room.price,
+            capacity: room.pplAccommodated,
+            availableRooms: room.availableRooms
+        } ) );
+
+        return res.status( 200 ).json( {
+            success: true,
+            message: 'Room availability retrieved successfully',
+            data: formattedRooms
+        } );
+
+    } catch ( error ) {
+        console.error( 'Error fetching room availability:', error );
+        return res.status( 500 ).json( {
+            success: false,
+            message: 'Internal Server Error',
+            error: process.env.NODE_ENV === 'production' ? null : error.message
+        } );
+    }
+}
+
+async function handleHotelCreate( req, res ) {
     try {
         const {
             name,
@@ -301,49 +389,47 @@ async function handleCreateHotel( req, res ) {
             breakfastIncluded,
             acType,
             amenities,
-            rooms
+            rooms,
+            photos
         } = req.body;
 
         // Validate required fields
         if ( !name || !phoneNo || !address || !address.city || !address.country ) {
             return res.status( 400 ).json( {
                 success: false,
-                message: 'Missing required fields'
+                message: 'Required fields missing'
             } );
         }
 
-        // Generate UUIDs
-        const accomId = Buffer.from( uuidv4().replace( /-/g, '' ), 'hex' );
-        const addressId = Buffer.from( uuidv4().replace( /-/g, '' ), 'hex' );
-
-        // Begin transaction
+        // Start transaction
         const connection = await pool.getConnection();
         await connection.beginTransaction();
 
         try {
-            // Insert into accommodations table
+            // Create accommodation record
+            const accomId = Buffer.from( uuidv4().replace( /-/g, '' ), 'hex' );
+
             await connection.execute(
                 `INSERT INTO accommodations 
-                (accomId, accomType, name, phoneNo, email, description)
+                (accomId, accomType, name, phoneNo, email, description) 
                 VALUES (?, 'hotel', ?, ?, ?, ?)`,
                 [ accomId, name, phoneNo, email || null, description || null ]
             );
 
-            // Insert into hotels table
+            // Create hotel record
             await connection.execute(
-                `INSERT INTO hotels 
+                `INSERT INTO hotels
                 (accomId, breakfastIncluded, acType)
                 VALUES (?, ?, ?)`,
-                [ accomId, breakfastIncluded ? 1 : 0, acType || 'BOTH' ]
+                [ accomId, breakfastIncluded || false, acType || 'BOTH' ]
             );
 
-            // Insert address
+            // Create address record
             await connection.execute(
-                `INSERT INTO accommodationaddresses 
+                `INSERT INTO accommodationaddresses
                 (addressId, accomId, street, landmark, city, state, pinCode, country)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+                VALUES (UNHEX(REPLACE(UUID(), '-', '')), ?, ?, ?, ?, ?, ?, ?)`,
                 [
-                    addressId,
                     accomId,
                     address.street || '',
                     address.landmark || null,
@@ -354,47 +440,43 @@ async function handleCreateHotel( req, res ) {
                 ]
             );
 
-            // Insert amenities if provided
-            if ( amenities && Object.keys( amenities ).length > 0 ) {
-                for ( const amenity of Object.keys( amenities ) ) {
-                    if ( !amenities[ amenity ] ) continue;
-
+            // Add amenities if provided
+            if ( amenities && amenities.length > 0 ) {
+                for ( const amenity of amenities ) {
                     // Check if amenity exists, if not create it
-                    let amenityId;
-                    const [ existingAmenity ] = await connection.execute(
-                        `SELECT amenityId FROM accommodationAmenities WHERE amenityType = ?`,
+                    let [ amenityRows ] = await connection.execute(
+                        `SELECT amenityId FROM accommodationamenities WHERE amenityType = ?`,
                         [ amenity ]
                     );
 
-                    if ( existingAmenity.length === 0 ) {
+                    let amenityId;
+                    if ( amenityRows.length === 0 ) {
                         // Create new amenity
                         amenityId = Buffer.from( uuidv4().replace( /-/g, '' ), 'hex' );
                         await connection.execute(
-                            `INSERT INTO accommodationAmenities (amenityId, amenityType) VALUES (?, ?)`,
+                            `INSERT INTO accommodationamenities (amenityId, amenityType) VALUES (?, ?)`,
                             [ amenityId, amenity ]
                         );
                     } else {
-                        amenityId = existingAmenity[ 0 ].amenityId;
+                        amenityId = amenityRows[ 0 ].amenityId;
                     }
 
                     // Map amenity to accommodation
                     await connection.execute(
-                        `INSERT INTO accomAmenityMap (accomId, amenityId) VALUES (?, ?)`,
+                        `INSERT INTO accomamenitymap (accomId, amenityId) VALUES (?, ?)`,
                         [ accomId, amenityId ]
                     );
                 }
             }
 
-            // Insert rooms if provided
+            // Add rooms if provided
             if ( rooms && rooms.length > 0 ) {
                 for ( const room of rooms ) {
-                    const roomId = Buffer.from( uuidv4().replace( /-/g, '' ), 'hex' );
                     await connection.execute(
-                        `INSERT INTO rooms 
+                        `INSERT INTO rooms
                         (roomId, accomId, roomType, roomsAvailable, pplAccommodated, roomDescription, price)
-                        VALUES (?, ?, ?, ?, ?, ?, ?)`,
+                        VALUES (UNHEX(REPLACE(UUID(), '-', '')), ?, ?, ?, ?, ?, ?)`,
                         [
-                            roomId,
                             accomId,
                             room.roomType,
                             room.roomsAvailable,
@@ -406,18 +488,31 @@ async function handleCreateHotel( req, res ) {
                 }
             }
 
+            // Add photos if provided
+            if ( photos && photos.length > 0 ) {
+                for ( const photoUrl of photos ) {
+                    await connection.execute(
+                        `INSERT INTO accommodationphotos
+                        (photoId, accomId, photoUrl)
+                        VALUES (UNHEX(REPLACE(UUID(), '-', '')), ?, ?)`,
+                        [ accomId, photoUrl ]
+                    );
+                }
+            }
+
             // Commit transaction
             await connection.commit();
 
-            // Return success response
             res.status( 201 ).json( {
                 success: true,
                 message: 'Hotel created successfully',
-                hotelId: accomId.toString( 'hex' ).toUpperCase()
+                data: {
+                    hotelId: Buffer.from( accomId ).toString( 'hex' )
+                }
             } );
 
         } catch ( error ) {
-            // Rollback transaction in case of error
+            // Rollback on error
             await connection.rollback();
             throw error;
         } finally {
@@ -434,4 +529,9 @@ async function handleCreateHotel( req, res ) {
     }
 }
 
-export { handleHotelListGet, handleHotelDetailGet, handleCreateHotel };
+export {
+    handleHotelListGet,
+    handleHotelDetailGet,
+    handleHotelRoomAvailabilityGet,
+    handleHotelCreate
+};

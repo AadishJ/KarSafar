@@ -1,44 +1,28 @@
 import { pool } from '../Config/ConnectDB.js';
 import { v4 as uuidv4 } from 'uuid';
 
-/**
- * Handles GET request for listing Airbnbs based on search criteria
- */
 async function handleAirbnbListGet( req, res ) {
     try {
         // Extract query parameters (for filtering)
-        const { location, checkInDate, checkOutDate, guests } = req.query;
+        const { city, state, country, checkInDate, checkOutDate, guests, amenities } = req.query;
 
         // Base query to get airbnbs with their details
         let query = `
             SELECT 
                 HEX(a.accomId) as airbnbId, 
-                a.name,
-                a.accomType,
+                a.name as propertyName,
                 a.description,
-                addr.city,
-                addr.country,
-                addr.street,
+                aa.city,
+                aa.state,
+                aa.country,
                 ab.maxAllowedGuests,
-                MIN(r.price) as basePrice,
-                COUNT(DISTINCT r.roomId) as roomCount,
-                (
-                    SELECT AVG(rating)
-                    FROM reviews
-                    WHERE reviews.itemType = 'accommodation' AND reviews.itemId = a.accomId
-                ) as rating,
-                (
-                    SELECT MIN(photoUrl)
-                    FROM accommodationphotos ap
-                    WHERE ap.accomId = a.accomId
-                    LIMIT 1
-                ) as mainPhoto
+                MIN(r.price) as basePrice
             FROM 
                 accommodations a
             JOIN 
                 airbnbs ab ON a.accomId = ab.accomId
             JOIN 
-                accommodationaddresses addr ON a.accomId = addr.accomId
+                accommodationaddresses aa ON a.accomId = aa.accomId
             LEFT JOIN
                 rooms r ON a.accomId = r.accomId
             WHERE 
@@ -48,65 +32,149 @@ async function handleAirbnbListGet( req, res ) {
         // Add parameters for filtering
         const params = [];
 
-        // Filter by location (city or country)
-        if ( location ) {
-            query += " AND (addr.city LIKE ? OR addr.country LIKE ?)";
-            params.push( `%${ location }%`, `%${ location }%` );
+        if ( city ) {
+            query += " AND aa.city LIKE ?";
+            params.push( `%${ city }%` );
         }
 
-        // Filter by guest capacity
-        if ( guests ) {
+        if ( state ) {
+            query += " AND aa.state LIKE ?";
+            params.push( `%${ state }%` );
+        }
+
+        if ( country ) {
+            query += " AND aa.country LIKE ?";
+            params.push( `%${ country }%` );
+        }
+
+        if ( guests && !isNaN( parseInt( guests ) ) ) {
             query += " AND ab.maxAllowedGuests >= ?";
             params.push( parseInt( guests ) );
         }
 
+        // Add availability filter if check-in and check-out dates are provided
+        if ( checkInDate && checkOutDate ) {
+            query += ` AND a.accomId NOT IN (
+                SELECT DISTINCT r.accomId
+                FROM rooms r
+                JOIN roombookings rb ON r.roomId = rb.roomId
+                WHERE rb.status NOT IN ('cancelled', 'rejected')
+                AND ((rb.checkInDate <= ? AND rb.checkOutDate >= ?) OR 
+                     (rb.checkInDate <= ? AND rb.checkOutDate >= ?) OR
+                     (rb.checkInDate >= ? AND rb.checkOutDate <= ?))
+            )`;
+            params.push(
+                checkOutDate, checkOutDate, // First condition
+                checkInDate, checkInDate,   // Second condition
+                checkInDate, checkOutDate   // Third condition
+            );
+        }
+
+        // Add amenities filter if provided
+        if ( amenities ) {
+            const amenityList = amenities.split( ',' );
+            if ( amenityList.length > 0 ) {
+                query += ` AND a.accomId IN (
+                    SELECT accomId 
+                    FROM accomamenitymap am
+                    JOIN accommodationamenities aa ON am.amenityId = aa.amenityId
+                    WHERE aa.amenityType IN (${ amenityList.map( () => '?' ).join( ',' ) })
+                    GROUP BY accomId
+                    HAVING COUNT(DISTINCT aa.amenityType) = ?
+                )`;
+                params.push( ...amenityList, amenityList.length );
+            }
+        }
+
         // Group by to avoid duplicates and for price aggregation
-        query += " GROUP BY a.accomId, a.name, a.accomType, a.description, addr.city, addr.country, addr.street, ab.maxAllowedGuests";
+        query += ` GROUP BY 
+            a.accomId, 
+            a.name, 
+            a.description, 
+            aa.city, 
+            aa.state, 
+            aa.country,
+            ab.maxAllowedGuests`;
 
         // Execute the query
         const [ airbnbs ] = await pool.execute( query, params );
 
-        // Get amenities for each airbnb
-        const processedAirbnbs = await Promise.all( airbnbs.map( async airbnb => {
-            // Get amenities - using correct table names with aliases
-            const [ amenities ] = await pool.execute( `
-                SELECT 
-                    am.amenityType
-                FROM 
-                    accomAmenityMap map
-                JOIN 
-                    accommodationAmenities am ON map.amenityId = am.amenityId
-                WHERE 
-                    map.accomId = UNHEX(?)
-            `, [ airbnb.airbnbId ] );
+        // Get photos for each airbnb
+        const airbnbIds = airbnbs.map( airbnb => airbnb.airbnbId );
 
-            // Convert amenities to object with boolean values
-            const amenitiesObj = {};
-            amenities.forEach( amenity => {
-                amenitiesObj[ amenity.amenityType.toLowerCase() ] = true;
+        if ( airbnbIds.length === 0 ) {
+            return res.status( 200 ).json( {
+                success: true,
+                count: 0,
+                data: []
             } );
+        }
 
-            // Return processed airbnb with amenities
-            return {
-                id: airbnb.airbnbId,
-                name: airbnb.name,
-                description: airbnb.description,
-                accomType: airbnb.accomType,
+        let photosQuery = `
+            SELECT 
+                HEX(ap.accomId) as airbnbId,
+                ap.photoUrl
+            FROM 
+                accommodationphotos ap
+            WHERE 
+                ap.accomId IN (${ airbnbIds.map( () => 'UNHEX(?)' ).join( ',' ) })
+        `;
+
+        const [ photos ] = await pool.execute(
+            photosQuery,
+            airbnbIds
+        );
+
+        // Group photos by airbnbId
+        const photosByAirbnb = photos.reduce( ( acc, photo ) => {
+            if ( !acc[ photo.airbnbId ] ) {
+                acc[ photo.airbnbId ] = [];
+            }
+            acc[ photo.airbnbId ].push( photo.photoUrl );
+            return acc;
+        }, {} );
+
+        // Get amenities for each airbnb
+        let amenitiesQuery = `
+            SELECT 
+                HEX(am.accomId) as airbnbId,
+                aa.amenityType
+            FROM 
+                accomamenitymap am
+            JOIN
+                accommodationamenities aa ON am.amenityId = aa.amenityId
+            WHERE 
+                am.accomId IN (${ airbnbIds.map( () => 'UNHEX(?)' ).join( ',' ) })
+        `;
+
+        const [ allAmenities ] = await pool.execute(
+            amenitiesQuery,
+            airbnbIds
+        );
+
+        // Group amenities by airbnbId
+        const amenitiesByAirbnb = allAmenities.reduce( ( acc, item ) => {
+            if ( !acc[ item.airbnbId ] ) {
+                acc[ item.airbnbId ] = [];
+            }
+            acc[ item.airbnbId ].push( item.amenityType );
+            return acc;
+        }, {} );
+
+        // Process airbnb data with photos and amenities
+        const processedAirbnbs = airbnbs.map( airbnb => ( {
+            id: airbnb.airbnbId,
+            name: airbnb.propertyName,
+            description: airbnb.description,
+            location: {
                 city: airbnb.city,
-                country: airbnb.country,
-                address: {
-                    street: airbnb.street,
-                    city: airbnb.city,
-                    country: airbnb.country
-                },
-                mainPhoto: airbnb.mainPhoto,
-                maxAllowedGuests: airbnb.maxAllowedGuests,
-                roomCount: airbnb.roomCount || 0,
-                basePrice: airbnb.basePrice || 0,
-                rating: airbnb.rating || 4.0, // Default rating if none available
-                amenities: amenitiesObj,
-                entirePlace: true // Most Airbnbs are entire places, can be adjusted if your schema tracks this
-            };
+                state: airbnb.state,
+                country: airbnb.country
+            },
+            maxGuests: airbnb.maxAllowedGuests,
+            basePrice: airbnb.basePrice,
+            photos: photosByAirbnb[ airbnb.airbnbId ] || [],
+            amenities: amenitiesByAirbnb[ airbnb.airbnbId ] || []
         } ) );
 
         res.status( 200 ).json( {
@@ -124,9 +192,7 @@ async function handleAirbnbListGet( req, res ) {
     }
 }
 
-/**
- * Handles GET request for detailed information about a specific airbnb
- */
+// Function to get detailed information about a specific airbnb
 async function handleAirbnbDetailGet( req, res ) {
     try {
         const { airbnbId } = req.params;
@@ -142,11 +208,10 @@ async function handleAirbnbDetailGet( req, res ) {
         const [ airbnbDetails ] = await pool.execute(
             `SELECT 
                 HEX(a.accomId) as airbnbId, 
-                a.name,
-                a.accomType,
+                a.name as propertyName,
+                a.description,
                 a.phoneNo,
                 a.email,
-                a.description,
                 ab.maxAllowedGuests
             FROM 
                 accommodations a
@@ -164,8 +229,8 @@ async function handleAirbnbDetailGet( req, res ) {
             } );
         }
 
-        // Query to get address
-        const [ address ] = await pool.execute(
+        // Query to get airbnb address
+        const [ addressDetails ] = await pool.execute(
             `SELECT 
                 street,
                 landmark,
@@ -174,43 +239,37 @@ async function handleAirbnbDetailGet( req, res ) {
                 pinCode,
                 country
             FROM 
-                accommodationaddresses addr
+                accommodationaddresses
             WHERE 
-                addr.accomId = UNHEX(?)`,
+                accomId = UNHEX(?)`,
             [ airbnbId ]
         );
 
-        // Query to get photos
+        // Query to get airbnb photos
         const [ photos ] = await pool.execute(
             `SELECT 
                 photoUrl
             FROM 
-                accommodationphotos photos
+                accommodationphotos
             WHERE 
-                photos.accomId = UNHEX(?)`,
+                accomId = UNHEX(?)`,
             [ airbnbId ]
         );
 
-        // Query to get amenities
+        // Query to get airbnb amenities
         const [ amenities ] = await pool.execute(
             `SELECT 
-                am.amenityType
+                aa.amenityType
             FROM 
-                accomAmenityMap map
-            JOIN 
-                accommodationAmenities am ON map.amenityId = am.amenityId
+                accomamenitymap am
+            JOIN
+                accommodationamenities aa ON am.amenityId = aa.amenityId
             WHERE 
-                map.accomId = UNHEX(?)`,
+                am.accomId = UNHEX(?)`,
             [ airbnbId ]
         );
 
-        // Convert amenities to object with boolean values
-        const amenitiesObj = {};
-        amenities.forEach( amenity => {
-            amenitiesObj[ amenity.amenityType.toLowerCase() ] = true;
-        } );
-
-        // Query to get room details - Airbnbs might have bedrooms, etc.
+        // Query to get room types (for airbnbs, this typically means bedrooms/spaces)
         const [ rooms ] = await pool.execute(
             `SELECT 
                 HEX(roomId) as roomId,
@@ -220,56 +279,36 @@ async function handleAirbnbDetailGet( req, res ) {
                 roomDescription,
                 price
             FROM 
-                rooms r
+                rooms
             WHERE 
-                r.accomId = UNHEX(?)`,
+                accomId = UNHEX(?)`,
             [ airbnbId ]
         );
 
-        // Get reviews
-        let reviews = [];
-        try {
-            const [ reviewsResult ] = await pool.execute(
-                `SELECT 
-                    HEX(reviewId) as reviewId,
-                    HEX(userId) as userId,
-                    rating,
-                    comment,
-                    reviewDate,
-                    userName
-                FROM 
-                    reviews r
-                WHERE 
-                    r.itemType = 'accommodation' AND r.itemId = UNHEX(?)
-                ORDER BY 
-                    reviewDate DESC`,
-                [ airbnbId ]
-            );
-            reviews = reviewsResult;
-        } catch ( error ) {
-            console.error( "Reviews not available:", error.message );
-        }
+        // Get host information if available (assuming there's a way to link to a host profile)
+        const [ hostInfo ] = await pool.execute(
+            `SELECT 
+                u.name as hostName,
+                u.email as hostEmail,
+                HEX(u.userId) as hostId,
+                u.profilePic as hostProfilePic
+            FROM 
+                accommodations a
+            JOIN 
+                users u ON a.hostId = u.userId
+            WHERE 
+                a.accomId = UNHEX(?)`,
+            [ airbnbId ]
+        );
 
         // Combine all data
         const airbnbData = {
             ...airbnbDetails[ 0 ],
-            address: address[ 0 ] || {},
+            address: addressDetails[ 0 ] || {},
             photos: photos.map( p => p.photoUrl ),
-            amenities: amenitiesObj,
+            amenities: amenities.map( a => a.amenityType ),
             rooms: rooms,
-            reviews: reviews,
-            houseRules: {
-                noSmoking: true,
-                noPets: false,
-                noParties: true,
-                checkInTime: "After 2:00 PM",
-                checkOutTime: "Before 11:00 AM"
-            }, // Example data, adjust based on your schema
-            hostInfo: {
-                responseRate: "95%",
-                averageResponseTime: "1 hour",
-                memberSince: "January 2020"
-            } // Example data, adjust based on your schema
+            host: hostInfo[ 0 ] || null
         };
 
         res.status( 200 ).json( {
@@ -287,10 +326,116 @@ async function handleAirbnbDetailGet( req, res ) {
     }
 }
 
-/**
- * Handles POST request to create a new airbnb
- */
-async function handleCreateAirbnb( req, res ) {
+async function handleAirbnbAvailabilityCheck( req, res ) {
+    try {
+        const { airbnbId } = req.params;
+        const { checkInDate, checkOutDate, guests } = req.query;
+
+        if ( !airbnbId ) {
+            return res.status( 400 ).json( {
+                success: false,
+                message: 'Airbnb ID is required'
+            } );
+        }
+
+        if ( !checkInDate || !checkOutDate ) {
+            return res.status( 400 ).json( {
+                success: false,
+                message: 'Check-in and check-out dates are required'
+            } );
+        }
+
+        // First verify the airbnb exists
+        const [ airbnbRows ] = await pool.execute(
+            `SELECT 
+                a.accomId,
+                a.name,
+                ab.maxAllowedGuests
+            FROM 
+                accommodations a
+            JOIN
+                airbnbs ab ON a.accomId = ab.accomId
+            WHERE 
+                a.accomId = UNHEX(?) 
+                AND a.accomType = 'airbnb'`,
+            [ airbnbId ]
+        );
+
+        if ( airbnbRows.length === 0 ) {
+            return res.status( 404 ).json( {
+                success: false,
+                message: 'Airbnb not found'
+            } );
+        }
+
+        // Check if airbnb can accommodate the requested number of guests
+        if ( guests && parseInt( guests ) > airbnbRows[ 0 ].maxAllowedGuests ) {
+            return res.status( 400 ).json( {
+                success: false,
+                message: `This property can only accommodate up to ${ airbnbRows[ 0 ].maxAllowedGuests } guests`
+            } );
+        }
+
+        // Check if the airbnb is available for the requested dates
+        const [ bookings ] = await pool.execute(
+            `SELECT 
+                COUNT(*) as bookingCount
+            FROM 
+                rooms r
+            JOIN 
+                roombookings rb ON r.roomId = rb.roomId
+            WHERE 
+                r.accomId = UNHEX(?)
+                AND rb.status NOT IN ('cancelled', 'rejected')
+                AND ((rb.checkInDate <= ? AND rb.checkOutDate >= ?) OR 
+                     (rb.checkInDate <= ? AND rb.checkOutDate >= ?) OR
+                     (rb.checkInDate >= ? AND rb.checkOutDate <= ?))`,
+            [
+                airbnbId,
+                checkOutDate, checkOutDate, // First condition
+                checkInDate, checkInDate,   // Second condition
+                checkInDate, checkOutDate   // Third condition
+            ]
+        );
+
+        const isAvailable = bookings[ 0 ].bookingCount === 0;
+
+        // Get pricing information
+        const [ pricingInfo ] = await pool.execute(
+            `SELECT 
+                MIN(price) as basePrice,
+                MAX(price) as maxPrice
+            FROM 
+                rooms
+            WHERE 
+                accomId = UNHEX(?)`,
+            [ airbnbId ]
+        );
+
+        return res.status( 200 ).json( {
+            success: true,
+            data: {
+                isAvailable,
+                propertyName: airbnbRows[ 0 ].name,
+                maxGuests: airbnbRows[ 0 ].maxAllowedGuests,
+                pricing: {
+                    basePrice: pricingInfo[ 0 ].basePrice,
+                    maxPrice: pricingInfo[ 0 ].maxPrice
+                }
+            }
+        } );
+
+    } catch ( error ) {
+        console.error( 'Error checking airbnb availability:', error );
+        return res.status( 500 ).json( {
+            success: false,
+            message: 'Internal Server Error',
+            error: process.env.NODE_ENV === 'production' ? null : error.message
+        } );
+    }
+}
+
+async function handleAirbnbCreate( req, res ) {
     try {
         const {
             name,
@@ -300,49 +445,48 @@ async function handleCreateAirbnb( req, res ) {
             address,
             maxAllowedGuests,
             amenities,
-            rooms
+            rooms,
+            photos,
+            hostId
         } = req.body;
 
         // Validate required fields
         if ( !name || !phoneNo || !address || !address.city || !address.country || !maxAllowedGuests ) {
             return res.status( 400 ).json( {
                 success: false,
-                message: 'Missing required fields'
+                message: 'Required fields missing'
             } );
         }
 
-        // Generate UUIDs
-        const accomId = Buffer.from( uuidv4().replace( /-/g, '' ), 'hex' );
-        const addressId = Buffer.from( uuidv4().replace( /-/g, '' ), 'hex' );
-
-        // Begin transaction
+        // Start transaction
         const connection = await pool.getConnection();
         await connection.beginTransaction();
 
         try {
-            // Insert into accommodations table
+            // Create accommodation record
+            const accomId = Buffer.from( uuidv4().replace( /-/g, '' ), 'hex' );
+
             await connection.execute(
                 `INSERT INTO accommodations 
-                (accomId, accomType, name, phoneNo, email, description)
-                VALUES (?, 'airbnb', ?, ?, ?, ?)`,
-                [ accomId, name, phoneNo, email || null, description || null ]
+                (accomId, accomType, name, phoneNo, email, description, hostId) 
+                VALUES (?, 'airbnb', ?, ?, ?, ?, UNHEX(?))`,
+                [ accomId, name, phoneNo, email || null, description || null, hostId || null ]
             );
 
-            // Insert into airbnbs table
+            // Create airbnb record
             await connection.execute(
-                `INSERT INTO airbnbs 
+                `INSERT INTO airbnbs
                 (accomId, maxAllowedGuests)
                 VALUES (?, ?)`,
                 [ accomId, maxAllowedGuests ]
             );
 
-            // Insert address
+            // Create address record
             await connection.execute(
-                `INSERT INTO accommodationaddresses 
+                `INSERT INTO accommodationaddresses
                 (addressId, accomId, street, landmark, city, state, pinCode, country)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+                VALUES (UNHEX(REPLACE(UUID(), '-', '')), ?, ?, ?, ?, ?, ?, ?)`,
                 [
-                    addressId,
                     accomId,
                     address.street || '',
                     address.landmark || null,
@@ -353,54 +497,77 @@ async function handleCreateAirbnb( req, res ) {
                 ]
             );
 
-            // Insert amenities if provided
-            if ( amenities && Object.keys( amenities ).length > 0 ) {
-                for ( const amenity of Object.keys( amenities ) ) {
-                    if ( !amenities[ amenity ] ) continue;
-
+            // Add amenities if provided
+            if ( amenities && amenities.length > 0 ) {
+                for ( const amenity of amenities ) {
                     // Check if amenity exists, if not create it
-                    let amenityId;
-                    const [ existingAmenity ] = await connection.execute(
-                        `SELECT amenityId FROM accommodationAmenities WHERE amenityType = ?`,
+                    let [ amenityRows ] = await connection.execute(
+                        `SELECT amenityId FROM accommodationamenities WHERE amenityType = ?`,
                         [ amenity ]
                     );
 
-                    if ( existingAmenity.length === 0 ) {
+                    let amenityId;
+                    if ( amenityRows.length === 0 ) {
                         // Create new amenity
                         amenityId = Buffer.from( uuidv4().replace( /-/g, '' ), 'hex' );
                         await connection.execute(
-                            `INSERT INTO accommodationAmenities (amenityId, amenityType) VALUES (?, ?)`,
+                            `INSERT INTO accommodationamenities (amenityId, amenityType) VALUES (?, ?)`,
                             [ amenityId, amenity ]
                         );
                     } else {
-                        amenityId = existingAmenity[ 0 ].amenityId;
+                        amenityId = amenityRows[ 0 ].amenityId;
                     }
 
                     // Map amenity to accommodation
                     await connection.execute(
-                        `INSERT INTO accomAmenityMap (accomId, amenityId) VALUES (?, ?)`,
+                        `INSERT INTO accomamenitymap (accomId, amenityId) VALUES (?, ?)`,
                         [ accomId, amenityId ]
                     );
                 }
             }
 
-            // Insert rooms/spaces if provided
+            // Add rooms/spaces if provided
             if ( rooms && rooms.length > 0 ) {
                 for ( const room of rooms ) {
-                    const roomId = Buffer.from( uuidv4().replace( /-/g, '' ), 'hex' );
                     await connection.execute(
-                        `INSERT INTO rooms 
+                        `INSERT INTO rooms
                         (roomId, accomId, roomType, roomsAvailable, pplAccommodated, roomDescription, price)
-                        VALUES (?, ?, ?, ?, ?, ?, ?)`,
+                        VALUES (UNHEX(REPLACE(UUID(), '-', '')), ?, ?, ?, ?, ?, ?)`,
                         [
-                            roomId,
                             accomId,
-                            room.roomType || 'Bedroom',
+                            room.roomType || 'Entire space',
                             room.roomsAvailable || 1,
-                            room.pplAccommodated,
+                            room.pplAccommodated || maxAllowedGuests,
                             room.roomDescription || null,
                             room.price
                         ]
+                    );
+                }
+            } else {
+                // Create at least one default room/space entry
+                await connection.execute(
+                    `INSERT INTO rooms
+                    (roomId, accomId, roomType, roomsAvailable, pplAccommodated, roomDescription, price)
+                    VALUES (UNHEX(REPLACE(UUID(), '-', '')), ?, ?, ?, ?, ?, ?)`,
+                    [
+                        accomId,
+                        'Entire space',
+                        1,
+                        maxAllowedGuests,
+                        'The entire property',
+                        req.body.price || 2000 // Default price if not specified
+                    ]
+                );
+            }
+
+            // Add photos if provided
+            if ( photos && photos.length > 0 ) {
+                for ( const photoUrl of photos ) {
+                    await connection.execute(
+                        `INSERT INTO accommodationphotos
+                        (photoId, accomId, photoUrl)
+                        VALUES (UNHEX(REPLACE(UUID(), '-', '')), ?, ?)`,
+                        [ accomId, photoUrl ]
                     );
                 }
             }
@@ -408,15 +575,16 @@ async function handleCreateAirbnb( req, res ) {
             // Commit transaction
             await connection.commit();
 
-            // Return success response
             res.status( 201 ).json( {
                 success: true,
-                message: 'Airbnb created successfully',
-                airbnbId: accomId.toString( 'hex' ).toUpperCase()
+                message: 'Airbnb property created successfully',
+                data: {
+                    airbnbId: Buffer.from( accomId ).toString( 'hex' )
+                }
             } );
 
         } catch ( error ) {
-            // Rollback transaction in case of error
+            // Rollback on error
             await connection.rollback();
             throw error;
         } finally {
@@ -433,4 +601,9 @@ async function handleCreateAirbnb( req, res ) {
     }
 }
 
-export { handleAirbnbListGet, handleAirbnbDetailGet, handleCreateAirbnb };
+export {
+    handleAirbnbListGet,
+    handleAirbnbDetailGet,
+    handleAirbnbAvailabilityCheck,
+    handleAirbnbCreate
+};

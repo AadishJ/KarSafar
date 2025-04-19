@@ -23,6 +23,10 @@ import CabId from './Pages/ID/CabId'
 import BookingCab from './Pages/Booking/BookingCab'
 import BookingCruise from './Pages/Booking/BookingCruise'
 import CruiseId from './Pages/ID/CruiseId'
+import HotelId from './Pages/ID/HotelId'
+import BookingHotel from './Pages/Booking/BookingHotel'
+import AirbnbId from './Pages/ID/AirbnbId'
+import BookingAirbnb from './Pages/Booking/BookingAirbnb'
 
 
 const App = () => {
@@ -37,23 +41,35 @@ const App = () => {
           <Route path='/login' element={<Login />} />
           <Route path='/register' element={<Register />} />
           <Route path='/bookings' element={<Bookings />} />
+
           <Route path='/flights' element={<Flight />} />
           <Route path='/flights/:id' element={<FlightId />} />
           <Route path='/booking/flight/:id' element={<BookingFlight />} />
+
           <Route path='/trains' element={<Train />} />
           <Route path='/trains/:id' element={<TrainId />} />
           <Route path='/booking/train/:id' element={<BookingTrain />} />
+
           <Route path='/buses' element={<Bus />} />
           <Route path='/buses/:id' element={<BusId />} />
           <Route path='/booking/bus/:id' element={<BookingTrain />} />
+
           <Route path='/cabs' element={<Cab />} />
           <Route path='/cabs/:id' element={<CabId />} />
           <Route path='/booking/cab/:id' element={<BookingCab />} />
+
           <Route path='/cruises' element={<Cruise />} />
           <Route path='/cruises/:id' element={<CruiseId />} />
           <Route path='/booking/cruise/:id' element={<BookingCruise />} />
+
           <Route path='/hotels' element={<Hotel />} />
+          <Route path='/hotels/:id' element={<HotelId />} />
+          <Route path='/booking/hotel/:id' element={<BookingHotel />} />
+          
           <Route path='/airbnbs' element={<Airbnb />} />
+          <Route path='/airbnbs/:id' element={<AirbnbId />} />
+          <Route path='/booking/airbnb/:id' element={<BookingAirbnb />} />
+
           <Route path='/api/auth/callback' element={<GoogleAuth />} />
         </Routes>
       </div>

@@ -32,7 +32,7 @@ const GoogleAuth = () => {
                         token: response.data.token
                     };
                     Cookies.set( 'user', response.data.token, {
-                        secure: process.env.NODE_ENV === 'production', // secure in production
+                        secure: process.env.VITE_ENV === 'production', // secure in production
                         sameSite: 'none' // CSRF protection
                     } );
 

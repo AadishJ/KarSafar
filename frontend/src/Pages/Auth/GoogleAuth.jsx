@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import axiosInstance from '../../Config/axiosInstance';
 import { useAuth } from '../../Contexts/auth.context';
+import Cookies from 'js-cookie';
 
 const GoogleAuth = () => {
     const location = useLocation();
@@ -30,6 +31,10 @@ const GoogleAuth = () => {
                         ...response.data.user,
                         token: response.data.token
                     };
+                    Cookies.set( 'user', response.data.token, {
+                        secure: process.env.NODE_ENV === 'production', // secure in production
+                        sameSite: 'strict' // CSRF protection
+                    } );
 
                     // Store in localStorage
                     localStorage.setItem( 'user', JSON.stringify( userData ) );

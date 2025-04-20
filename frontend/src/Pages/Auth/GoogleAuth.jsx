@@ -33,7 +33,7 @@ const GoogleAuth = () => {
                     };
                     Cookies.set( 'user', response.data.token, {
                         secure: process.env.NODE_ENV === 'production', // secure in production
-                        sameSite: 'strict' // CSRF protection
+                        sameSite: 'none' // CSRF protection
                     } );
 
                     // Store in localStorage

@@ -1,5 +1,6 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import axiosInstance from '../Config/axiosInstance';
+import Cookies from 'js-cookie';
 
 // Create the Auth context
 const AuthContext = createContext();
@@ -129,6 +130,7 @@ export const AuthProvider = ( { children } ) => {
 
         // Remove user data from localStorage
         localStorage.removeItem( 'user' );
+        Cookies.remove( 'user' );
 
         // Remove auth header
         delete axiosInstance.defaults.headers.common[ 'Authorization' ];

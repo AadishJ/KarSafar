@@ -1,17 +1,28 @@
 import jwt from 'jsonwebtoken';
 
 const authUser = async ( req, res, next ) => {
-    const { user } = req.cookies;
-    if ( !user ) {
-        return res.json( { success: false, message: 'Please Login' } );
+    // First check for cookie
+    const token = req.cookies.user;
+
+    // If no cookie, check Authorization header
+    const authHeader = req.headers.authorization;
+    let finalToken = token;
+
+    if ( !finalToken && authHeader && authHeader.startsWith( 'Bearer ' ) ) {
+        finalToken = authHeader.split( ' ' )[ 1 ];
     }
+
+    if ( !finalToken ) {
+        return res.status( 401 ).json( { success: false, message: 'Please Login' } );
+    }
+
     try {
-        const decoded = jwt.verify( user, process.env.JWT_SECRET );
+        const decoded = jwt.verify( finalToken, process.env.JWT_SECRET );
         req.body.userId = decoded.id;
         next();
     } catch ( error ) {
         console.log( error );
-        res.json( { success: false, message: error.message } );
+        res.status( 401 ).json( { success: false, message: error.message } );
     }
 }
 

@@ -34,7 +34,6 @@ const GoogleAuth = () => {
                     Cookies.set( 'user', response.data.token, {
                         secure: process.env.VITE_ENV === 'production', // secure in production
                         sameSite: 'none',
-                        domain: process.env.VITE_DOMAIN || 'localhost',
                         path: '/',
                         expires: 7 
                     } );

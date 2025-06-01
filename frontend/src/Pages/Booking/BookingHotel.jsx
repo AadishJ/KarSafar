@@ -209,11 +209,13 @@ const BookingHotel = () => {
             } );
 
             if ( response.data.success ) {
-                setAvailableRooms( response.data.data );
+                // Extract the rooms array from the nested data structure
+                const roomsData = response.data.data.rooms || [];
+                setAvailableRooms( roomsData );
 
                 // If we have a roomId from location state, select that room
                 if ( location.state?.roomId ) {
-                    const selectedRoom = response.data.data.find(
+                    const selectedRoom = roomsData.find(
                         room => room.roomId === location.state.roomId
                     );
                     if ( selectedRoom ) {

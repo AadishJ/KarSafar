@@ -11,6 +11,7 @@ import {
     Chip
 } from '@mui/material';
 import axiosInstance from '../../Config/axiosInstance';
+import { Link } from 'react-router-dom';
 import { format } from 'date-fns';
 import {
     Hotel as HotelIcon,
@@ -246,13 +247,15 @@ const Hotel = () => {
                                                 </Box>
 
                                                 <Box mt={2} display="flex" justifyContent="flex-end">
-                                                    <Button
-                                                        variant="contained"
-                                                        color="primary"
-                                                        size="medium"
-                                                    >
-                                                        Book Now
-                                                    </Button>
+                                                    <Link to={`/hotels/${hotel.id}`}>
+                                                        <Button
+                                                            variant="contained"
+                                                            color="primary"
+                                                            size="medium"
+                                                        >
+                                                            Book Now
+                                                        </Button>
+                                                    </Link>
                                                 </Box>
                                             </Grid>
                                         </Grid>

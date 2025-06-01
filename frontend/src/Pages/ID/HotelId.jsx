@@ -100,7 +100,7 @@ const HotelId = () => {
             fetchHotelDetails();
         }
     }, [ id ] );
-
+    // Fix for the fetchAvailableRooms function in HotelId.jsx
     const fetchAvailableRooms = async ( hotelData ) => {
         try {
             const formattedCheckIn = format( searchParams.checkInDate, 'yyyy-MM-dd' );
@@ -115,7 +115,8 @@ const HotelId = () => {
             } );
 
             if ( response.data.success ) {
-                setAvailableRooms( response.data.data );
+                // Extract the rooms array from the nested data structure
+                setAvailableRooms( response.data.data.rooms || [] );
             } else {
                 // If API call fails, fall back to all rooms from hotel data
                 setAvailableRooms( hotelData.rooms || [] );

@@ -266,7 +266,6 @@ async function handleHotelDetailGet( req, res ) {
         } );
     }
 }
-
 async function handleHotelRoomAvailabilityGet( req, res ) {
     try {
         const { hotelId } = req.params;
@@ -289,10 +288,14 @@ async function handleHotelRoomAvailabilityGet( req, res ) {
         // First verify the hotel exists
         const [ hotelRows ] = await pool.execute(
             `SELECT 
-                a.accomId,
-                a.name
+                HEX(a.accomId) as accomId,
+                a.name,
+                h.breakfastIncluded,
+                h.acType
             FROM 
                 accommodations a
+            JOIN 
+                hotels h ON a.accomId = h.accomId
             WHERE 
                 a.accomId = UNHEX(?) 
                 AND a.accomType = 'hotel'`,
@@ -306,7 +309,7 @@ async function handleHotelRoomAvailabilityGet( req, res ) {
             } );
         }
 
-        // Base query for rooms
+        // Base query for rooms with availability calculation
         let query = `
             SELECT 
                 HEX(r.roomId) as roomId,
@@ -315,13 +318,15 @@ async function handleHotelRoomAvailabilityGet( req, res ) {
                 r.price,
                 r.pplAccommodated,
                 r.roomsAvailable - COALESCE(
-                    (SELECT COUNT(*) 
-                     FROM roombookings rb 
-                     WHERE rb.roomId = r.roomId
-                     AND ((rb.checkInDate <= ? AND rb.checkOutDate >= ?) OR 
-                          (rb.checkInDate <= ? AND rb.checkOutDate >= ?) OR
-                          (rb.checkInDate >= ? AND rb.checkOutDate <= ?))
-                     AND rb.status NOT IN ('cancelled', 'rejected')
+                    (SELECT COUNT(DISTINCT abr.roomId) 
+                     FROM accombookingrooms abr
+                     JOIN accommodationbookingitems abi ON abr.accomItemId = abi.accomItemId
+                     WHERE abr.roomId = r.roomId
+                     AND abi.accomId = UNHEX(?)
+                     AND ((abi.checkInDate <= ? AND abi.checkOutDate > ?) OR 
+                          (abi.checkInDate < ? AND abi.checkOutDate >= ?) OR
+                          (abi.checkInDate >= ? AND abi.checkOutDate <= ?))
+                     AND abi.status NOT IN ('cancelled')
                     ), 0
                 ) as availableRooms
             FROM 
@@ -331,9 +336,10 @@ async function handleHotelRoomAvailabilityGet( req, res ) {
         `;
 
         const params = [
-            checkOutDate, checkOutDate, // First condition
-            checkInDate, checkInDate,   // Second condition
-            checkInDate, checkOutDate,  // Third condition
+            hotelId,
+            checkOutDate, checkInDate,     // First condition: booking checkout overlaps with requested checkin
+            checkInDate, checkOutDate,     // Second condition: booking checkin overlaps with requested checkout
+            checkInDate, checkOutDate,     // Third condition: booking entirely within requested period
             hotelId
         ];
 
@@ -352,20 +358,65 @@ async function handleHotelRoomAvailabilityGet( req, res ) {
         // Execute the query
         const [ rooms ] = await pool.execute( query, params );
 
+        // Get hotel amenities
+        const [ amenities ] = await pool.execute(
+            `SELECT 
+                aa.amenityType
+             FROM 
+                accomamenitymap aam
+             JOIN
+                accommodationamenities aa ON aam.amenityId = aa.amenityId
+             WHERE 
+                aam.accomId = UNHEX(?)`,
+            [ hotelId ]
+        );
+
+        // Get hotel address
+        const [ address ] = await pool.execute(
+            `SELECT 
+                ad.city,
+                ad.state,
+                ad.country
+             FROM 
+                accommodationaddresses ad
+             WHERE 
+                ad.accomId = UNHEX(?)`,
+            [ hotelId ]
+        );
+
         // Format the response
         const formattedRooms = rooms.map( room => ( {
             roomId: room.roomId,
             roomType: room.roomType,
             description: room.roomDescription,
-            price: room.price,
+            price: parseFloat( room.price ),
             capacity: room.pplAccommodated,
-            availableRooms: room.availableRooms
+            availableRooms: parseInt( room.availableRooms )
         } ) );
 
         return res.status( 200 ).json( {
             success: true,
             message: 'Room availability retrieved successfully',
-            data: formattedRooms
+            data: {
+                hotel: {
+                    hotelId: hotelRows[ 0 ].accomId,
+                    name: hotelRows[ 0 ].name,
+                    breakfastIncluded: Boolean( hotelRows[ 0 ].breakfastIncluded ),
+                    acType: hotelRows[ 0 ].acType,
+                    location: address.length > 0 ? {
+                        city: address[ 0 ].city,
+                        state: address[ 0 ].state,
+                        country: address[ 0 ].country
+                    } : null,
+                    amenities: amenities.map( a => a.amenityType )
+                },
+                rooms: formattedRooms,
+                searchParams: {
+                    checkInDate,
+                    checkOutDate,
+                    guests: guests ? parseInt( guests ) : null
+                }
+            }
         } );
 
     } catch ( error ) {

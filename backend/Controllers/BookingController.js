@@ -486,7 +486,6 @@ const handleBookingsListGet = async ( req, res ) => {
     }
 };
 
-// ...existing code...
 
 const handleTrainBookPost = async ( req, res ) => {
     const conn = await pool.getConnection();
@@ -798,6 +797,293 @@ const handleBusBookPost = async ( req, res ) => {
 const handleCruiseBookPost = async ( req, res ) => {
 
 }
+const handleHotelBookPost = async ( req, res ) => {
+    const conn = await pool.getConnection();
+
+    try {
+        await conn.beginTransaction();
+
+        const { id: hotelId } = req.params;
+        const {
+            roomId,
+            checkInDate,
+            checkOutDate,
+            numberOfRooms,
+            numberOfGuests,
+            guestInfo,
+            specialRequests,
+            paymentMethod,
+            tripDetails,
+            bookingDetails
+        } = req.body;
+
+        const userId = req.userId || req.body.userId; // From auth middleware or request body
+
+        // Validate input
+        if ( !hotelId || !roomId || !checkInDate || !checkOutDate || !guestInfo ) {
+            return res.status( 400 ).json( {
+                success: false,
+                message: 'Missing required booking information'
+            } );
+        }
+
+        if ( !guestInfo.name || !guestInfo.phone ) {
+            return res.status( 400 ).json( {
+                success: false,
+                message: 'Guest name and phone are required'
+            } );
+        }
+
+        // 1. Check if the hotel exists
+        const [ hotelRows ] = await conn.execute(
+            `SELECT 
+                a.accomId, 
+                a.name as hotelName,
+                a.accomType
+            FROM 
+                accommodations a
+            WHERE 
+                a.accomId = UNHEX(?) 
+                AND a.accomType = 'hotel'`,
+            [ hotelId ]
+        );
+
+        if ( hotelRows.length === 0 ) {
+            return res.status( 404 ).json( {
+                success: false,
+                message: 'Hotel not found'
+            } );
+        }
+
+        // 2. Check if the room exists and has availability for the selected dates
+        const [ roomRows ] = await conn.execute(
+            `SELECT 
+                r.roomId, 
+                r.roomType, 
+                r.roomsAvailable,
+                r.price,
+                r.pplAccommodated
+            FROM 
+                rooms r
+            WHERE 
+                r.accomId = UNHEX(?) AND r.roomId = UNHEX(?)`,
+            [ hotelId, roomId ]
+        );
+
+        if ( roomRows.length === 0 ) {
+            return res.status( 404 ).json( {
+                success: false,
+                message: 'Room not found'
+            } );
+        }
+
+        // Check room availability for the selected dates
+        const [ availabilityResult ] = await conn.execute(
+            `SELECT 
+                COUNT(DISTINCT abr.roomId) as bookedCount
+            FROM 
+                accombookingrooms abr
+            JOIN 
+                accommodationbookingitems abi ON abr.accomItemId = abi.accomItemId
+            WHERE 
+                abr.roomId = UNHEX(?) 
+                AND abi.accomId = UNHEX(?)
+                AND ((abi.checkInDate <= ? AND abi.checkOutDate > ?) OR 
+                    (abi.checkInDate < ? AND abi.checkOutDate >= ?) OR
+                    (abi.checkInDate >= ? AND abi.checkOutDate <= ?))
+                AND abi.status NOT IN ('cancelled')`,
+            [
+                roomId, hotelId,
+                checkOutDate, checkInDate, // First condition
+                checkInDate, checkOutDate, // Second condition
+                checkInDate, checkOutDate  // Third condition
+            ]
+        );
+
+        const bookedCount = availabilityResult[ 0 ].bookedCount;
+        const availableRooms = roomRows[ 0 ].roomsAvailable - bookedCount;
+
+        if ( availableRooms < ( numberOfRooms || 1 ) ) {
+            return res.status( 400 ).json( {
+                success: false,
+                message: `Only ${ availableRooms } rooms of this type are available`
+            } );
+        }
+
+        // Verify guest count doesn't exceed room capacity
+        if ( numberOfGuests > roomRows[ 0 ].pplAccommodated ) {
+            return res.status( 400 ).json( {
+                success: false,
+                message: `Room can only accommodate ${ roomRows[ 0 ].pplAccommodated } guests`
+            } );
+        }
+
+        // 3. Handle trip creation or selection if specified
+        let tripId = null;
+
+        if ( tripDetails ) {
+            if ( tripDetails.createNewTrip && tripDetails.newTripName ) {
+                // Create a new trip
+                const newTripId = uuidv4();
+
+                await conn.execute(
+                    `INSERT INTO trips (tripId, userId, name, startDate, endDate, status)
+                    VALUES (UNHEX(?), UNHEX(?), ?, ?, ?, 'planning')`,
+                    [
+                        newTripId.replace( /-/g, '' ),
+                        userId.replace( /-/g, '' ),
+                        tripDetails.newTripName,
+                        checkInDate,
+                        checkOutDate
+                    ]
+                );
+
+                tripId = newTripId;
+            } else if ( tripDetails.tripId ) {
+                // Verify the trip exists and belongs to the user
+                const [ tripRows ] = await conn.execute(
+                    `SELECT tripId FROM trips WHERE tripId = UNHEX(?) AND userId = UNHEX(?)`,
+                    [ tripDetails.tripId.replace( /-/g, '' ), userId.replace( /-/g, '' ) ]
+                );
+
+                if ( tripRows.length === 0 ) {
+                    return res.status( 404 ).json( {
+                        success: false,
+                        message: 'Trip not found or does not belong to the user'
+                    } );
+                }
+
+                tripId = tripDetails.tripId;
+            }
+        }
+
+        // 4. Calculate total price (use provided value or calculate)
+        const totalPrice = bookingDetails?.totalPrice ||
+            ( parseFloat( roomRows[ 0 ].price ) *
+                differenceInDays( new Date( checkOutDate ), new Date( checkInDate ) ) *
+                ( numberOfRooms || 1 ) );
+
+        // 5. Create the main booking record
+        const bookingId = uuidv4();
+
+        await conn.execute(
+            `INSERT INTO bookings (bookingId, userId, tripId, totalPrice, status, createDate)
+            VALUES (UNHEX(?), UNHEX(?), ${ tripId ? 'UNHEX(?)' : 'NULL' }, ?, 'pending', NOW())`,
+            tripId
+                ? [ bookingId.replace( /-/g, '' ), userId.replace( /-/g, '' ), tripId.replace( /-/g, '' ), totalPrice ]
+                : [ bookingId.replace( /-/g, '' ), userId.replace( /-/g, '' ), totalPrice ]
+        );
+
+        // 6. Create the accommodation booking item
+        const accomItemId = uuidv4();
+
+        await conn.execute(
+            `INSERT INTO accommodationbookingitems 
+            (accomItemId, accomId, checkInDate, checkOutDate, contactName, contactPhoneNo, contactEmail, price, status)
+            VALUES (UNHEX(?), UNHEX(?), ?, ?, ?, ?, ?, ?, 'pending')`,
+            [
+                accomItemId.replace( /-/g, '' ),
+                hotelId.replace( /-/g, '' ),
+                checkInDate,
+                checkOutDate,
+                guestInfo.name,
+                guestInfo.phone,
+                guestInfo.email || null,
+                totalPrice
+            ]
+        );
+
+        // 7. Create the booking item linking booking and accommodation item
+        const bookingItemId = uuidv4();
+
+        await conn.execute(
+            `INSERT INTO bookingitems (bookingItemId, bookingId, itemType, vehicleItemId, accomItemId, price)
+            VALUES (UNHEX(?), UNHEX(?), 'accommodation', NULL, UNHEX(?), ?)`,
+            [
+                bookingItemId.replace( /-/g, '' ),
+                bookingId.replace( /-/g, '' ),
+                accomItemId.replace( /-/g, '' ),
+                totalPrice
+            ]
+        );
+
+        // 8. Create room booking records (for each room if multiple)
+        const numRooms = numberOfRooms || 1;
+        for ( let i = 0; i < numRooms; i++ ) {
+            const bookingRoomId = uuidv4();
+            await conn.execute(
+                `INSERT INTO accombookingrooms 
+                (bookingRoomId, accomItemId, roomId, roomNumber)
+                VALUES (UNHEX(?), UNHEX(?), UNHEX(?), ?)`,
+                [
+                    bookingRoomId.replace( /-/g, '' ),
+                    accomItemId.replace( /-/g, '' ),
+                    roomId.replace( /-/g, '' ),
+                    null // Room number is typically assigned at check-in
+                ]
+            );
+        }
+
+        // 9. Create payment record if needed
+        if ( paymentMethod ) {
+            const paymentId = uuidv4();
+            await conn.execute(
+                `INSERT INTO payments 
+                (paymentId, bookingId, amount, paid, paymentMethod, status)
+                VALUES (UNHEX(?), UNHEX(?), ?, ?, ?, 'pending')`,
+                [
+                    paymentId.replace( /-/g, '' ),
+                    bookingId.replace( /-/g, '' ),
+                    totalPrice,
+                    paymentMethod === 'pay_at_hotel' ? 0 : 0, // 0 = not paid yet
+                    paymentMethod
+                ]
+            );
+        }
+
+        // Commit transaction
+        await conn.commit();
+
+        // Generate booking reference (you need to implement this function)
+        const bookingReference = generateBookingReference ? generateBookingReference() : `HB-${ bookingId.substring( 0, 8 ).toUpperCase() }`;
+
+        return res.status( 201 ).json( {
+            success: true,
+            message: 'Hotel booking created successfully',
+            data: {
+                bookingId,
+                bookingReference,
+                hotelName: hotelRows[ 0 ].hotelName,
+                roomType: roomRows[ 0 ].roomType,
+                checkInDate,
+                checkOutDate,
+                nights: differenceInDays( new Date( checkOutDate ), new Date( checkInDate ) ),
+                totalPrice,
+                status: 'pending',
+                tripId
+            }
+        } );
+
+    } catch ( error ) {
+        await conn.rollback();
+        console.error( 'Error creating hotel booking:', error );
+
+        return res.status( 500 ).json( {
+            success: false,
+            message: 'Failed to create hotel booking',
+            error: process.env.NODE_ENV === 'production' ? null : error.message
+        } );
+    } finally {
+        conn.release();
+    }
+};
+
+// Helper function to calculate days difference
+function differenceInDays( endDate, startDate ) {
+    const diffTime = Math.abs( endDate - startDate );
+    const diffDays = Math.ceil( diffTime / ( 1000 * 60 * 60 * 24 ) );
+    return diffDays;
+}
 
 export {
     handleFlightBookPost,
@@ -805,5 +1091,6 @@ export {
     handleCarBookPost,
     handleTrainBookPost,
     handleBusBookPost,
-    handleCruiseBookPost
+    handleCruiseBookPost,
+    handleHotelBookPost
 };

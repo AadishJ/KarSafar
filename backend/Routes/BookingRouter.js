@@ -1,5 +1,5 @@
 import express from "express";
-import { handleBookingsListGet, handleBusBookPost, handleFlightBookPost, handleTrainBookPost } from "../Controllers/BookingController.js";
+import { handleBookingsListGet, handleBusBookPost, handleFlightBookPost, handleHotelBookPost, handleTrainBookPost } from "../Controllers/BookingController.js";
 const bookingRouter = express.Router();
 
 bookingRouter
@@ -13,6 +13,9 @@ bookingRouter
 bookingRouter
     .route( "/bus/:id" )
     .post( handleBusBookPost );
+bookingRouter
+    .route( "/hotel/:id" )
+    .post( handleHotelBookPost );
 
 bookingRouter
     .route( "/list" )
